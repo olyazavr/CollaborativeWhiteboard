@@ -8,4 +8,7 @@ public class Whiteboard {
 
     }
 
+    public String getName() {
+        return "Annie";
+    }
 }
