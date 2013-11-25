@@ -2,6 +2,7 @@ package canvas;
 
 import java.awt.BasicStroke;
 import java.awt.BorderLayout;
+import java.awt.Button;
 import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.Graphics;
@@ -24,6 +25,9 @@ import javax.swing.SwingUtilities;
 public class Canvas extends JPanel {
     // image where the user's drawing is stored
     private Image drawingBuffer;
+    private static Color color = Color.BLACK;
+    private static int stroke = 2;
+    private final static int ERASER_STROKE = 10;
     
     
     /**
@@ -115,11 +119,13 @@ public class Canvas extends JPanel {
      * pixels relative to the upper-left corner of the drawing buffer.
      */
     private void drawLineSegment(int x1, int y1, int x2, int y2) {
-        Graphics2D g = (Graphics2D) drawingBuffer.getGraphics();
+        Graphics2D graphics = (Graphics2D) drawingBuffer.getGraphics();
+
+        graphics.setColor(color);
+        graphics.setStroke(new BasicStroke(stroke));
+        graphics.drawLine(x1, y1, x2, y2);
         
-        g.setColor(Color.BLACK);
-        g.drawLine(x1, y1, x2, y2);
-        
+
         // IMPORTANT!  every time we draw on the internal drawing buffer, we
         // have to notify Swing to repaint this component on the screen.
         this.repaint();
@@ -181,8 +187,56 @@ public class Canvas extends JPanel {
                 JFrame window = new JFrame("Freehand Canvas");
                 window.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
                 window.setLayout(new BorderLayout());
+
+                JPanel panel = new JPanel();
+                Button paintButton = new Button("Draw!");
+                Button eraserButton = new Button("Erase!");
+                paintButton.addMouseListener(new MouseListener() {
+                    public void mouseReleased(MouseEvent arg0) {
+                    }
+
+                    public void mousePressed(MouseEvent arg0) {
+                    }
+
+                    public void mouseExited(MouseEvent arg0) {
+                    }
+
+                    public void mouseEntered(MouseEvent arg0) {
+                    }
+
+                    @Override
+                    public void mouseClicked(MouseEvent arg0) {
+                        color = Color.BLACK;
+                        stroke = 2;
+                    }
+                });
+
+                eraserButton.addMouseListener(new MouseListener() {
+
+                    public void mouseReleased(MouseEvent arg0) {
+                    }
+
+                    public void mousePressed(MouseEvent arg0) {
+                    }
+
+                    public void mouseExited(MouseEvent arg0) {
+                    }
+
+                    public void mouseEntered(MouseEvent arg0) {
+                    }
+
+                    @Override
+                    public void mouseClicked(MouseEvent arg0) {
+                        color = Color.WHITE;
+                        stroke = ERASER_STROKE;
+                    }
+                });
+
+                panel.add(paintButton);
+                panel.add(eraserButton);
                 Canvas canvas = new Canvas(800, 600);
-                window.add(canvas, BorderLayout.CENTER);
+                window.add(canvas, BorderLayout.WEST);
+                window.add(panel, BorderLayout.EAST);
                 window.pack();
                 window.setVisible(true);
             }
