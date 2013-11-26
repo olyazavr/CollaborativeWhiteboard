@@ -7,6 +7,7 @@ import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.net.SocketException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -18,7 +19,18 @@ import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.atomic.AtomicInteger;
 
 /**
- * Run this shit to make a server.
+ * Threadsafe, mutable server for collaborative whiteboard-ing.
+ * 
+ * This is threadsafe because all of the shared variables are private, final,
+ * thread-safe, and locked during iteration. Information to be sent back to the
+ * client is put on blocking queues, and is processed in an orderly manner.
+ * Every client has two threads- one for input and one for output, and the only
+ * shared information is a final socket and an atomic integer. The server knows
+ * nothing about the GUI or the client, except for the messages the client
+ * sends.
+ * 
+ * Port is set to 4444 by default, and every whiteboard and client are given
+ * unique ID numbers.
  * 
  */
 public class WhiteboardServer {
@@ -286,9 +298,12 @@ public class WhiteboardServer {
         try (BufferedReader in = new BufferedReader(new InputStreamReader(socket.getInputStream()))) {
 
             for (String line = in.readLine(); line != null; line = in.readLine()) {
+                System.out.println("read in " + line);
                 handleRequest(line, clientID);
             }
 
+        } catch (SocketException e) {
+            // this is ok, the other thread closed the socket
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -306,18 +321,16 @@ public class WhiteboardServer {
     private void handleOutput(Socket socket, int clientID) {
         // try with resources!
         try (PrintWriter out = new PrintWriter(socket.getOutputStream(), true)) {
+            String response = "";
 
-            // take the latest output, deliver it
-            String response = queues.get(clientID).take();
+            while (!"BYE".equals(response)) {
+                // take the latest output, deliver it
+                response = queues.get(clientID).take();
+                System.out.println("got response " + response);
 
-            // terminate connection
-            if ("BYE".equals(response)) {
-                return;
-            }
-
-            if (!response.isEmpty()) {
-                out.write(response);
-                out.flush();
+                if (!response.isEmpty()) {
+                    out.write(response);
+                }
             }
 
         } catch (IOException | InterruptedException e) {
@@ -349,7 +362,6 @@ public class WhiteboardServer {
      *            id of client making the request
      */
     private void handleRequest(String input, int clientID) {
-        System.out.println(input);
         String[] inputSplit = input.split(" ");
         BlockingQueue<String> clientQueue = queues.get(clientID);
 
@@ -411,6 +423,7 @@ public class WhiteboardServer {
 
                 putOnAllQueuesBut(clientID, new Integer(inputSplit[1]), "BYEUSER " + inputSplit[2]);
                 clientQueue.put("BYE"); // poison pill
+                return;
             }
         } catch (Exception e) {
             e.printStackTrace();
