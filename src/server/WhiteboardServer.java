@@ -36,21 +36,18 @@ import java.util.concurrent.atomic.AtomicInteger;
 public class WhiteboardServer {
     private final ServerSocket serverSocket;
     private final int port = 4444;
-    // stores all the whiteboards, maps ID number to Whiteboard for fast lookup
-    private final Map<Integer, Whiteboard> whiteboards;
 
-    // stores all the users, maps ID number to Person for fast lookup
-    // private final Map<Integer, Person> users;
-
-    // helps in making a unique ID for every new Whiteboard created
     private final AtomicInteger whiteBoardIDCounter;
-
-    // helps in making a unique ID for every new client created
     private final AtomicInteger clientIDCounter;
-    // client ID -> queue
-    private final Map<Integer, BlockingQueue<String>> queues;
+
+    // whiteboard id -> whiteboard
+    private final Map<Integer, Whiteboard> whiteboards;
     // whiteboard ID -> client IDs
     private final Map<Integer, List<Integer>> whiteboardClients;
+    // client ID -> name
+    private final Map<Integer, String> names;
+    // client ID -> queue
+    private final Map<Integer, BlockingQueue<String>> queues;
 
     /**
      * Creates a new server, with no whiteboards or users
@@ -61,23 +58,12 @@ public class WhiteboardServer {
     public WhiteboardServer() throws IOException {
         serverSocket = new ServerSocket(port);
         whiteboards = Collections.synchronizedMap(new HashMap<Integer, Whiteboard>());
-        // users = Collections.synchronizedMap(new HashMap<Integer, Person>());
 
         whiteBoardIDCounter = new AtomicInteger(0);
         clientIDCounter = new AtomicInteger(0);
+        names = Collections.synchronizedMap(new HashMap<Integer, String>());
         queues = Collections.synchronizedMap(new HashMap<Integer, BlockingQueue<String>>());
         whiteboardClients = Collections.synchronizedMap(new HashMap<Integer, List<Integer>>());
-    }
-
-    /**
-     * This gets called when the client initially makes contact with the server.
-     * This makes a new Person with a unique ID number and stores them
-     * 
-     * @param clientID
-     *            unique ID for the client
-     */
-    private void newUser(int clientID) {
-        // users.put(clientID, new Person(clientID));
     }
 
     /**
@@ -103,8 +89,8 @@ public class WhiteboardServer {
     }
 
     /**
-     * User has selected this Whiteboard, so add them to the user list and send
-     * them info. Also must have already chosen user name, so set that too.
+     * User has selected this Whiteboard, so add them to the list and send them
+     * info. Also must have already chosen user name, so set that too.
      * 
      * @param boardID
      *            id of whiteboard
@@ -115,9 +101,7 @@ public class WhiteboardServer {
      * @return list of all actions of the whiteboard
      */
     private String selectWhiteboard(int boardID, String userName, int clientID) {
-        // Person newArtist = users.get(clientID);
-        // newArtist.setName(userName)
-        // whiteboards.get(boardID).addUser(newArtist)
+        names.put(clientID, userName);
 
         // subscribe the client to whiteboard events
         whiteboardClients.get(boardID).add(clientID);
@@ -149,10 +133,11 @@ public class WhiteboardServer {
      */
     private String listUsers(int boardID) {
         StringBuilder users = new StringBuilder();
-        Whiteboard board = whiteboards.get(boardID);
-        // for (User u : board.users()) {
-        // users.append(u.getName() + " ");
-        // }
+        List<Integer> clients = whiteboardClients.get(boardID);
+
+        for (Integer id : clients) {
+            users.append(names.get(id) + " ");
+        }
         return users.toString().trim();
     }
 
@@ -183,7 +168,7 @@ public class WhiteboardServer {
 
     /**
      * Converts a string array of commands to draw to an Art, and adds that to
-     * both the Whiteboard and the Person
+     * the Whiteboard
      * 
      * @param input
      *            "DRAW" WB_ID COLOR_R COLOR_G COLOR_B STROKE X1 Y1 X2 Y2...
@@ -191,7 +176,6 @@ public class WhiteboardServer {
      */
     private String draw(String[] input) {
         Whiteboard board = whiteboards.get(new Integer(input[1]));
-        // Person person = users.get(new Integer(input[2]));
 
         // start with draw, color, stroke (insert artsy meter later)
         StringBuilder draw = new StringBuilder("DRAW " + input[2] + " " + input[3] + " " + input[4] + " " + input[5]
@@ -199,7 +183,6 @@ public class WhiteboardServer {
         Color color = new Color(new Integer(input[2]), new Integer(input[3]), new Integer(input[4]));
 
         // TODO:...make an Art
-        // person.addArt(art);
         // board.addArt(art);
         // draw.insert(5, art.getArtsyMeter());
         return draw.toString();
@@ -373,7 +356,6 @@ public class WhiteboardServer {
             // initial connect message
             // "HELLO"
             if (inputSplit[0].equals("HELLO")) {
-                newUser(clientID);
                 clientQueue.put(listWhiteboards());
                 return;
             }
@@ -432,7 +414,7 @@ public class WhiteboardServer {
             e.printStackTrace();
         }
 
-        // things that don't adhere to the grammar were put in here
+        // things that don't adhere to the grammar were put in here, muy bad
         throw new UnsupportedOperationException();
     }
 
