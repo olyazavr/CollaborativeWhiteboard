@@ -7,9 +7,14 @@ import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
+import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.atomic.AtomicInteger;
 
 /**
@@ -28,9 +33,15 @@ public class WhiteboardServer {
     // helps in making a unique ID for every new Whiteboard created
     private final AtomicInteger whiteBoardIDCounter;
 
+    // helps in making a unique ID for every new client created
+    private final AtomicInteger clientIDCounter;
+    // client ID -> queue
+    private final Map<Integer, BlockingQueue<String>> queues;
+    // whiteboard ID -> client IDs
+    private final Map<Integer, List<Integer>> whiteboardClients;
+
     /**
-     * Creates a new server, with no whiteboards or users, and a reset
-     * whiteboard ID counter
+     * Creates a new server, with no whiteboards or users
      * 
      * @throws IOException
      *             if invalid port
@@ -39,18 +50,22 @@ public class WhiteboardServer {
         serverSocket = new ServerSocket(port);
         whiteboards = Collections.synchronizedMap(new HashMap<Integer, Whiteboard>());
         // users = Collections.synchronizedMap(new HashMap<Integer, Person>());
+
         whiteBoardIDCounter = new AtomicInteger(0);
+        clientIDCounter = new AtomicInteger(0);
+        queues = Collections.synchronizedMap(new HashMap<Integer, BlockingQueue<String>>());
+        whiteboardClients = Collections.synchronizedMap(new HashMap<Integer, List<Integer>>());
     }
 
     /**
      * This gets called when the client initially makes contact with the server.
      * This makes a new Person with a unique ID number and stores them
      * 
-     * @param userID
-     *            unique ID for the user
+     * @param clientID
+     *            unique ID for the client
      */
-    private void newUser(int userID) {
-        // users.put(userID, new Person(userID));
+    private void newUser(int clientID) {
+        // users.put(clientID, new Person(clientID));
     }
 
     /**
@@ -60,49 +75,57 @@ public class WhiteboardServer {
      *            name of whiteboard, can't be empty
      * @param color
      *            background color
-     * @param userID
-     *            ID of user that called this
      * @param userName
      *            name of user, can't be empty
+     * @param clientID
+     *            id of client
      * @return list of all actions of whiteboard (none so far)
      */
-    private String createWhiteboard(String boardName, Color color, int userID, String userName) {
-        int whiteboardID = whiteBoardIDCounter.getAndIncrement();
-        whiteboards.put(whiteboardID, new Whiteboard(whiteboardID, boardName, color));
-        selectWhiteboard(whiteboardID, userID, userName);
+    private String createWhiteboard(String boardName, Color color, String userName, int clientID) {
+        int boardID = whiteBoardIDCounter.getAndIncrement();
+        whiteboards.put(boardID, new Whiteboard(boardID, boardName, color));
+        whiteboardClients.put(boardID, new ArrayList<Integer>());
+        selectWhiteboard(boardID, userName, clientID);
 
-        return listAllActions(whiteboardID);
+        return listAllActions(boardID);
     }
 
     /**
      * User has selected this Whiteboard, so add them to the user list and send
      * them info. Also must have already chosen user name, so set that too.
      * 
-     * @param whiteboardID
+     * @param boardID
      *            id of whiteboard
-     * @param userID
-     *            id of user
      * @param userName
      *            name of user, can't be empty
+     * @param clientID
+     *            id of client
      * @return list of all actions of the whiteboard
      */
-    private String selectWhiteboard(int whiteboardID, int userID, String userName) {
-        // Person newArtist = users.get(userID);
+    private String selectWhiteboard(int boardID, String userName, int clientID) {
+        // Person newArtist = users.get(clientID);
         // newArtist.setName(userName)
-        // whiteboards.get(whiteboardID).addUser(newArtist)
+        // whiteboards.get(boardID).addUser(newArtist)
 
-        return listAllActions(whiteboardID);
+        // subscribe the client to whiteboard events
+        whiteboardClients.get(boardID).add(clientID);
+
+        return listAllActions(boardID);
     }
 
     /**
-     * Lists all of the whiteboard names
+     * Lists all of the whiteboard names and ids
      * 
-     * @return a string of all whiteboard names, separated by spaces
+     * @return a string of all whiteboard names and ids (name followed by
+     *         corresponding id), separated by spaces
      */
     private String listWhiteboards() {
         StringBuilder boards = new StringBuilder();
-        for (Whiteboard w : whiteboards.values()) {
-            boards.append(w.getName() + " ");
+
+        synchronized (whiteboards) {
+            for (Entry<Integer, Whiteboard> w : whiteboards.entrySet()) {
+                boards.append(w.getKey() + " " + w.getValue().getName() + " ");
+            }
         }
         return boards.toString().trim();
     }
@@ -151,17 +174,23 @@ public class WhiteboardServer {
      * both the Whiteboard and the Person
      * 
      * @param input
-     *            "DRAW" WB_ID USER_ID COLOR_R COLOR_G COLOR_B STROKE X1 Y1 X2
-     *            Y2...
+     *            "DRAW" WB_ID COLOR_R COLOR_G COLOR_B STROKE X1 Y1 X2 Y2...
+     * @return "DRAW" ARTSY_METER COLOR_R COLOR_G COLOR_B STROKE X1 Y1 X2 Y2...
      */
-    private void draw(String[] input) {
+    private String draw(String[] input) {
         Whiteboard board = whiteboards.get(new Integer(input[1]));
         // Person person = users.get(new Integer(input[2]));
-        Color color = new Color(new Integer(input[3]), new Integer(input[4]), new Integer(input[5]));
+
+        // start with draw, color, stroke (insert artsy meter later)
+        StringBuilder draw = new StringBuilder("DRAW " + input[2] + " " + input[3] + " " + input[4] + " " + input[5]
+                + " ");
+        Color color = new Color(new Integer(input[2]), new Integer(input[3]), new Integer(input[4]));
 
         // TODO:...make an Art
         // person.addArt(art);
         // board.addArt(art);
+        // draw.insert(5, art.getArtsyMeter());
+        return draw.toString();
     }
 
     /**
@@ -178,8 +207,32 @@ public class WhiteboardServer {
     }
 
     /**
+     * Put the message on all of the queues of clients that are in the
+     * particular whiteboard except the specified client.
+     * 
+     * @param clientID
+     *            id of client not to recieve message
+     * @param boardID
+     *            id of whiteboard in question
+     * @param message
+     *            message to put on the queues
+     */
+    private void putOnAllQueuesBut(int clientID, int boardID, String message) {
+        List<Integer> clients = whiteboardClients.get(boardID);
+        for (int id : clients) {
+            if (clientID != id) {
+                try {
+                    queues.get(id).put(message);
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+            }
+        }
+    }
+
+    /**
      * Run the server, listening for client connections and handling them. Never
-     * returns unless an exception is thrown. This was stolen from Minesweeper!
+     * returns unless an exception is thrown.
      * 
      * @throws IOException
      *             if the main server socket is broken (IOExceptions from
@@ -189,12 +242,25 @@ public class WhiteboardServer {
         while (true) {
             // block until a client connects
             final Socket socket = serverSocket.accept();
+            final int clientID = clientIDCounter.getAndIncrement();
+            queues.put(clientID, new LinkedBlockingQueue<String>());
 
-            // start a new thread every time!
-            Thread thread = new Thread(new Runnable() {
+            // start a new thread for input
+            Thread inputThread = new Thread(new Runnable() {
                 @Override
                 public void run() {
-                    handleConnection(socket);
+                    // outputThread closes this socket
+                    handleInput(socket, clientID);
+                }
+            });
+
+            inputThread.start();
+
+            // start a new thread for output
+            Thread outputThread = new Thread(new Runnable() {
+                @Override
+                public void run() {
+                    handleOutput(socket, clientID);
                     try {
                         socket.close();
                     } catch (IOException e) {
@@ -203,34 +269,24 @@ public class WhiteboardServer {
                 }
             });
 
-            thread.start();
+            outputThread.start();
         }
     }
 
     /**
-     * Handle a single client connection. Returns when client disconnects. This
-     * was stolen from Minesweeper!
+     * Handle input from a single client connection
      * 
      * @param socket
      *            socket where the client is connected
+     * @param clientID
+     *            id of client
      */
-    private void handleConnection(Socket socket) {
-        // try with multiple resources! this is so hot
-        try (BufferedReader in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
-                PrintWriter out = new PrintWriter(socket.getOutputStream(), true)) {
+    private void handleInput(Socket socket, int clientID) {
+        // try with resources! this is so hot
+        try (BufferedReader in = new BufferedReader(new InputStreamReader(socket.getInputStream()))) {
 
             for (String line = in.readLine(); line != null; line = in.readLine()) {
-                String response = handleRequest(line);
-
-                // disconnect!
-                if (response.equals("BYE")) {
-                    return;
-                }
-
-                if (!response.isEmpty()) {
-                    out.write(response);
-                    out.flush();
-                }
+                handleRequest(line, clientID);
             }
 
         } catch (IOException e) {
@@ -239,76 +295,128 @@ public class WhiteboardServer {
     }
 
     /**
-     * Respond to the client's request appropriately, and send information back.
+     * Delivers output to the particular socket connection. Returns when client
+     * disconnects.
      * 
-     * Possible inputs: (1) initial connect message ("HELLO" USER_ID), (2)
-     * select whiteboard ("SELECT" WB_ID USER_ID USER_NAME), (3) make new
-     * whiteboard and select it ("NEW" WB_NAME COLOR_R COLOR_G COLOR_B USER_ID
-     * USER_NAME), (4) new draw actions ("DRAW" WB_ID USER_ID COLOR_R COLOR_G
-     * COLOR_B STROKE X1 Y1 X2 Y2...), (5) change whiteboard bg color ("BG"
-     * WB_ID COLOR_R COLOR_G COLOR_B), (6) disconnect message ("BYE" USER_ID)
+     * @param socket
+     *            socket where the client is connected
+     * @param clientID
+     *            id of client
+     */
+    private void handleOutput(Socket socket, int clientID) {
+        // try with resources!
+        try (PrintWriter out = new PrintWriter(socket.getOutputStream(), true)) {
+
+            // take the latest output, deliver it
+            String response = queues.get(clientID).take();
+
+            // terminate connection
+            if ("BYE".equals(response)) {
+                return;
+            }
+
+            if (!response.isEmpty()) {
+                out.write(response);
+                out.flush();
+            }
+
+        } catch (IOException | InterruptedException e) {
+            e.printStackTrace();
+        }
+    }
+
+    /**
+     * Respond to the client's request appropriately, and send information back
+     * (via queues).
      * 
-     * Possible outputs: (1) whiteboard names (WB_NAME WB_NAME...) to new
-     * client, ("NEWUSER" USER_NAME) to others, (2)-(3) whiteboard specs
-     * ("USERS" USER_NAME USER_NAME... "ARTS" DRAW_ACTIONS), (4) new draw
-     * actions by others ("DRAW" ARTSY_METER COLOR_R COLOR_G COLOR_B STROKE X1
-     * Y1 X2 Y2...), (5) change whiteboard bg color ("BG" COLOR_R COLOR_G
-     * COLOR_B), (6) user leaves ("BYEUSER" USER_NAME)
+     * Possible inputs: (1) initial connect message ("HELLO"), (2) select
+     * whiteboard ("SELECT" WB_ID USER_NAME), (3) make new whiteboard and select
+     * it ("NEW" WB_NAME COLOR_R COLOR_G COLOR_B USER_NAME), (4) new draw
+     * actions ("DRAW" WB_ID COLOR_R COLOR_G COLOR_B STROKE X1 Y1 X2 Y2...), (5)
+     * change whiteboard bg color ("BG" WB_ID COLOR_R COLOR_G COLOR_B), (6)
+     * disconnect message ("BYE" WB_ID USER_NAME)
+     * 
+     * Possible outputs: (1) whiteboard names and ids (WB_NAME WB_ID WB_NAME
+     * WB_ID...), (2)-(3) whiteboard specs ("USERS" USER_NAME USER_NAME...
+     * "ARTS" DRAW_ACTIONS) to new client, ("NEWUSER" USER_NAME) to others, (4)
+     * new draw actions by others ("DRAW" ARTSY_METER COLOR_R COLOR_G COLOR_B
+     * STROKE X1 Y1 X2 Y2...), (5) change whiteboard bg color ("BG" COLOR_R
+     * COLOR_G COLOR_B), (6) user leaves ("BYEUSER" USER_NAME)
      * 
      * @param input
      *            the client's request
-     * @return response to give to the client
+     * @param clientID
+     *            id of client making the request
      */
-    private String handleRequest(String input) {
+    private void handleRequest(String input, int clientID) {
         System.out.println(input);
         String[] inputSplit = input.split(" ");
+        BlockingQueue<String> clientQueue = queues.get(clientID);
 
-        // initial connect message
-        // "HELLO" USER_ID
-        if (inputSplit[0].equals("HELLO")) {
-            newUser(new Integer(inputSplit[1]));
-            // TODO: alert all other clients
-            return listWhiteboards();
+        // try to put on the queues
+        try {
+            // initial connect message
+            // "HELLO"
+            if (inputSplit[0].equals("HELLO")) {
+                newUser(clientID);
+                clientQueue.put(listWhiteboards());
+                return;
+            }
+
+            // select a whiteboard
+            // "SELECT" WB_ID USER_NAME
+            if (inputSplit[0].equals("SELECT")) {
+                clientQueue.put(selectWhiteboard(new Integer(inputSplit[1]), inputSplit[2], clientID));
+                putOnAllQueuesBut(clientID, new Integer(inputSplit[1]), "NEWUSER " + inputSplit[2]);
+                return;
+            }
+
+            // make new whiteboard and select it
+            // "NEW" WB_NAME COLOR_R COLOR_G COLOR_B USER_NAME
+            if (inputSplit[0].equals("NEW")) {
+                // make a color from RGB values
+                Color color = new Color(new Integer(inputSplit[2]), new Integer(inputSplit[3]), new Integer(
+                        inputSplit[4]));
+                clientQueue.put(createWhiteboard(inputSplit[1], color, inputSplit[5], clientID));
+                return;
+            }
+
+            // new draw actions
+            // "DRAW" WB_ID COLOR_R COLOR_G COLOR_B STROKE X1 Y1 X2
+            // Y2...
+            if (inputSplit[0].equals("DRAW")) {
+                String draw = draw(inputSplit);
+                putOnAllQueuesBut(clientID, new Integer(inputSplit[1]), draw);
+                return;
+            }
+
+            // change whiteboard bg color
+            // "BG" WB_ID COLOR_R COLOR_G COLOR_B
+            if (inputSplit[0].equals("BG")) {
+                // make a color from RGB values
+                Color color = new Color(new Integer(inputSplit[2]), new Integer(inputSplit[3]), new Integer(
+                        inputSplit[4]));
+                changeBackgroundColor(new Integer(inputSplit[1]), color);
+                putOnAllQueuesBut(clientID, new Integer(inputSplit[1]), "BG " + inputSplit[2] + " " + inputSplit[3]
+                        + " " + inputSplit[4]);
+                return;
+            }
+
+            // disconnect message
+            // "BYE" WB_ID USER_NAME
+            if (inputSplit[0].equals("BYE")) {
+                // un-subscribe the client from whiteboard events
+                List<Integer> unsubList = whiteboardClients.get(new Integer(inputSplit[1]));
+                unsubList.remove(unsubList.indexOf(clientID));
+
+                putOnAllQueuesBut(clientID, new Integer(inputSplit[1]), "BYEUSER " + inputSplit[2]);
+                clientQueue.put("BYE"); // poison pill
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
         }
 
-        // select a whiteboard
-        // "SELECT" WB_ID USER_ID USER_NAME
-        else if (inputSplit[0].equals("SELECT")) {
-            return selectWhiteboard(new Integer(inputSplit[1]), new Integer(inputSplit[2]), inputSplit[3]);
-        }
-
-        // make new whiteboard and select it
-        // "NEW" WB_NAME COLOR_R COLOR_G COLOR_B USER_ID USER_NAME
-        else if (inputSplit[0].equals("NEW")) {
-            // make a color from RGB values
-            Color color = new Color(new Integer(inputSplit[2]), new Integer(inputSplit[3]), new Integer(inputSplit[4]));
-            return createWhiteboard(inputSplit[1], color, new Integer(inputSplit[5]), inputSplit[6]);
-        }
-
-        // new draw actions
-        // "DRAW" WB_ID USER_ID COLOR_R COLOR_G COLOR_B STROKE X1 Y1 X2 Y2...
-        else if (inputSplit[0].equals("DRAW")) {
-            draw(inputSplit);
-            // TODO: announce to others
-        }
-
-        // change whiteboard bg color
-        // "BG" WB_ID COLOR_R COLOR_G COLOR_B
-        else if (inputSplit[0].equals("BG")) {
-            // make a color from RGB values
-            Color color = new Color(new Integer(inputSplit[2]), new Integer(inputSplit[3]), new Integer(inputSplit[4]));
-            changeBackgroundColor(new Integer(inputSplit[1]), color);
-            // TODO: announce to others
-        }
-
-        // disconnect message
-        // "BYE" USER_ID
-        else if (inputSplit[0].equals("BYE")) {
-            // TODO: announce to others
-            return "BYE"; // poison pill
-        }
-
-        // What the fuck did you put in here
+        // things that don't adhere to the grammar were put in here
         throw new UnsupportedOperationException();
     }
 
