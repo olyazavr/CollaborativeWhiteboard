@@ -79,13 +79,11 @@ public class WhiteboardServer {
      *            id of client
      * @return list of all actions of whiteboard (none so far)
      */
-    private String createWhiteboard(String boardName, Color color, String userName, int clientID) {
+    private void createWhiteboard(String boardName, Color color, String userName, int clientID) {
         int boardID = whiteBoardIDCounter.getAndIncrement();
         whiteboards.put(boardID, new Whiteboard(boardID, boardName, color));
         whiteboardClients.put(boardID, new ArrayList<Integer>());
         selectWhiteboard(boardID, userName, clientID);
-
-        return listAllActions(boardID);
     }
 
     /**
@@ -98,7 +96,7 @@ public class WhiteboardServer {
      *            name of user, can't be empty
      * @param clientID
      *            id of client
-     * @return list of all actions of the whiteboard
+     * @return "USERS" list of users "ARTS" list of pixels and their colors
      */
     private String selectWhiteboard(int boardID, String userName, int clientID) {
         names.put(clientID, userName);
@@ -106,7 +104,32 @@ public class WhiteboardServer {
         // subscribe the client to whiteboard events
         whiteboardClients.get(boardID).add(clientID);
 
-        return listAllActions(boardID);
+        return "USERS " + listUsers(boardID) + " ARTS " + createListOfPixels(boardID);
+    }
+
+    /**
+     * Converts the board's array of positions and colors to a string of all of
+     * the positions and colors (X Y R G B) of the board's pixels separated by
+     * spaces
+     * 
+     * @param boardID
+     *            id of the board in question
+     * @return string of positions and colors of the pixels of the board
+     */
+    private String createListOfPixels(int boardID) {
+        // Map<List<Integer>, Color> pointsArray =
+        // whiteboards.get(boardID);
+        Map<List<Integer>, List<Integer>> pointsArray = new HashMap<List<Integer>, List<Integer>>();
+        StringBuilder points = new StringBuilder();
+
+        // loop through and add to the string
+        for (Entry<List<Integer>, List<Integer>> point : pointsArray.entrySet()) {
+            // X Y R G B
+            points.append(point.getKey().get(0) + " " + point.getKey().get(1) + " " + point.getValue().get(0) + " "
+                    + point.getValue().get(1) + " " + point.getValue().get(2) + " ");
+        }
+
+        return points.toString();
     }
 
     /**
@@ -142,53 +165,6 @@ public class WhiteboardServer {
     }
 
     /**
-     * This lists all actions that have been performed on a particular board.
-     * Format: "USERS" USER_NAME USER_NAME... "ARTS" "DRAW" ARTSY_METER COLOR_R
-     * COLOR_G COLOR_B STROKE X1 Y1 X2 Y2... "DRAW" ARTSY_METER COLOR_R COLOR_G
-     * COLOR_B STROKE X1 Y1 X2 Y2...
-     * 
-     * @param boardID
-     *            id of the board in question
-     * @return string that lists all actions and users in a whiteboard
-     */
-    private String listAllActions(int boardID) {
-        StringBuilder actions = new StringBuilder();
-
-        // add users
-        actions.append("USERS " + listUsers(boardID));
-
-        // add actions
-        actions.append(" ARTS ");
-        Whiteboard board = whiteboards.get(boardID);
-        // for (Art a : board.arts()) {
-        // actions.append(a + " ");
-        // }
-        return actions.toString().trim();
-    }
-
-    /**
-     * Converts a string array of commands to draw to an Art, and adds that to
-     * the Whiteboard
-     * 
-     * @param input
-     *            "DRAW" WB_ID COLOR_R COLOR_G COLOR_B STROKE X1 Y1 X2 Y2...
-     * @return "DRAW" ARTSY_METER COLOR_R COLOR_G COLOR_B STROKE X1 Y1 X2 Y2...
-     */
-    private String draw(String[] input) {
-        Whiteboard board = whiteboards.get(new Integer(input[1]));
-
-        // start with draw, color, stroke (insert artsy meter later)
-        StringBuilder draw = new StringBuilder("DRAW " + input[2] + " " + input[3] + " " + input[4] + " " + input[5]
-                + " ");
-        Color color = new Color(new Integer(input[2]), new Integer(input[3]), new Integer(input[4]));
-
-        // TODO:...make an Art
-        // board.addArt(art);
-        // draw.insert(5, art.getArtsyMeter());
-        return draw.toString();
-    }
-
-    /**
      * Change the background color of the board
      * 
      * @param boardID
@@ -199,6 +175,26 @@ public class WhiteboardServer {
     private void changeBackgroundColor(int boardID, Color color) {
         Whiteboard board = whiteboards.get(boardID);
         // board.setBackgroundColor(color);
+    }
+
+    /**
+     * Converts
+     * 
+     * @param input
+     *            "DRAW" WB_ID STROKE X Y COLOR_R COLOR_G COLOR_B
+     * @return "DRAW" ARTSY_METER STROKE X Y COLOR_R COLOR_G COLOR_B
+     */
+    private String draw(int boardID, int stroke, int x, int y, int red, int green, int blue) {
+        Whiteboard board = whiteboards.get(boardID);
+        Color color = new Color(red, green, blue);
+        int width = stroke / 2; // integer division
+
+        // board.addPixels(what);
+        // int artsy = board.getArtsy();
+
+        int artsy = 5;
+
+        return "DRAW " + artsy + " " + stroke + " " + x + " " + y + " " + red + " " + blue;
     }
 
     /**
@@ -331,16 +327,16 @@ public class WhiteboardServer {
      * Possible inputs: (1) initial connect message ("HELLO"), (2) select
      * whiteboard ("SELECT" WB_ID USER_NAME), (3) make new whiteboard and select
      * it ("NEW" WB_NAME COLOR_R COLOR_G COLOR_B USER_NAME), (4) new draw
-     * actions ("DRAW" WB_ID COLOR_R COLOR_G COLOR_B STROKE X1 Y1 X2 Y2...), (5)
-     * change whiteboard bg color ("BG" WB_ID COLOR_R COLOR_G COLOR_B), (6)
-     * disconnect message ("BYE" WB_ID USER_NAME)
+     * actions ("DRAW" WB_ID STROKE X Y COLOR_R COLOR_G COLOR_B), (5) change
+     * whiteboard bg color ("BG" WB_ID COLOR_R COLOR_G COLOR_B), (6) disconnect
+     * message ("BYE" WB_ID USER_NAME)
      * 
      * Possible outputs: (1) whiteboard names and ids (WB_NAME WB_ID WB_NAME
      * WB_ID...), (2)-(3) whiteboard specs ("USERS" USER_NAME USER_NAME...
      * "ARTS" DRAW_ACTIONS) to new client, ("NEWUSER" USER_NAME) to others, (4)
-     * new draw actions by others ("DRAW" ARTSY_METER COLOR_R COLOR_G COLOR_B
-     * STROKE X1 Y1 X2 Y2...), (5) change whiteboard bg color ("BG" COLOR_R
-     * COLOR_G COLOR_B), (6) user leaves ("BYEUSER" USER_NAME)
+     * new draw actions by others ("DRAW" ARTSY_METER STROKE X Y COLOR_R COLOR_G
+     * COLOR_B), (5) change whiteboard bg color ("BG" COLOR_R COLOR_G COLOR_B),
+     * (6) user leaves ("BYEUSER" USER_NAME)
      * 
      * @param input
      *            the client's request
@@ -374,15 +370,16 @@ public class WhiteboardServer {
                 // make a color from RGB values
                 Color color = new Color(new Integer(inputSplit[2]), new Integer(inputSplit[3]), new Integer(
                         inputSplit[4]));
-                clientQueue.put(createWhiteboard(inputSplit[1], color, inputSplit[5], clientID));
+                createWhiteboard(inputSplit[1], color, inputSplit[5], clientID);
                 return;
             }
 
             // new draw actions
-            // "DRAW" WB_ID COLOR_R COLOR_G COLOR_B STROKE X1 Y1 X2
-            // Y2...
+            // "DRAW" WB_ID STROKE X1 Y1 COLOR_R COLOR_G COLOR_B
             if (inputSplit[0].equals("DRAW")) {
-                String draw = draw(inputSplit);
+                String draw = draw(new Integer(inputSplit[1]), new Integer(inputSplit[2]), new Integer(inputSplit[3]),
+                        new Integer(inputSplit[4]), new Integer(inputSplit[5]), new Integer(inputSplit[6]),
+                        new Integer(inputSplit[7]));
                 putOnAllQueuesBut(clientID, new Integer(inputSplit[1]), draw);
                 return;
             }

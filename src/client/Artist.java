@@ -39,8 +39,7 @@ public class Artist {
                 PrintWriter out = new PrintWriter(socket.getOutputStream(), true)) {
 
             // send initial hello to get whiteboards
-            out.write("HELLO");
-            out.flush();
+            out.println("HELLO");
             System.out.println("wrote hello!");
 
             // retrieve the list of whiteboards
