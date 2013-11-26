@@ -77,12 +77,10 @@ public class Whiteboard {
 	 *            to
 	 */
 
-	public synchronized void setColor(int x, int y, Color color) { // we could
-																	// change
-																	// the
-		// method to take
-		// something more
-		// usable, idk
+	public synchronized void setColor(int x, int y, Color color) {
+		// we could change the method to take something more usable, idk
+		// like maybe have the parser return a small list of points at once; we'll what happens 
+		
 		ArrayList<Integer> coords = new ArrayList<Integer>();
 		coords.add(x);
 		coords.add(y);
@@ -91,7 +89,7 @@ public class Whiteboard {
 	}
 
 	public Map getMap() {
-		return Whiteboard.colormap; // this is not safe probs
+		return Whiteboard.colormap; // this is not safe probs fix later
 	}
 
 }
