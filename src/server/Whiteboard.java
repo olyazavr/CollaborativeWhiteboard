@@ -41,20 +41,23 @@ public class Whiteboard {
         for (int y = 0; y < 600; y++) {
             for (int x = 0; x < 800; x++) {
 
-                ArrayList<Integer> coords = new ArrayList<Integer>();
+                List<Integer> coords = new ArrayList<Integer>();
 
                 coords.add(x);
                 coords.add(y);
                 colormap.put(coords, this.bg);
 
-                // Use unmodifiablelist for coords (like convert them from
-                // regular arraylist or some shit) at some point maybe i tried
-                // but java kept yelling at me just pretend arraylist
-                // is a list okay bitch its 2 am fuck it
-
             }
         }
 
+    }
+    
+    public List<Integer> getColor(int x, int y) {
+    	List<Integer> key = new ArrayList<Integer>();
+    	key.add(x);
+    	key.add(y);
+    	return colormap.get(key);
+    	
     }
 
     public String getName() {
@@ -114,6 +117,7 @@ public class Whiteboard {
         bg.set(1, green);
         bg.set(2, blue);
     }
+    
 
     public synchronized String toString() {
         return this.createListOfPixels();
