@@ -9,6 +9,7 @@ import java.net.ServerSocket;
 import java.net.Socket;
 import java.net.SocketException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -71,17 +72,21 @@ public class WhiteboardServer {
      * 
      * @param boardName
      *            name of whiteboard, can't be empty
-     * @param color
-     *            background color
+     * @param red
+     *            amount of red
+     * @param green
+     *            amount of green
+     * @param blue
+     *            amount of blue
      * @param userName
      *            name of user, can't be empty
      * @param clientID
      *            id of client
      * @return list of all actions of whiteboard (none so far)
      */
-    private void createWhiteboard(String boardName, Color color, String userName, int clientID) {
+    private void createWhiteboard(String boardName, int red, int green, int blue, String userName, int clientID) {
         int boardID = whiteBoardIDCounter.getAndIncrement();
-        whiteboards.put(boardID, new Whiteboard(boardID, boardName, color));
+        whiteboards.put(boardID, new Whiteboard(boardID, boardName, Arrays.asList(red, green, blue)));
         whiteboardClients.put(boardID, new ArrayList<Integer>());
         selectWhiteboard(boardID, userName, clientID);
     }
@@ -117,19 +122,8 @@ public class WhiteboardServer {
      * @return string of positions and colors of the pixels of the board
      */
     private String createListOfPixels(int boardID) {
-        // Map<List<Integer>, Color> pointsArray =
-        // whiteboards.get(boardID);
-        Map<List<Integer>, List<Integer>> pointsArray = new HashMap<List<Integer>, List<Integer>>();
-        StringBuilder points = new StringBuilder();
-
-        // loop through and add to the string
-        for (Entry<List<Integer>, List<Integer>> point : pointsArray.entrySet()) {
-            // X Y R G B
-            points.append(point.getKey().get(0) + " " + point.getKey().get(1) + " " + point.getValue().get(0) + " "
-                    + point.getValue().get(1) + " " + point.getValue().get(2) + " ");
-        }
-
-        return points.toString();
+        Whiteboard board = whiteboards.get(boardID);
+        return board.createListOfPixels();
     }
 
     /**
@@ -169,19 +163,36 @@ public class WhiteboardServer {
      * 
      * @param boardID
      *            board in question
-     * @param color
-     *            color to change background to
+     * @param red
+     *            amount of red
+     * @param green
+     *            amount of green
+     * @param blue
+     *            amount of blue
      */
-    private void changeBackgroundColor(int boardID, Color color) {
+    private void changeBackgroundColor(int boardID, int red, int green, int blue) {
         Whiteboard board = whiteboards.get(boardID);
-        // board.setBackgroundColor(color);
+        board.setBackgroundColor(red, green, blue);
     }
 
     /**
-     * Converts
+     * Saves the drawing action to the whiteboard and returns the message to
+     * send to all other clients (with the artsy meter)
      * 
-     * @param input
-     *            "DRAW" WB_ID STROKE X Y COLOR_R COLOR_G COLOR_B
+     * @param boardID
+     *            id of board in question
+     * @param stroke
+     *            >1, must be odd, thickness of the draw action
+     * @param x
+     *            x-coordinate
+     * @param y
+     *            y-coordinate
+     * @param red
+     *            amount of red
+     * @param green
+     *            amount of green
+     * @param blue
+     *            amount of blue
      * @return "DRAW" ARTSY_METER STROKE X Y COLOR_R COLOR_G COLOR_B
      */
     private String draw(int boardID, int stroke, int x, int y, int red, int green, int blue) {
@@ -189,7 +200,7 @@ public class WhiteboardServer {
         Color color = new Color(red, green, blue);
         int width = stroke / 2; // integer division
 
-        // board.addPixels(what);
+        // board.setColor(what);
         // int artsy = board.getArtsy();
 
         int artsy = 5;
@@ -359,51 +370,67 @@ public class WhiteboardServer {
             // select a whiteboard
             // "SELECT" WB_ID USER_NAME
             if (inputSplit[0].equals("SELECT")) {
-                clientQueue.put(selectWhiteboard(new Integer(inputSplit[1]), inputSplit[2], clientID));
-                putOnAllQueuesBut(clientID, new Integer(inputSplit[1]), "NEWUSER " + inputSplit[2]);
+                int boardID = new Integer(inputSplit[1]);
+                String userName = inputSplit[2];
+                clientQueue.put(selectWhiteboard(boardID, userName, clientID));
+                putOnAllQueuesBut(clientID, boardID, "NEWUSER " + userName);
                 return;
             }
 
             // make new whiteboard and select it
             // "NEW" WB_NAME COLOR_R COLOR_G COLOR_B USER_NAME
             if (inputSplit[0].equals("NEW")) {
-                // make a color from RGB values
-                Color color = new Color(new Integer(inputSplit[2]), new Integer(inputSplit[3]), new Integer(
-                        inputSplit[4]));
-                createWhiteboard(inputSplit[1], color, inputSplit[5], clientID);
+                String boardName = inputSplit[1];
+                int red = new Integer(inputSplit[2]);
+                int green = new Integer(inputSplit[3]);
+                int blue = new Integer(inputSplit[4]);
+                String userName = inputSplit[5];
+                createWhiteboard(boardName, red, green, blue, userName, clientID);
                 return;
             }
 
             // new draw actions
-            // "DRAW" WB_ID STROKE X1 Y1 COLOR_R COLOR_G COLOR_B
+            // "DRAW" WB_ID STROKE X Y COLOR_R COLOR_G COLOR_B
             if (inputSplit[0].equals("DRAW")) {
-                String draw = draw(new Integer(inputSplit[1]), new Integer(inputSplit[2]), new Integer(inputSplit[3]),
-                        new Integer(inputSplit[4]), new Integer(inputSplit[5]), new Integer(inputSplit[6]),
-                        new Integer(inputSplit[7]));
-                putOnAllQueuesBut(clientID, new Integer(inputSplit[1]), draw);
+                int boardID = new Integer(inputSplit[1]);
+                int stroke = new Integer(inputSplit[2]);
+                int x = new Integer(inputSplit[3]);
+                int y = new Integer(inputSplit[4]);
+                int red = new Integer(inputSplit[5]);
+                int green = new Integer(inputSplit[6]);
+                int blue = new Integer(inputSplit[7]);
+
+                // draw has artsy meter on it "DRAW" ARTSY_METER STROKE X Y
+                // COLOR_R COLOR_G COLOR_B
+                String draw = draw(boardID, stroke, x, y, red, green, blue);
+                putOnAllQueuesBut(clientID, boardID, draw);
                 return;
             }
 
             // change whiteboard bg color
             // "BG" WB_ID COLOR_R COLOR_G COLOR_B
             if (inputSplit[0].equals("BG")) {
-                // make a color from RGB values
-                Color color = new Color(new Integer(inputSplit[2]), new Integer(inputSplit[3]), new Integer(
-                        inputSplit[4]));
-                changeBackgroundColor(new Integer(inputSplit[1]), color);
-                putOnAllQueuesBut(clientID, new Integer(inputSplit[1]), "BG " + inputSplit[2] + " " + inputSplit[3]
-                        + " " + inputSplit[4]);
+                int boardID = new Integer(inputSplit[1]);
+                int red = new Integer(inputSplit[2]);
+                int green = new Integer(inputSplit[3]);
+                int blue = new Integer(inputSplit[4]);
+
+                changeBackgroundColor(boardID, red, green, blue);
+                putOnAllQueuesBut(clientID, boardID, "BG " + red + " " + green + " " + blue);
                 return;
             }
 
             // disconnect message
             // "BYE" WB_ID USER_NAME
             if (inputSplit[0].equals("BYE")) {
+                int boardID = new Integer(inputSplit[1]);
+                String userName = inputSplit[2];
+
                 // un-subscribe the client from whiteboard events
-                List<Integer> unsubList = whiteboardClients.get(new Integer(inputSplit[1]));
+                List<Integer> unsubList = whiteboardClients.get(boardID);
                 unsubList.remove(unsubList.indexOf(clientID));
 
-                putOnAllQueuesBut(clientID, new Integer(inputSplit[1]), "BYEUSER " + inputSplit[2]);
+                putOnAllQueuesBut(clientID, boardID, "BYEUSER " + userName);
                 clientQueue.put("BYE"); // poison pill
                 return;
             }
