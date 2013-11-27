@@ -1,6 +1,5 @@
 package server;
 
-import java.awt.Color;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
@@ -68,27 +67,24 @@ public class WhiteboardServer {
     }
 
     /**
-     * Make a new Whiteboard, add it to the whiteboards list, and switch to it
+     * Make a new Whiteboard, add it to the whiteboards list
      * 
      * @param boardName
      *            name of whiteboard, can't be empty
      * @param red
-     *            amount of red
+     *            amount of red in bg (0-255)
      * @param green
-     *            amount of green
+     *            amount of green in bg (0-255)
      * @param blue
-     *            amount of blue
-     * @param userName
-     *            name of user, can't be empty
-     * @param clientID
-     *            id of client
-     * @return list of all actions of whiteboard (none so far)
+     *            amount of blue in bg (0-255)
+     * @return id of the new board
      */
-    private void createWhiteboard(String boardName, int red, int green, int blue, String userName, int clientID) {
+    private int createWhiteboard(String boardName, int red, int green, int blue) {
         int boardID = whiteBoardIDCounter.getAndIncrement();
         whiteboards.put(boardID, new Whiteboard(boardID, boardName, Arrays.asList(red, green, blue)));
         whiteboardClients.put(boardID, new ArrayList<Integer>());
-        selectWhiteboard(boardID, userName, clientID);
+
+        return boardID;
     }
 
     /**
@@ -136,10 +132,18 @@ public class WhiteboardServer {
         StringBuilder boards = new StringBuilder();
 
         synchronized (whiteboards) {
+            // make a default board
+            if (whiteboards.isEmpty()) {
+                // bg is all white
+                createWhiteboard("Default", 255, 255, 255);
+            }
+
+            // get all whiteboard ids and names
             for (Entry<Integer, Whiteboard> w : whiteboards.entrySet()) {
                 boards.append(w.getKey() + " " + w.getValue().getName() + " ");
             }
         }
+
         return boards.toString().trim();
     }
 
@@ -152,9 +156,11 @@ public class WhiteboardServer {
         StringBuilder users = new StringBuilder();
         List<Integer> clients = whiteboardClients.get(boardID);
 
+        // get all of the names associated with this whiteboard
         for (Integer id : clients) {
             users.append(names.get(id) + " ");
         }
+
         return users.toString().trim();
     }
 
@@ -164,11 +170,11 @@ public class WhiteboardServer {
      * @param boardID
      *            board in question
      * @param red
-     *            amount of red
+     *            amount of red (0-255)
      * @param green
-     *            amount of green
+     *            amount of green (0-255)
      * @param blue
-     *            amount of blue
+     *            amount of blue (0-255)
      */
     private void changeBackgroundColor(int boardID, int red, int green, int blue) {
         Whiteboard board = whiteboards.get(boardID);
@@ -182,27 +188,35 @@ public class WhiteboardServer {
      * @param boardID
      *            id of board in question
      * @param stroke
-     *            >1, must be odd, thickness of the draw action
+     *            >1, MUST BE ODD, thickness of the draw action
      * @param x
      *            x-coordinate
      * @param y
      *            y-coordinate
      * @param red
-     *            amount of red
+     *            amount of red (0-255)
      * @param green
-     *            amount of green
+     *            amount of green (0-255)
      * @param blue
-     *            amount of blue
+     *            amount of blue (0-255)
      * @return "DRAW" ARTSY_METER STROKE X Y COLOR_R COLOR_G COLOR_B
      */
     private String draw(int boardID, int stroke, int x, int y, int red, int green, int blue) {
         Whiteboard board = whiteboards.get(boardID);
-        Color color = new Color(red, green, blue);
+        List<Integer> color = Arrays.asList(red, green, blue);
         int width = stroke / 2; // integer division
 
-        // board.setColor(what);
-        // int artsy = board.getArtsy();
+        // search for width around the x,y center
+        for (int j = y - width; j <= y + width; ++j) {
+            for (int i = x - width; i <= x + width; ++i) {
+                // if within board
+                if (i > 0 && j > 0 && i <= 800 && j <= 600) {
+                    board.setColor(i, j, red, green, blue);
+                }
+            }
+        }
 
+        // int artsy = board.getArtsy();
         int artsy = 5;
 
         return "DRAW " + artsy + " " + stroke + " " + x + " " + y + " " + red + " " + blue;
@@ -321,8 +335,7 @@ public class WhiteboardServer {
                 System.out.println("got response " + response);
 
                 if (!response.isEmpty()) {
-                    out.write(response);
-                    out.flush();
+                    out.println(response);
                 }
             }
 
@@ -342,10 +355,11 @@ public class WhiteboardServer {
      * whiteboard bg color ("BG" WB_ID COLOR_R COLOR_G COLOR_B), (6) disconnect
      * message ("BYE" WB_ID USER_NAME)
      * 
-     * Possible outputs: (1) whiteboard names and ids (WB_NAME WB_ID WB_NAME
-     * WB_ID...), (2)-(3) whiteboard specs ("USERS" USER_NAME USER_NAME...
-     * "ARTS" DRAW_ACTIONS) to new client, ("NEWUSER" USER_NAME) to others, (4)
-     * new draw actions by others ("DRAW" ARTSY_METER STROKE X Y COLOR_R COLOR_G
+     * Possible outputs: (1) whiteboard names and ids (WB_ID WB_NAME WB_ID
+     * WB_NAME...), (2)-(3) whiteboard specs ("USERS" USER_NAME USER_NAME...
+     * "PIXELS" X1 Y1 COLOR_R1 COLOR_G1 COLOR_B1 X2 Y2 COLOR_R2 COLOR_G2
+     * COLOR_B2...) to new client, ("NEWUSER" USER_NAME) to others, (4) new draw
+     * actions by others ("DRAW" ARTSY_METER STROKE X Y COLOR_R COLOR_G
      * COLOR_B), (5) change whiteboard bg color ("BG" COLOR_R COLOR_G COLOR_B),
      * (6) user leaves ("BYEUSER" USER_NAME)
      * 
@@ -372,6 +386,8 @@ public class WhiteboardServer {
             if (inputSplit[0].equals("SELECT")) {
                 int boardID = new Integer(inputSplit[1]);
                 String userName = inputSplit[2];
+
+                // select whiteboard, tell others that there's a new user
                 clientQueue.put(selectWhiteboard(boardID, userName, clientID));
                 putOnAllQueuesBut(clientID, boardID, "NEWUSER " + userName);
                 return;
@@ -385,7 +401,12 @@ public class WhiteboardServer {
                 int green = new Integer(inputSplit[3]);
                 int blue = new Integer(inputSplit[4]);
                 String userName = inputSplit[5];
-                createWhiteboard(boardName, red, green, blue, userName, clientID);
+
+                // make a new whiteboard
+                int boardID = createWhiteboard(boardName, red, green, blue);
+                // we don't care about the result of select, because the board
+                // is brand new
+                selectWhiteboard(boardID, userName, clientID);
                 return;
             }
 
@@ -415,6 +436,7 @@ public class WhiteboardServer {
                 int green = new Integer(inputSplit[3]);
                 int blue = new Integer(inputSplit[4]);
 
+                // change color, inform others
                 changeBackgroundColor(boardID, red, green, blue);
                 putOnAllQueuesBut(clientID, boardID, "BG " + red + " " + green + " " + blue);
                 return;
@@ -429,11 +451,15 @@ public class WhiteboardServer {
                 // un-subscribe the client from whiteboard events
                 List<Integer> unsubList = whiteboardClients.get(boardID);
                 unsubList.remove(unsubList.indexOf(clientID));
+                names.remove(clientID);
+                queues.remove(clientID);
 
+                // tell others the user is gone
                 putOnAllQueuesBut(clientID, boardID, "BYEUSER " + userName);
                 clientQueue.put("BYE"); // poison pill
                 return;
             }
+
         } catch (Exception e) {
             e.printStackTrace();
         }
