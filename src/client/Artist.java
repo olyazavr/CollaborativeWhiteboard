@@ -18,6 +18,7 @@ import javax.swing.GroupLayout;
 import javax.swing.JFrame;
 import javax.swing.JComboBox;
 import javax.swing.JLabel;
+import javax.swing.JOptionPane;
 import javax.swing.JTextField;
 import javax.swing.JButton;
 import javax.swing.GroupLayout.Group;
@@ -71,6 +72,10 @@ public class Artist {
 
 	private final JFrame window;
 
+	private String username;
+	private String IP;
+	private String whiteboard;
+
 	public Artist() throws UnknownHostException, IOException {
 		String ip = "localhost";
 		socket = new Socket(ip, port);
@@ -115,40 +120,36 @@ public class Artist {
 		board = new JLabel();
 		board.setText("Choose/create a board: ");
 
+		// The dropdown list to choose a whiteboard is a combobox
 		DefaultComboBoxModel model = new DefaultComboBoxModel();
-		model.addElement("New whiteboard");
-		newBoard = new JComboBox(model);
 
+		// default option (first thing) is newboard
+		model.addElement("New whiteboard");
+		
 		// TODO: parse whiteboard name shits from the server and do a loop and
-		// add
-		// them here
+		// add them here
+		
+		newBoard = new JComboBox(model);
 
 		IPprompt = new JLabel();
 		IPprompt.setText("Enter IP address: ");
 
+		// default width so it doesn't get shat on by the fatass button
 		enterIP = new JTextField(10);
 
 		localhost = new JButton();
 		localhost.setText("Use localhost");
 
-		localhost.addActionListener(new ActionListener() {
-
-			@Override
-			public void actionPerformed(ActionEvent e) {
-				enterIP.setText("localhost");
-
-			}
-
-		});
-
 		GO = new JButton();
 		GO.setText("Go!");
 
+		// use GroupLayout
 		layout = new GroupLayout(window.getContentPane());
 		layout.setAutoCreateGaps(true);
 		layout.setAutoCreateContainerGaps(true);
 		this.window.setLayout(layout);
 
+		// draw all the shits
 		row1 = layout.createSequentialGroup().addComponent(usernamePrompt)
 				.addComponent(enterUsername);
 		row2 = layout.createSequentialGroup().addComponent(board)
@@ -160,6 +161,7 @@ public class Artist {
 		horizontal = layout.createSequentialGroup();
 		horizontal.addGroup(layout.createParallelGroup().addGroup(row1)
 				.addGroup(row2).addGroup(row3).addGroup(row4));
+
 		layout.setHorizontalGroup(horizontal);
 
 		ver1 = layout.createParallelGroup().addComponent(usernamePrompt)
@@ -175,6 +177,49 @@ public class Artist {
 		layout.setVerticalGroup(vertical);
 
 		this.window.pack();
+
+		// LISTENERS BITCH
+		// the localhost button sets the text to local host
+		// parse later
+		localhost.addActionListener(new ActionListener() {
+
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				enterIP.setText("localhost");
+			}
+
+		});
+
+		// clicking go makes new canvas and gets rid of the log in screen
+		// finalize choices and sends dat shit to server
+
+		GO.addActionListener(new ActionListener() {
+
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				if (enterUsername.getText().length() != 0
+						& enterIP.getText().length() != 0) {
+
+					// all the info needs to get merged into a stream somehow
+					username = enterUsername.getText();
+					IP = enterIP.getText();
+					whiteboard = (String) newBoard.getSelectedItem();
+
+					try {
+						// TODO: SEND SHIT TO SERVER
+
+						// Catch invalid inputs
+						// dayum dis is dumb-bitch-proof
+					} catch (Exception badConnection) {
+						JOptionPane.showMessageDialog(window, "Invalid input!");
+					}
+
+				}
+
+				window.dispose();
+			}
+
+		});
 
 	}
 
