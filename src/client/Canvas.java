@@ -72,7 +72,7 @@ public class Canvas extends JPanel {
     }
     
     public Canvas() {
-     // Main Window creation
+        // Main Window creation
         JFrame window = new JFrame("Whiteboard #"); //TODO: Query server for whiteboard number
         window.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         BorderLayout windowLayout = new BorderLayout();
@@ -269,6 +269,7 @@ public class Canvas extends JPanel {
         window.setSize(1010, 600);
         canvas.setSize(800,  600);
         sidePanel.setBorder(BorderFactory.createEmptyBorder(20, 5, 20, 5));
+        colorPallet.setMaximumSize(new Dimension(200, 100));
         paintButtonContainer.setBorder(BorderFactory.createEmptyBorder(25, 0, 12, 0));
         eraserButtonContainer.setBorder(BorderFactory.createEmptyBorder(13, 0, 25, 0));
         Dimension buttonDimension = new Dimension(BUTTON_WIDTH, BUTTON_HEIGHT);
@@ -276,6 +277,7 @@ public class Canvas extends JPanel {
         paintButton.setMaximumSize(buttonDimension);
         eraserButton.setMaximumSize(buttonDimension);
         scrollList.setPreferredSize(tableDimension);
+        
         
         Font segoe;
         
