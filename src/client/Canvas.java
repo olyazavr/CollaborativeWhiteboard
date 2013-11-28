@@ -77,9 +77,9 @@ public class Canvas extends JPanel {
         // wait until paintComponent() is first called.
     }
     
-    public Canvas() {
+    public Canvas(String boardNumber) {
         // Main Window creation
-        JFrame window = new JFrame("Whiteboard #"); //TODO: Query server for whiteboard number
+        JFrame window = new JFrame("Whiteboard #" + boardNumber);
         window.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         BorderLayout windowLayout = new BorderLayout();
         window.setLayout(windowLayout);
@@ -494,7 +494,7 @@ public class Canvas extends JPanel {
         // set up the UI (on the event-handling thread)
         SwingUtilities.invokeLater(new Runnable() {
             public void run() {
-                Canvas canvas = new Canvas();
+                Canvas canvas = new Canvas("9001");
             }
         });
     }
