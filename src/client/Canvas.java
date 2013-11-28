@@ -36,6 +36,9 @@ import javax.swing.SwingUtilities;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 
+// TODO: something still needs to happen to the main method
+
+
 /**
  * Canvas represents a drawing surface that allows the user to draw
  * on it freehand, with the mouse.
@@ -354,20 +357,22 @@ public class Canvas extends JPanel {
         // Copy the drawing buffer to the screen.
         g.drawImage(drawingBuffer, 0, 0, null);
     }
-    
+      
     /*
      * Make the drawing buffer and draw some starting content for it.
      */
     private void makeDrawingBuffer() {
         drawingBuffer = createImage(getWidth(), getHeight());
-        fillWithWhite();
+        fillWithChoice();
         drawSmile();
     }
     
     /*
      * Make the drawing buffer entirely white.
+     * 
+     * TODO: this still needs to talk to server and get the starting color of all the pixels
      */
-    private void fillWithWhite() {
+    private void fillWithChoice() {
         final Graphics2D g = (Graphics2D) drawingBuffer.getGraphics();
 
         g.setColor(Color.WHITE);
@@ -494,7 +499,7 @@ public class Canvas extends JPanel {
         // set up the UI (on the event-handling thread)
         SwingUtilities.invokeLater(new Runnable() {
             public void run() {
-                Canvas canvas = new Canvas("9001");
+                Canvas canvas = new Canvas("Unknown");
             }
         });
     }

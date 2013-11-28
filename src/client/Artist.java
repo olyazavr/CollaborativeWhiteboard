@@ -1,7 +1,6 @@
 package client;
 
-import java.awt.BorderLayout;
-import java.awt.Container;
+import java.awt.Color;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.BufferedReader;
@@ -12,13 +11,17 @@ import java.net.Socket;
 import java.net.UnknownHostException;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import javax.swing.DefaultComboBoxModel;
 import javax.swing.GroupLayout;
+import javax.swing.JColorChooser;
 import javax.swing.JFrame;
 import javax.swing.JComboBox;
 import javax.swing.JLabel;
 import javax.swing.JOptionPane;
+import javax.swing.JPanel;
 import javax.swing.JTextField;
 import javax.swing.JButton;
 import javax.swing.GroupLayout.Group;
@@ -49,7 +52,7 @@ public class Artist {
 	private final JLabel usernamePrompt;
 	private final JTextField enterUsername;
 	private final JLabel board;
-	private final JComboBox newBoard;
+	private final JComboBox<String> newBoard;
 
 	private final JLabel IPprompt;
 	private final JTextField enterIP;
@@ -57,7 +60,10 @@ public class Artist {
 
 	private final JLabel whiteboardPrompt;
 	private final JTextField whiteboardNamer;
+	private final JLabel bgColorPrompt;
+	private final JComboBox<String> bgColorPicker;
 
+	private Color color;
 	private final JButton GO;
 
 	private final GroupLayout layout;
@@ -65,12 +71,14 @@ public class Artist {
 	private final Group row2;
 	private final Group row3;
 	private final Group row4;
+	private final Group row5;
 	private final Group horizontal;
 
 	private final Group ver1;
 	private final Group ver2;
 	private final Group ver3;
 	private final Group ver4;
+	private final Group ver5;
 	private final Group vertical;
 
 	private final JFrame window;
@@ -121,20 +129,61 @@ public class Artist {
 			board.setText("Choose/create a board: ");
 
 			// The dropdown list to choose a whiteboard is a combobox
-			DefaultComboBoxModel model = new DefaultComboBoxModel();
+			DefaultComboBoxModel<String> model = new DefaultComboBoxModel<String>();
 
 			// default option (first thing) is newboard
 			model.addElement("New whiteboard");
 
-			whiteboardPrompt = new JLabel();
-			whiteboardPrompt.setText("New board name:");
-			whiteboardNamer = new JTextField(5);
+			model.addElement("existing board"); // have this for testing now
 
 			// TODO: parse whiteboard name shits from the server and do a loop
 			// and
 			// add them here
 
-			newBoard = new JComboBox(model);
+			newBoard = new JComboBox<String>(model);
+
+			// If they want a new board, prompt them
+			// Pick name and background color
+			whiteboardPrompt = new JLabel();
+			whiteboardPrompt.setText("New board name:");
+			whiteboardNamer = new JTextField(10);
+
+			bgColorPrompt = new JLabel();
+			bgColorPrompt.setText("with background: ");
+
+			DefaultComboBoxModel<String> colors = new DefaultComboBoxModel<String>();
+
+			colors.addElement("White");
+			colors.addElement("Black");
+			colors.addElement("Gray");
+			colors.addElement("Light gray");
+			colors.addElement("Red");
+			colors.addElement("Orange");
+			colors.addElement("Yellow");
+			colors.addElement("Green");
+			colors.addElement("Blue");
+			colors.addElement("MIT Special");
+			colors.addElement("Magenta");
+			colors.addElement("Pink");
+			colors.addElement("Cyan");
+			colors.addElement("Custom...");
+
+			final Map<String, Color> colorMap = new HashMap<String, Color>();
+			colorMap.put("White", Color.WHITE);
+			colorMap.put("Black", Color.BLACK);
+			colorMap.put("Gray", Color.GRAY);
+			colorMap.put("Light gray", Color.LIGHT_GRAY);
+			colorMap.put("Red", Color.RED);
+			colorMap.put("Orange", Color.ORANGE);
+			colorMap.put("Yellow", Color.YELLOW);
+			colorMap.put("Green", Color.GREEN);
+			colorMap.put("Blue", Color.BLUE);
+			colorMap.put("MIT Special", new Color(163, 31, 52));
+			colorMap.put("Magenta", Color.MAGENTA);
+			colorMap.put("Pink", Color.PINK);
+			colorMap.put("Cyan", Color.CYAN);
+
+			bgColorPicker = new JComboBox<String>(colors);
 
 			IPprompt = new JLabel();
 			IPprompt.setText("Enter IP address: ");
@@ -159,13 +208,18 @@ public class Artist {
 					.addComponent(enterUsername);
 			row2 = layout.createSequentialGroup().addComponent(board)
 					.addComponent(newBoard);
-			row3 = layout.createSequentialGroup().addComponent(IPprompt)
+			row3 = layout.createSequentialGroup()
+					.addComponent(whiteboardPrompt)
+					.addComponent(whiteboardNamer).addComponent(bgColorPrompt)
+					.addComponent(bgColorPicker);
+			row4 = layout.createSequentialGroup().addComponent(IPprompt)
 					.addComponent(enterIP).addComponent(localhost);
-			row4 = layout.createSequentialGroup().addComponent(GO);
+			row5 = layout.createSequentialGroup().addComponent(GO);
 
 			horizontal = layout.createSequentialGroup();
 			horizontal.addGroup(layout.createParallelGroup().addGroup(row1)
-					.addGroup(row2).addGroup(row3).addGroup(row4));
+					.addGroup(row2).addGroup(row3).addGroup(row4)
+					.addGroup(row5));
 
 			layout.setHorizontalGroup(horizontal);
 
@@ -173,13 +227,16 @@ public class Artist {
 					.addComponent(enterUsername);
 			ver2 = layout.createParallelGroup().addComponent(board)
 					.addComponent(newBoard);
-			ver3 = layout.createParallelGroup().addComponent(IPprompt)
+			ver3 = layout.createParallelGroup().addComponent(whiteboardPrompt)
+					.addComponent(whiteboardNamer).addComponent(bgColorPrompt)
+					.addComponent(bgColorPicker);
+			ver4 = layout.createParallelGroup().addComponent(IPprompt)
 					.addComponent(enterIP).addComponent(localhost);
-			ver4 = layout.createParallelGroup().addComponent(GO);
+			ver5 = layout.createParallelGroup().addComponent(GO);
 
 			vertical = layout.createSequentialGroup();
 			vertical.addGroup(ver1).addGroup(ver2).addGroup(ver3)
-					.addGroup(ver4);
+					.addGroup(ver4).addGroup(ver4).addGroup(ver5);
 			layout.setVerticalGroup(vertical);
 
 			this.window.pack();
@@ -192,6 +249,48 @@ public class Artist {
 				@Override
 				public void actionPerformed(ActionEvent e) {
 					enterIP.setText("localhost");
+				}
+
+			});
+
+			newBoard.addActionListener(new ActionListener() {
+
+				@Override
+				public void actionPerformed(ActionEvent e) {
+					String choice = (String) newBoard.getSelectedItem();
+					if (!choice.equals("New whiteboard")) {
+						// TODO: find someway to hide the shits without making
+						// all the objects realign
+						whiteboardPrompt.setVisible(false);
+						whiteboardNamer.setVisible(false);
+						bgColorPrompt.setVisible(false);
+						bgColorPicker.setVisible(false);
+					} else {
+						// if they are a dumbass and cant make up their mind
+						whiteboardPrompt.setVisible(true);
+						whiteboardNamer.setVisible(true);
+						bgColorPrompt.setVisible(true);
+						bgColorPicker.setVisible(true);
+					}
+				}
+
+			});
+
+			bgColorPicker.addActionListener(new ActionListener() {
+
+				@Override
+				public void actionPerformed(ActionEvent e) {
+					String bgColor = (String) bgColorPicker.getSelectedItem();
+					if (bgColor.equals("Custom...")) {
+						color = Color.WHITE;
+						JColorChooser.showDialog(new JPanel(),
+								"Choose a color", color);
+
+					} else {
+
+						// get the chosen color object from the map
+						color = colorMap.get(bgColor);
+					}
 				}
 
 			});
@@ -214,8 +313,8 @@ public class Artist {
 
 						if (!boardNameTaken) {
 
-							// all the info needs to get merged into a stream
-							// somehow
+							// TODO: do usernames need to be unique??
+
 							username = enterUsername.getText();
 							IP = enterIP.getText();
 
@@ -225,6 +324,8 @@ public class Artist {
 							try {
 								if (choice.equals("New whiteboard")) {
 
+									// loop through the map to see if their
+									// choice of whiteboard name is taken
 									for (String value : whiteboardList.values()) {
 										if (value.equals(whiteboardNamer
 												.getText())) {
@@ -235,19 +336,18 @@ public class Artist {
 									if (boardNameTaken) {
 										JOptionPane
 												.showMessageDialog(window,
-														"That name is taken. Please choose a different one!");
+														"That whiteboard name is taken. Please choose a different one!");
 
 									} else {
 										out.println("NEW "
-												+ whiteboardNamer.getText());
+												+ whiteboardNamer.getText()
+												+ " " + color.getRed() + " "
+												+ color.getGreen() + " "
+												+ color.getBlue() + username);
 										// TODO: initialize background color
 										// stuffs
 
 									}
-									// TODO: SEND SHIT TO SERVER. server should
-									// see if whiteboard is New whiteboard or a
-									// number;
-									// increment counter accordingly
 
 								} else {
 
@@ -255,10 +355,16 @@ public class Artist {
 									// whiteboard
 									// make a canvas with that name
 
-									String boardName = choice;
-									Canvas canvas = new Canvas(choice);
+									// TODO: this doesn't actually work lolz
+
+									Canvas canvas = new Canvas(whiteboardNamer
+											.getText());
+									// TODO: fix the map to either a BiMap or name --> ID (for whiteboards)
+									
+									out.println("SELECT" + whiteboardNamer.getText());
 
 								}
+
 								// Catch invalid inputs
 								// dayum dis is dumb-bitch-proof
 							} catch (Exception badConnection) {
