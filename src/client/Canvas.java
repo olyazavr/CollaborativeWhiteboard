@@ -257,17 +257,21 @@ public class Canvas extends JPanel {
         colorPallet.add(button15);
         
         // adding components to the side panel
+        
         sidePanel.add(sliderLabel);
         sidePanel.add(strokeSlider);
         sidePanel.add(paintButtonContainer);
         sidePanel.add(eraserButtonContainer);
         sidePanel.add(colorPallet);
+        
         sidePanel.add(tableLabel);
         sidePanel.add(scrollList);
+       
         
         // borders and dimensions
         window.setSize(1010, 600);
         canvas.setSize(800,  600);
+        sidePanel.setPreferredSize(new Dimension(200, 600));
         sidePanel.setBorder(BorderFactory.createEmptyBorder(20, 5, 20, 5));
         colorPallet.setMaximumSize(new Dimension(200, 100));
         paintButtonContainer.setBorder(BorderFactory.createEmptyBorder(25, 0, 12, 0));
