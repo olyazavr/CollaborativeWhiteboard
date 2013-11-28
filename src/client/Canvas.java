@@ -6,6 +6,7 @@ import java.awt.Button;
 import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.Font;
+import java.awt.FontFormatException;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.GridLayout;
@@ -22,6 +23,7 @@ import java.io.File;
 import java.io.IOException;
 
 import javax.imageio.ImageIO;
+import javax.management.RuntimeErrorException;
 import javax.swing.BoxLayout;
 import javax.swing.BorderFactory;
 import javax.swing.JColorChooser;
@@ -238,7 +240,7 @@ public class Canvas extends JPanel {
                 
                 // components of the side panel
                 final Label sliderLabel = new Label("Stroke Size:");
-                final JSlider strokeSlider = new JSlider(SLIDER_MIN, SLIDER_MAX, SLIDER_INIT); //TODO: Add JSlider listener
+                final JSlider strokeSlider = new JSlider(SLIDER_MIN, SLIDER_MAX, SLIDER_INIT);
                 final Button paintButton = new Button("Draw!");
                 final Button eraserButton = new Button("Erase!");
                 final Label tableLabel = new Label("List of Artists:"); //TODO: Change the font from Annie's trove
@@ -428,11 +430,19 @@ public class Canvas extends JPanel {
                 eraserButton.setMaximumSize(buttonDimension);
                 scrollList.setPreferredSize(tableDimension);
                 
+                Font segoe;
+                
+                try {
+                    segoe = Font.createFont(Font.TRUETYPE_FONT, new File("files/SEGOEUI.TTF"));
+                } catch (FontFormatException | IOException e1) {
+                    throw new RuntimeException("files/SEGOEUI.TTF has been either tampered or removed");
+                }
+                
                 // set fonts
-                sliderLabel.setFont(new Font("Helvetica", Font.TRUETYPE_FONT, 20));
-                paintButton.setFont(new Font("Helvetica", Font.TRUETYPE_FONT, 35));
-                eraserButton.setFont(new Font("Helvetica", Font.TRUETYPE_FONT, 35));
-                tableLabel.setFont(new Font("Helvetica", Font.TRUETYPE_FONT, 20));
+                sliderLabel.setFont(segoe.deriveFont(20f));
+                paintButton.setFont(segoe.deriveFont(35f));
+                eraserButton.setFont(segoe.deriveFont(35f));
+                tableLabel.setFont(segoe.deriveFont(20f));
                 
                 //window.pack();
                 window.setResizable(false);
