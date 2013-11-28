@@ -21,6 +21,7 @@ import javax.swing.JLabel;
 import javax.swing.JTextField;
 import javax.swing.JButton;
 import javax.swing.GroupLayout.Group;
+import javax.swing.SwingUtilities;
 
 /**
  * Possible outputs: (1) initial connect message ("HELLO"), (2) select
@@ -54,21 +55,21 @@ public class Artist {
 	private final JButton localhost;
 
 	private final JButton GO;
-	
+
 	private final GroupLayout layout;
 	private final Group row1;
-	/*
 	private final Group row2;
 	private final Group row3;
 	private final Group row4;
 	private final Group horizontal;
-	
+
 	private final Group ver1;
 	private final Group ver2;
 	private final Group ver3;
 	private final Group ver4;
 	private final Group vertical;
-	*/
+
+	private final JFrame window;
 
 	public Artist() throws UnknownHostException, IOException {
 		String ip = "localhost";
@@ -101,10 +102,8 @@ public class Artist {
 		}
 
 		// Create a log-in screen
-		JFrame window = new JFrame("Login");
-		window.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-		BorderLayout windowLayout = new BorderLayout();
-		window.setLayout(windowLayout);
+		this.window = new JFrame("Login");
+		this.window.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 
 		// Initiating labels, textfields, etc
 		usernamePrompt = new JLabel();
@@ -116,9 +115,9 @@ public class Artist {
 		board = new JLabel();
 		board.setText("Choose/create a board: ");
 
-		newBoard = new JComboBox();
 		DefaultComboBoxModel model = new DefaultComboBoxModel();
 		model.addElement("New whiteboard");
+		newBoard = new JComboBox(model);
 
 		// TODO: parse whiteboard name shits from the server and do a loop and
 		// add
@@ -127,10 +126,10 @@ public class Artist {
 		IPprompt = new JLabel();
 		IPprompt.setText("Enter IP address: ");
 
-		enterIP = new JTextField();
+		enterIP = new JTextField(10);
 
 		localhost = new JButton();
-		localhost.setText("Use localhost instead");
+		localhost.setText("Use localhost");
 
 		localhost.addActionListener(new ActionListener() {
 
@@ -143,23 +142,55 @@ public class Artist {
 		});
 
 		GO = new JButton();
-		
-		layout = new GroupLayout(window);
+		GO.setText("Go!");
+
+		layout = new GroupLayout(window.getContentPane());
 		layout.setAutoCreateGaps(true);
 		layout.setAutoCreateContainerGaps(true);
-		window.setLayout(layout);
-		
-		row1 = layout.createSequentialGroup().addComponent(usernamePrompt).addComponent(enterUsername);
-		
+		this.window.setLayout(layout);
+
+		row1 = layout.createSequentialGroup().addComponent(usernamePrompt)
+				.addComponent(enterUsername);
+		row2 = layout.createSequentialGroup().addComponent(board)
+				.addComponent(newBoard);
+		row3 = layout.createSequentialGroup().addComponent(IPprompt)
+				.addComponent(enterIP).addComponent(localhost);
+		row4 = layout.createSequentialGroup().addComponent(GO);
+
+		horizontal = layout.createSequentialGroup();
+		horizontal.addGroup(layout.createParallelGroup().addGroup(row1)
+				.addGroup(row2).addGroup(row3).addGroup(row4));
+		layout.setHorizontalGroup(horizontal);
+
+		ver1 = layout.createParallelGroup().addComponent(usernamePrompt)
+				.addComponent(enterUsername);
+		ver2 = layout.createParallelGroup().addComponent(board)
+				.addComponent(newBoard);
+		ver3 = layout.createParallelGroup().addComponent(IPprompt)
+				.addComponent(enterIP).addComponent(localhost);
+		ver4 = layout.createParallelGroup().addComponent(GO);
+
+		vertical = layout.createSequentialGroup();
+		vertical.addGroup(ver1).addGroup(ver2).addGroup(ver3).addGroup(ver4);
+		layout.setVerticalGroup(vertical);
+
+		this.window.pack();
 
 	}
 
 	public static void main(String[] args) {
-		try {
-			Artist artist = new Artist();
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
+		SwingUtilities.invokeLater(new Runnable() {
+			public void run() {
+				Artist main;
+				try {
+					main = new Artist();
+					main.window.setVisible(true);
+				} catch (IOException e) {
+					e.printStackTrace();
+				}
+
+			}
+		});
 	}
 
 }
