@@ -22,11 +22,10 @@ import java.awt.event.MouseMotionListener;
 import java.io.File;
 import java.io.IOException;
 
-import javax.swing.JButton;
 import javax.imageio.ImageIO;
-import javax.management.RuntimeErrorException;
 import javax.swing.BoxLayout;
 import javax.swing.BorderFactory;
+import javax.swing.JButton;
 import javax.swing.JColorChooser;
 import javax.swing.JFrame;
 import javax.swing.JPanel;
@@ -46,8 +45,8 @@ public class Canvas extends JPanel {
     private Image drawingBuffer;
     private static Color color = Color.BLACK;
     private static Color userColor = Color.BLACK;
-    private static int stroke = 2;
-    private static int userStroke = 2;
+    private static int stroke = 3;
+    private static int userStroke = 3;
     private static boolean erasing = false;
     private final int BUTTON_WIDTH = 100;
     private final int BUTTON_HEIGHT = 50;
@@ -56,6 +55,12 @@ public class Canvas extends JPanel {
     private final int SLIDER_MIN = 1;
     private final int SLIDER_MAX = 5;
     private final int SLIDER_INIT = 2;
+    private final int WINDOW_WIDTH = 1010;
+    private final int WINDOW_HEIGHT = 600;
+    private final int CANVAS_WIDTH = 800;
+    private final int CANVAS_HEIGHT = 600;
+    private final int SIDE_PANEL_WIDTH = 200;
+    private final int SIDE_PANEL_HEIGHT = 600;
     private final Color MIT = new Color(163, 31, 52);
     
     
@@ -91,7 +96,7 @@ public class Canvas extends JPanel {
         final JSlider strokeSlider = new JSlider(SLIDER_MIN, SLIDER_MAX, SLIDER_INIT);
         final Button paintButton = new Button("Draw!");
         final Button eraserButton = new Button("Erase!");
-        final Label tableLabel = new Label("List of Artists:"); //TODO: Change the font from Annie's trove
+        final Label tableLabel = new Label("List of Artists:");
         final JTable playerList = new JTable(0, 1); //TODO: Add table-server comm
         final JScrollPane scrollList = new JScrollPane(playerList);
         
@@ -110,7 +115,7 @@ public class Canvas extends JPanel {
         JButton button12 = new JButton();
         JButton button13 = new JButton();
         JButton button14 = new JButton();
-        JButton button15 = new JButton("?");
+        JButton button15 = new JButton("...");
         
         // set colors to buttons
         button1.setBackground(Color.BLACK);
@@ -127,6 +132,39 @@ public class Canvas extends JPanel {
         button12.setBackground(Color.MAGENTA);
         button13.setBackground(Color.PINK);
         button14.setBackground(Color.CYAN);
+        
+        // This removes the default buttons
+        button1.setBorderPainted(false);
+        button2.setBorderPainted(false);
+        button3.setBorderPainted(false);
+        button4.setBorderPainted(false);
+        button5.setBorderPainted(false);
+        button6.setBorderPainted(false);
+        button7.setBorderPainted(false);
+        button8.setBorderPainted(false);
+        button9.setBorderPainted(false);
+        button10.setBorderPainted(false);
+        button11.setBorderPainted(false);
+        button12.setBorderPainted(false);
+        button13.setBorderPainted(false);
+        button14.setBorderPainted(false);
+        button15.setBorderPainted(false);
+
+        // This makes the background visible
+        button1.setOpaque(true);
+        button2.setOpaque(true);
+        button3.setOpaque(true);
+        button4.setOpaque(true);
+        button5.setOpaque(true);
+        button6.setOpaque(true);
+        button7.setOpaque(true);
+        button8.setOpaque(true);
+        button9.setOpaque(true);
+        button10.setOpaque(true);
+        button11.setOpaque(true);
+        button12.setOpaque(true);
+        button13.setOpaque(true);
+        button14.setOpaque(true);
         
         // Adding action listeners to the buttons and sliders
         paintButton.addActionListener(new ActionListener() {
@@ -269,20 +307,21 @@ public class Canvas extends JPanel {
        
         
         // borders and dimensions
-        window.setSize(1010, 600);
-        canvas.setSize(800,  600);
-        sidePanel.setPreferredSize(new Dimension(200, 600));
+        Dimension buttonDimension = new Dimension(BUTTON_WIDTH, BUTTON_HEIGHT);
+        Dimension tableDimension = new Dimension(TABLE_WIDTH, TABLE_HEIGHT);
+        Dimension sidePanelDimension = new Dimension(SIDE_PANEL_WIDTH, SIDE_PANEL_HEIGHT);
+        window.setSize(WINDOW_WIDTH, WINDOW_HEIGHT);
+        canvas.setSize(CANVAS_WIDTH,  CANVAS_HEIGHT);
+        sidePanel.setPreferredSize(sidePanelDimension);
         sidePanel.setBorder(BorderFactory.createEmptyBorder(20, 5, 20, 5));
         colorPallet.setMaximumSize(new Dimension(200, 100));
         paintButtonContainer.setBorder(BorderFactory.createEmptyBorder(25, 0, 12, 0));
         eraserButtonContainer.setBorder(BorderFactory.createEmptyBorder(13, 0, 25, 0));
-        Dimension buttonDimension = new Dimension(BUTTON_WIDTH, BUTTON_HEIGHT);
-        Dimension tableDimension = new Dimension(TABLE_WIDTH, TABLE_HEIGHT);
         paintButton.setPreferredSize(buttonDimension);
         eraserButton.setPreferredSize(buttonDimension);
         scrollList.setPreferredSize(tableDimension);
         
-        
+        // Create segoe font from the font file
         Font segoe;
         
         try {
@@ -297,7 +336,6 @@ public class Canvas extends JPanel {
         eraserButton.setFont(segoe.deriveFont(35f));
         tableLabel.setFont(segoe.deriveFont(20f));
         
-        //window.pack();
         window.setResizable(false);
         window.setVisible(true);
     }
