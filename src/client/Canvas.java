@@ -48,14 +48,14 @@ public class Canvas extends JPanel {
     private static int stroke = 2;
     private static int userStroke = 2;
     private static boolean erasing = false;
-    private final static int BUTTON_WIDTH = 150;
-    private final static int BUTTON_HEIGHT = 100;
-    private final static int TABLE_WIDTH = 180;
-    private final static int TABLE_HEIGHT = 330;
-    private final static int SLIDER_MIN = 1;
-    private final static int SLIDER_MAX = 10;
-    private final static int SLIDER_INIT = 2;
-    private final static Color MIT = new Color(163, 31, 52);
+    private final int BUTTON_WIDTH = 150;
+    private final int BUTTON_HEIGHT = 100;
+    private final int TABLE_WIDTH = 180;
+    private final int TABLE_HEIGHT = 330;
+    private final int SLIDER_MIN = 1;
+    private final int SLIDER_MAX = 10;
+    private final int SLIDER_INIT = 2;
+    private final Color MIT = new Color(163, 31, 52);
     
     
     /**
@@ -69,6 +69,231 @@ public class Canvas extends JPanel {
         // note: we can't call makeDrawingBuffer here, because it only
         // works *after* this canvas has been added to a window.  Have to
         // wait until paintComponent() is first called.
+    }
+    
+    public Canvas() {
+     // Main Window creation
+        JFrame window = new JFrame("Whiteboard #"); //TODO: Query server for whiteboard number
+        window.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        BorderLayout windowLayout = new BorderLayout();
+        window.setLayout(windowLayout);
+        
+        // Container and Canvas creation
+        Canvas canvas = new Canvas(800, 600);
+        JPanel sidePanel = new JPanel();
+        JPanel paintButtonContainer = new JPanel();
+        JPanel eraserButtonContainer = new JPanel();
+        JPanel colorPallet = new JPanel();
+        
+        // components of the side panel
+        final Label sliderLabel = new Label("Stroke Size:");
+        final JSlider strokeSlider = new JSlider(SLIDER_MIN, SLIDER_MAX, SLIDER_INIT);
+        final Button paintButton = new Button("Draw!");
+        final Button eraserButton = new Button("Erase!");
+        final Label tableLabel = new Label("List of Artists:"); //TODO: Change the font from Annie's trove
+        final JTable playerList = new JTable(0, 1); //TODO: Add table-server comm
+        final JScrollPane scrollList = new JScrollPane(playerList);
+        
+        //Color pallet buttons
+        Button button1 = new Button();
+        Button button2 = new Button();
+        Button button3 = new Button();
+        Button button4 = new Button();
+        Button button5 = new Button();
+        Button button6 = new Button();
+        Button button7 = new Button();
+        Button button8 = new Button();
+        Button button9 = new Button();
+        Button button10 = new Button();
+        Button button11 = new Button();
+        Button button12 = new Button();
+        Button button13 = new Button();
+        Button button14 = new Button();
+        Button button15 = new Button("?");
+        
+        // set colors to buttons
+        button1.setBackground(Color.BLACK);
+        button2.setBackground(Color.DARK_GRAY);
+        button3.setBackground(Color.GRAY);
+        button4.setBackground(Color.LIGHT_GRAY);
+        button5.setBackground(Color.WHITE);
+        button6.setBackground(Color.RED);
+        button7.setBackground(Color.ORANGE);
+        button8.setBackground(Color.YELLOW);
+        button9.setBackground(Color.GREEN);
+        button10.setBackground(Color.BLUE);
+        button11.setBackground(MIT);
+        button12.setBackground(Color.MAGENTA);
+        button13.setBackground(Color.PINK);
+        button14.setBackground(Color.CYAN);
+        
+        // Adding action listeners to the buttons and sliders
+        paintButton.addActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent ae) {
+                erasing = false;
+                color = userColor;
+                stroke = userStroke;
+                stroke = 2;
+            }
+        });
+        
+        eraserButton.addActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent ae) {
+                erasing = true;
+                userColor = color;
+                userStroke = stroke;
+                color = Color.WHITE;
+                stroke = userStroke * 5;
+            }
+        });
+        
+        strokeSlider.addChangeListener(new ChangeListener() {
+            public void stateChanged(ChangeEvent arg0) {
+                if(!erasing) stroke = strokeSlider.getValue();
+            }
+        });
+        
+        // Color Buttons
+        button1.addActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent e) {if(!erasing) color = Color.BLACK;}
+        });
+        
+        button2.addActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent e) {if(!erasing) color = Color.DARK_GRAY;}
+        });
+        
+        button3.addActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent e) {if(!erasing) color = Color.GRAY;}
+        });
+        
+        button4.addActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent e) {if(!erasing) color = Color.LIGHT_GRAY;}
+        });
+        
+        button5.addActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent e) {if(!erasing) color = Color.WHITE;}
+        });
+        
+        button6.addActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent e) {if(!erasing) color = Color.RED;}
+        });
+        
+        button7.addActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent e) {if(!erasing) color = Color.ORANGE;}
+        });
+        
+        button8.addActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent e) {if(!erasing) color = Color.YELLOW;}
+        });
+        
+        button9.addActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent e) {if(!erasing) color = Color.GREEN;}
+        });
+        
+        button10.addActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent e) {if(!erasing) color = Color.BLUE;}
+        });
+        
+        button11.addActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent e) {if(!erasing) color = MIT;}
+        });
+        
+        button12.addActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent e) {if(!erasing) color = Color.MAGENTA;}
+        });
+        
+        button13.addActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent e) {if(!erasing) color = Color.PINK;}
+        });
+        
+        button14.addActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent e) {if(!erasing) color = Color.CYAN;}
+        });
+        
+        button15.addActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent e) {
+                if(!erasing) color = JColorChooser.showDialog(new JPanel(), "Choose a color", color);
+            }
+        });
+        
+        // creating layouts and customizing components
+        GridLayout palletLayout = new GridLayout(3, 5);
+        BoxLayout panelLayout = new BoxLayout(sidePanel, BoxLayout.Y_AXIS);
+        BoxLayout pButtonLayout = new BoxLayout(paintButtonContainer, BoxLayout.Y_AXIS);
+        BoxLayout eButtonLayout = new BoxLayout(eraserButtonContainer, BoxLayout.Y_AXIS);
+        window.add(canvas, BorderLayout.WEST);
+        window.add(sidePanel, BorderLayout.EAST);
+        playerList.setFillsViewportHeight(true);
+        playerList.setTableHeader(null);
+        strokeSlider.setMajorTickSpacing(1);
+        strokeSlider.setPaintTicks(true);
+        strokeSlider.setPaintLabels(true);
+        
+        // apply layouts to containers
+        paintButtonContainer.setLayout(pButtonLayout);
+        eraserButtonContainer.setLayout(eButtonLayout);
+        colorPallet.setLayout(palletLayout);
+        sidePanel.setLayout(panelLayout);
+        
+        // adding components to the button container
+        paintButtonContainer.add(paintButton);
+        eraserButtonContainer.add(eraserButton);
+        
+        // adding components to the pallet
+        colorPallet.add(button1);
+        colorPallet.add(button2);
+        colorPallet.add(button3);
+        colorPallet.add(button4);
+        colorPallet.add(button5);
+        colorPallet.add(button6);
+        colorPallet.add(button7);
+        colorPallet.add(button8);
+        colorPallet.add(button9);
+        colorPallet.add(button10);
+        colorPallet.add(button11);
+        colorPallet.add(button12);
+        colorPallet.add(button13);
+        colorPallet.add(button14);
+        colorPallet.add(button15);
+        
+        // adding components to the side panel
+        sidePanel.add(sliderLabel);
+        sidePanel.add(strokeSlider);
+        sidePanel.add(paintButtonContainer);
+        sidePanel.add(eraserButtonContainer);
+        sidePanel.add(colorPallet);
+        sidePanel.add(tableLabel);
+        sidePanel.add(scrollList);
+        
+        // borders and dimensions
+        window.setSize(1010, 600);
+        canvas.setSize(800,  600);
+        sidePanel.setBorder(BorderFactory.createEmptyBorder(20, 5, 20, 5));
+        paintButtonContainer.setBorder(BorderFactory.createEmptyBorder(25, 0, 12, 0));
+        eraserButtonContainer.setBorder(BorderFactory.createEmptyBorder(13, 0, 25, 0));
+        Dimension buttonDimension = new Dimension(BUTTON_WIDTH, BUTTON_HEIGHT);
+        Dimension tableDimension = new Dimension(TABLE_WIDTH, TABLE_HEIGHT);
+        paintButton.setMaximumSize(buttonDimension);
+        eraserButton.setMaximumSize(buttonDimension);
+        scrollList.setPreferredSize(tableDimension);
+        
+        Font segoe;
+        
+        try {
+            segoe = Font.createFont(Font.TRUETYPE_FONT, new File("files/SEGOEUI.TTF"));
+        } catch (FontFormatException | IOException e1) {
+            throw new RuntimeException("files/SEGOEUI.TTF has been either tampered or removed");
+        }
+        
+        // set fonts
+        sliderLabel.setFont(segoe.deriveFont(20f));
+        paintButton.setFont(segoe.deriveFont(35f));
+        eraserButton.setFont(segoe.deriveFont(35f));
+        tableLabel.setFont(segoe.deriveFont(20f));
+        
+        //window.pack();
+        window.setResizable(false);
+        window.setVisible(true);
     }
     
     /**
@@ -225,228 +450,7 @@ public class Canvas extends JPanel {
         // set up the UI (on the event-handling thread)
         SwingUtilities.invokeLater(new Runnable() {
             public void run() {
-                // Main Window creation
-                JFrame window = new JFrame("Whiteboard #"); //TODO: Query server for whiteboard number
-                window.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-                BorderLayout windowLayout = new BorderLayout();
-                window.setLayout(windowLayout);
-                
-                // Container and Canvas creation
-                Canvas canvas = new Canvas(800, 600);
-                JPanel sidePanel = new JPanel();
-                JPanel paintButtonContainer = new JPanel();
-                JPanel eraserButtonContainer = new JPanel();
-                JPanel colorPallet = new JPanel();
-                
-                // components of the side panel
-                final Label sliderLabel = new Label("Stroke Size:");
-                final JSlider strokeSlider = new JSlider(SLIDER_MIN, SLIDER_MAX, SLIDER_INIT);
-                final Button paintButton = new Button("Draw!");
-                final Button eraserButton = new Button("Erase!");
-                final Label tableLabel = new Label("List of Artists:"); //TODO: Change the font from Annie's trove
-                final JTable playerList = new JTable(0, 1); //TODO: Add table-server comm
-                final JScrollPane scrollList = new JScrollPane(playerList);
-                
-                //Color pallet buttons
-                Button button1 = new Button();
-                Button button2 = new Button();
-                Button button3 = new Button();
-                Button button4 = new Button();
-                Button button5 = new Button();
-                Button button6 = new Button();
-                Button button7 = new Button();
-                Button button8 = new Button();
-                Button button9 = new Button();
-                Button button10 = new Button();
-                Button button11 = new Button();
-                Button button12 = new Button();
-                Button button13 = new Button();
-                Button button14 = new Button();
-                Button button15 = new Button("?");
-                
-                // set colors to buttons
-                button1.setBackground(Color.BLACK);
-                button2.setBackground(Color.DARK_GRAY);
-                button3.setBackground(Color.GRAY);
-                button4.setBackground(Color.LIGHT_GRAY);
-                button5.setBackground(Color.WHITE);
-                button6.setBackground(Color.RED);
-                button7.setBackground(Color.ORANGE);
-                button8.setBackground(Color.YELLOW);
-                button9.setBackground(Color.GREEN);
-                button10.setBackground(Color.BLUE);
-                button11.setBackground(MIT);
-                button12.setBackground(Color.MAGENTA);
-                button13.setBackground(Color.PINK);
-                button14.setBackground(Color.CYAN);
-                
-                // Adding action listeners to the buttons and sliders
-                paintButton.addActionListener(new ActionListener() {
-                    public void actionPerformed(ActionEvent ae) {
-                        erasing = false;
-                        color = userColor;
-                        stroke = userStroke;
-                        stroke = 2;
-                    }
-                });
-                
-                eraserButton.addActionListener(new ActionListener() {
-                    public void actionPerformed(ActionEvent ae) {
-                        erasing = true;
-                        userColor = color;
-                        userStroke = stroke;
-                        color = Color.WHITE;
-                        stroke = userStroke * 5;
-                    }
-                });
-                
-                strokeSlider.addChangeListener(new ChangeListener() {
-                    public void stateChanged(ChangeEvent arg0) {
-                        if(!erasing) stroke = strokeSlider.getValue();
-                    }
-                });
-                
-                // Color Buttons
-                button1.addActionListener(new ActionListener() {
-                    public void actionPerformed(ActionEvent e) {if(!erasing) color = Color.BLACK;}
-                });
-                
-                button2.addActionListener(new ActionListener() {
-                    public void actionPerformed(ActionEvent e) {if(!erasing) color = Color.DARK_GRAY;}
-                });
-                
-                button3.addActionListener(new ActionListener() {
-                    public void actionPerformed(ActionEvent e) {if(!erasing) color = Color.GRAY;}
-                });
-                
-                button4.addActionListener(new ActionListener() {
-                    public void actionPerformed(ActionEvent e) {if(!erasing) color = Color.LIGHT_GRAY;}
-                });
-                
-                button5.addActionListener(new ActionListener() {
-                    public void actionPerformed(ActionEvent e) {if(!erasing) color = Color.WHITE;}
-                });
-                
-                button6.addActionListener(new ActionListener() {
-                    public void actionPerformed(ActionEvent e) {if(!erasing) color = Color.RED;}
-                });
-                
-                button7.addActionListener(new ActionListener() {
-                    public void actionPerformed(ActionEvent e) {if(!erasing) color = Color.ORANGE;}
-                });
-                
-                button8.addActionListener(new ActionListener() {
-                    public void actionPerformed(ActionEvent e) {if(!erasing) color = Color.YELLOW;}
-                });
-                
-                button9.addActionListener(new ActionListener() {
-                    public void actionPerformed(ActionEvent e) {if(!erasing) color = Color.GREEN;}
-                });
-                
-                button10.addActionListener(new ActionListener() {
-                    public void actionPerformed(ActionEvent e) {if(!erasing) color = Color.BLUE;}
-                });
-                
-                button11.addActionListener(new ActionListener() {
-                    public void actionPerformed(ActionEvent e) {if(!erasing) color = MIT;}
-                });
-                
-                button12.addActionListener(new ActionListener() {
-                    public void actionPerformed(ActionEvent e) {if(!erasing) color = Color.MAGENTA;}
-                });
-                
-                button13.addActionListener(new ActionListener() {
-                    public void actionPerformed(ActionEvent e) {if(!erasing) color = Color.PINK;}
-                });
-                
-                button14.addActionListener(new ActionListener() {
-                    public void actionPerformed(ActionEvent e) {if(!erasing) color = Color.CYAN;}
-                });
-                
-                button15.addActionListener(new ActionListener() {
-                    public void actionPerformed(ActionEvent e) {
-                        if(!erasing) color = JColorChooser.showDialog(new JPanel(), "Choose a color", color);
-                    }
-                });
-                
-                // creating layouts and customizing components
-                GridLayout palletLayout = new GridLayout(3, 5);
-                BoxLayout panelLayout = new BoxLayout(sidePanel, BoxLayout.Y_AXIS);
-                BoxLayout pButtonLayout = new BoxLayout(paintButtonContainer, BoxLayout.Y_AXIS);
-                BoxLayout eButtonLayout = new BoxLayout(eraserButtonContainer, BoxLayout.Y_AXIS);
-                window.add(canvas, BorderLayout.WEST);
-                window.add(sidePanel, BorderLayout.EAST);
-                playerList.setFillsViewportHeight(true);
-                playerList.setTableHeader(null);
-                strokeSlider.setMajorTickSpacing(1);
-                strokeSlider.setPaintTicks(true);
-                strokeSlider.setPaintLabels(true);
-                
-                // apply layouts to containers
-                paintButtonContainer.setLayout(pButtonLayout);
-                eraserButtonContainer.setLayout(eButtonLayout);
-                colorPallet.setLayout(palletLayout);
-                sidePanel.setLayout(panelLayout);
-                
-                // adding components to the button container
-                paintButtonContainer.add(paintButton);
-                eraserButtonContainer.add(eraserButton);
-                
-                // adding components to the pallet
-                colorPallet.add(button1);
-                colorPallet.add(button2);
-                colorPallet.add(button3);
-                colorPallet.add(button4);
-                colorPallet.add(button5);
-                colorPallet.add(button6);
-                colorPallet.add(button7);
-                colorPallet.add(button8);
-                colorPallet.add(button9);
-                colorPallet.add(button10);
-                colorPallet.add(button11);
-                colorPallet.add(button12);
-                colorPallet.add(button13);
-                colorPallet.add(button14);
-                colorPallet.add(button15);
-                
-                // adding components to the side panel
-                sidePanel.add(sliderLabel);
-                sidePanel.add(strokeSlider);
-                sidePanel.add(paintButtonContainer);
-                sidePanel.add(eraserButtonContainer);
-                sidePanel.add(colorPallet);
-                sidePanel.add(tableLabel);
-                sidePanel.add(scrollList);
-                
-                // borders and dimensions
-                window.setSize(1010, 600);
-                canvas.setSize(800,  600);
-                sidePanel.setBorder(BorderFactory.createEmptyBorder(20, 5, 20, 5));
-                paintButtonContainer.setBorder(BorderFactory.createEmptyBorder(25, 0, 12, 0));
-                eraserButtonContainer.setBorder(BorderFactory.createEmptyBorder(13, 0, 25, 0));
-                Dimension buttonDimension = new Dimension(BUTTON_WIDTH, BUTTON_HEIGHT);
-                Dimension tableDimension = new Dimension(TABLE_WIDTH, TABLE_HEIGHT);
-                paintButton.setMaximumSize(buttonDimension);
-                eraserButton.setMaximumSize(buttonDimension);
-                scrollList.setPreferredSize(tableDimension);
-                
-                Font segoe;
-                
-                try {
-                    segoe = Font.createFont(Font.TRUETYPE_FONT, new File("files/SEGOEUI.TTF"));
-                } catch (FontFormatException | IOException e1) {
-                    throw new RuntimeException("files/SEGOEUI.TTF has been either tampered or removed");
-                }
-                
-                // set fonts
-                sliderLabel.setFont(segoe.deriveFont(20f));
-                paintButton.setFont(segoe.deriveFont(35f));
-                eraserButton.setFont(segoe.deriveFont(35f));
-                tableLabel.setFont(segoe.deriveFont(20f));
-                
-                //window.pack();
-                window.setResizable(false);
-                window.setVisible(true);
+                Canvas canvas = new Canvas();
             }
         });
     }
