@@ -1,5 +1,9 @@
 package client;
 
+import java.awt.BorderLayout;
+import java.awt.Container;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
@@ -8,6 +12,15 @@ import java.net.Socket;
 import java.net.UnknownHostException;
 import java.util.HashMap;
 import java.util.Map;
+
+import javax.swing.DefaultComboBoxModel;
+import javax.swing.GroupLayout;
+import javax.swing.JFrame;
+import javax.swing.JComboBox;
+import javax.swing.JLabel;
+import javax.swing.JTextField;
+import javax.swing.JButton;
+import javax.swing.GroupLayout.Group;
 
 /**
  * Possible outputs: (1) initial connect message ("HELLO"), (2) select
@@ -26,46 +39,127 @@ import java.util.Map;
  * leaves ("BYEUSER" USER_NAME)
  */
 public class Artist {
-    private final Socket socket;
-    private final int port = 4444;
-    // always send the server the whiteboardID, not its name
-    private final int whiteboardID;
+	private final Socket socket;
+	private final int port = 4444;
+	// always send the server the whiteboardID, not its name
+	private final int whiteboardID;
 
-    public Artist() throws UnknownHostException, IOException {
-        String ip = "localhost";
-        socket = new Socket(ip, port);
+	private final JLabel usernamePrompt;
+	private final JTextField enterUsername;
+	private final JLabel board;
+	private final JComboBox newBoard;
 
-        // try with multiple resources! this is so hot
-        try (BufferedReader in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
-                PrintWriter out = new PrintWriter(socket.getOutputStream(), true)) {
+	private final JLabel IPprompt;
+	private final JTextField enterIP;
+	private final JButton localhost;
 
-            // send initial hello to get whiteboards
-            out.println("HELLO");
-            System.out.println("wrote hello!");
+	private final JButton GO;
+	
+	private final GroupLayout layout;
+	private final Group row1;
+	/*
+	private final Group row2;
+	private final Group row3;
+	private final Group row4;
+	private final Group horizontal;
+	
+	private final Group ver1;
+	private final Group ver2;
+	private final Group ver3;
+	private final Group ver4;
+	private final Group vertical;
+	*/
 
-            // retrieve the list of whiteboards
-            Map<Integer, String> whiteboardList = new HashMap<Integer, String>();
-            String[] input = in.readLine().split(" ");
-            System.out.println("read something in!");
+	public Artist() throws UnknownHostException, IOException {
+		String ip = "localhost";
+		socket = new Socket(ip, port);
 
-            for (int i = 1; i < input.length; i += 2) {
-                System.out.println(input[i - 1] + " " + input[i]);
-                whiteboardList.put(new Integer(input[i - 1]), input[i]);
-            }
+		// try with multiple resources! this is so hot
+		try (BufferedReader in = new BufferedReader(new InputStreamReader(
+				socket.getInputStream()));
+				PrintWriter out = new PrintWriter(socket.getOutputStream(),
+						true)) {
 
-            // select the whiteboard (name) we want, give the server the id of
-            // it (look it up) if we're selecting (not creating)
-            whiteboardID = 0;
+			// send initial hello to get whiteboards
+			out.println("HELLO");
+			System.out.println("wrote hello!");
 
-        }
-    }
+			// retrieve the list of whiteboards
+			Map<Integer, String> whiteboardList = new HashMap<Integer, String>();
+			String[] input = in.readLine().split(" ");
+			System.out.println("read something in!");
 
-    public static void main(String[] args) {
-        try {
-            Artist artist = new Artist();
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-    }
+			for (int i = 1; i < input.length; i += 2) {
+				System.out.println(input[i - 1] + " " + input[i]);
+				whiteboardList.put(new Integer(input[i - 1]), input[i]);
+			}
+
+			// select the whiteboard (name) we want, give the server the id of
+			// it (look it up) if we're selecting (not creating)
+			whiteboardID = 0;
+
+		}
+
+		// Create a log-in screen
+		JFrame window = new JFrame("Login");
+		window.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+		BorderLayout windowLayout = new BorderLayout();
+		window.setLayout(windowLayout);
+
+		// Initiating labels, textfields, etc
+		usernamePrompt = new JLabel();
+		usernamePrompt.setName("usernamePrompt");
+		usernamePrompt.setText("Pick a username: ");
+
+		enterUsername = new JTextField();
+
+		board = new JLabel();
+		board.setText("Choose/create a board: ");
+
+		newBoard = new JComboBox();
+		DefaultComboBoxModel model = new DefaultComboBoxModel();
+		model.addElement("New whiteboard");
+
+		// TODO: parse whiteboard name shits from the server and do a loop and
+		// add
+		// them here
+
+		IPprompt = new JLabel();
+		IPprompt.setText("Enter IP address: ");
+
+		enterIP = new JTextField();
+
+		localhost = new JButton();
+		localhost.setText("Use localhost instead");
+
+		localhost.addActionListener(new ActionListener() {
+
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				enterIP.setText("localhost");
+
+			}
+
+		});
+
+		GO = new JButton();
+		
+		layout = new GroupLayout(window);
+		layout.setAutoCreateGaps(true);
+		layout.setAutoCreateContainerGaps(true);
+		window.setLayout(layout);
+		
+		row1 = layout.createSequentialGroup().addComponent(usernamePrompt).addComponent(enterUsername);
+		
+
+	}
+
+	public static void main(String[] args) {
+		try {
+			Artist artist = new Artist();
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+	}
 
 }
