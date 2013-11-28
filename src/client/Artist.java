@@ -55,6 +55,9 @@ public class Artist {
 	private final JTextField enterIP;
 	private final JButton localhost;
 
+	private final JLabel whiteboardPrompt;
+	private final JTextField whiteboardNamer;
+
 	private final JButton GO;
 
 	private final GroupLayout layout;
@@ -74,7 +77,6 @@ public class Artist {
 
 	private String username;
 	private String IP;
-	private String whiteboard;
 
 	public Artist() throws UnknownHostException, IOException {
 		String ip = "localhost";
@@ -91,7 +93,7 @@ public class Artist {
 			System.out.println("wrote hello!");
 
 			// retrieve the list of whiteboards
-			Map<Integer, String> whiteboardList = new HashMap<Integer, String>();
+			final Map<Integer, String> whiteboardList = new HashMap<Integer, String>();
 			String[] input = in.readLine().split(" ");
 			System.out.println("read something in!");
 
@@ -104,123 +106,175 @@ public class Artist {
 			// it (look it up) if we're selecting (not creating)
 			whiteboardID = 0;
 
-		}
+			// Create a log-in screen
+			this.window = new JFrame("Login");
+			this.window.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 
-		// Create a log-in screen
-		this.window = new JFrame("Login");
-		this.window.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+			// Initiating labels, textfields, etc
+			usernamePrompt = new JLabel();
+			usernamePrompt.setName("usernamePrompt");
+			usernamePrompt.setText("Pick a username: ");
 
-		// Initiating labels, textfields, etc
-		usernamePrompt = new JLabel();
-		usernamePrompt.setName("usernamePrompt");
-		usernamePrompt.setText("Pick a username: ");
+			enterUsername = new JTextField();
 
-		enterUsername = new JTextField();
+			board = new JLabel();
+			board.setText("Choose/create a board: ");
 
-		board = new JLabel();
-		board.setText("Choose/create a board: ");
+			// The dropdown list to choose a whiteboard is a combobox
+			DefaultComboBoxModel model = new DefaultComboBoxModel();
 
-		// The dropdown list to choose a whiteboard is a combobox
-		DefaultComboBoxModel model = new DefaultComboBoxModel();
+			// default option (first thing) is newboard
+			model.addElement("New whiteboard");
 
-		// default option (first thing) is newboard
-		model.addElement("New whiteboard");
-		
-		// TODO: parse whiteboard name shits from the server and do a loop and
-		// add them here
-		
-		newBoard = new JComboBox(model);
+			whiteboardPrompt = new JLabel();
+			whiteboardPrompt.setText("New board name:");
+			whiteboardNamer = new JTextField(5);
 
-		IPprompt = new JLabel();
-		IPprompt.setText("Enter IP address: ");
+			// TODO: parse whiteboard name shits from the server and do a loop
+			// and
+			// add them here
 
-		// default width so it doesn't get shat on by the fatass button
-		enterIP = new JTextField(10);
+			newBoard = new JComboBox(model);
 
-		localhost = new JButton();
-		localhost.setText("Use localhost");
+			IPprompt = new JLabel();
+			IPprompt.setText("Enter IP address: ");
 
-		GO = new JButton();
-		GO.setText("Go!");
+			// default width so it doesn't get shat on by the fatass button
+			enterIP = new JTextField(10);
 
-		// use GroupLayout
-		layout = new GroupLayout(window.getContentPane());
-		layout.setAutoCreateGaps(true);
-		layout.setAutoCreateContainerGaps(true);
-		this.window.setLayout(layout);
+			localhost = new JButton();
+			localhost.setText("Use localhost");
 
-		// draw all the shits
-		row1 = layout.createSequentialGroup().addComponent(usernamePrompt)
-				.addComponent(enterUsername);
-		row2 = layout.createSequentialGroup().addComponent(board)
-				.addComponent(newBoard);
-		row3 = layout.createSequentialGroup().addComponent(IPprompt)
-				.addComponent(enterIP).addComponent(localhost);
-		row4 = layout.createSequentialGroup().addComponent(GO);
+			GO = new JButton();
+			GO.setText("Go!");
 
-		horizontal = layout.createSequentialGroup();
-		horizontal.addGroup(layout.createParallelGroup().addGroup(row1)
-				.addGroup(row2).addGroup(row3).addGroup(row4));
+			// use GroupLayout
+			layout = new GroupLayout(window.getContentPane());
+			layout.setAutoCreateGaps(true);
+			layout.setAutoCreateContainerGaps(true);
+			this.window.setLayout(layout);
 
-		layout.setHorizontalGroup(horizontal);
+			// draw all the shits
+			row1 = layout.createSequentialGroup().addComponent(usernamePrompt)
+					.addComponent(enterUsername);
+			row2 = layout.createSequentialGroup().addComponent(board)
+					.addComponent(newBoard);
+			row3 = layout.createSequentialGroup().addComponent(IPprompt)
+					.addComponent(enterIP).addComponent(localhost);
+			row4 = layout.createSequentialGroup().addComponent(GO);
 
-		ver1 = layout.createParallelGroup().addComponent(usernamePrompt)
-				.addComponent(enterUsername);
-		ver2 = layout.createParallelGroup().addComponent(board)
-				.addComponent(newBoard);
-		ver3 = layout.createParallelGroup().addComponent(IPprompt)
-				.addComponent(enterIP).addComponent(localhost);
-		ver4 = layout.createParallelGroup().addComponent(GO);
+			horizontal = layout.createSequentialGroup();
+			horizontal.addGroup(layout.createParallelGroup().addGroup(row1)
+					.addGroup(row2).addGroup(row3).addGroup(row4));
 
-		vertical = layout.createSequentialGroup();
-		vertical.addGroup(ver1).addGroup(ver2).addGroup(ver3).addGroup(ver4);
-		layout.setVerticalGroup(vertical);
+			layout.setHorizontalGroup(horizontal);
 
-		this.window.pack();
+			ver1 = layout.createParallelGroup().addComponent(usernamePrompt)
+					.addComponent(enterUsername);
+			ver2 = layout.createParallelGroup().addComponent(board)
+					.addComponent(newBoard);
+			ver3 = layout.createParallelGroup().addComponent(IPprompt)
+					.addComponent(enterIP).addComponent(localhost);
+			ver4 = layout.createParallelGroup().addComponent(GO);
 
-		// LISTENERS BITCH
-		// the localhost button sets the text to local host
-		// parse later
-		localhost.addActionListener(new ActionListener() {
+			vertical = layout.createSequentialGroup();
+			vertical.addGroup(ver1).addGroup(ver2).addGroup(ver3)
+					.addGroup(ver4);
+			layout.setVerticalGroup(vertical);
 
-			@Override
-			public void actionPerformed(ActionEvent e) {
-				enterIP.setText("localhost");
-			}
+			this.window.pack();
 
-		});
+			// LISTENERS BITCH
+			// the localhost button sets the text to local host
+			// parse later
+			localhost.addActionListener(new ActionListener() {
 
-		// clicking go makes new canvas and gets rid of the log in screen
-		// finalize choices and sends dat shit to server
+				@Override
+				public void actionPerformed(ActionEvent e) {
+					enterIP.setText("localhost");
+				}
 
-		GO.addActionListener(new ActionListener() {
+			});
 
-			@Override
-			public void actionPerformed(ActionEvent e) {
-				if (enterUsername.getText().length() != 0
-						& enterIP.getText().length() != 0) {
+			// clicking go makes new canvas and gets rid of the log in screen
+			// finalize choices and sends dat shit to server
 
-					// all the info needs to get merged into a stream somehow
-					username = enterUsername.getText();
-					IP = enterIP.getText();
-					whiteboard = (String) newBoard.getSelectedItem();
+			GO.addActionListener(new ActionListener() {
 
-					try {
-						// TODO: SEND SHIT TO SERVER
+				@Override
+				public void actionPerformed(ActionEvent e) {
 
-						// Catch invalid inputs
-						// dayum dis is dumb-bitch-proof
-					} catch (Exception badConnection) {
-						JOptionPane.showMessageDialog(window, "Invalid input!");
+					// make sure the client doesn't try to do stupid stuff like
+					// empty usernames lolz
+					if (enterUsername.getText().replaceAll("\\s+", "").length() != 0
+							& enterIP.getText().replaceAll("\\s+", "").length() != 0) {
+
+						// let the user make a map
+						boolean boardNameTaken = false;
+
+						if (!boardNameTaken) {
+
+							// all the info needs to get merged into a stream
+							// somehow
+							username = enterUsername.getText();
+							IP = enterIP.getText();
+
+							// see what they chose
+							String choice = (String) newBoard.getSelectedItem();
+
+							try {
+								if (choice.equals("New whiteboard")) {
+
+									for (String value : whiteboardList.values()) {
+										if (value.equals(whiteboardNamer
+												.getText())) {
+											boardNameTaken = true;
+											break;
+										}
+									}
+									if (boardNameTaken) {
+										JOptionPane
+												.showMessageDialog(window,
+														"That name is taken. Please choose a different one!");
+
+									} else {
+										out.println("NEW "
+												+ whiteboardNamer.getText());
+										// TODO: initialize background color
+										// stuffs
+
+									}
+									// TODO: SEND SHIT TO SERVER. server should
+									// see if whiteboard is New whiteboard or a
+									// number;
+									// increment counter accordingly
+
+								} else {
+
+									// if the client chose an existing
+									// whiteboard
+									// make a canvas with that name
+
+									String boardName = choice;
+									Canvas canvas = new Canvas(choice);
+
+								}
+								// Catch invalid inputs
+								// dayum dis is dumb-bitch-proof
+							} catch (Exception badConnection) {
+								JOptionPane.showMessageDialog(window,
+										"Invalid input!");
+							}
+
+						}
+
+						// when log in is done close everythannggg
+						window.dispose();
 					}
 
 				}
-
-				window.dispose();
-			}
-
-		});
-
+			});
+		}
 	}
 
 	public static void main(String[] args) {
