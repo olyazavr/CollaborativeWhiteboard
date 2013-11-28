@@ -13,7 +13,8 @@ import java.awt.Image;
 import java.awt.Label;
 import java.awt.Point;
 import java.awt.Rectangle;
-import java.awt.ScrollPane;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import java.awt.event.MouseMotionListener;
@@ -23,14 +24,15 @@ import java.io.IOException;
 import javax.imageio.ImageIO;
 import javax.swing.BoxLayout;
 import javax.swing.BorderFactory;
+import javax.swing.JColorChooser;
 import javax.swing.JFrame;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JSlider;
 import javax.swing.JTable;
 import javax.swing.SwingUtilities;
-
-import org.junit.Rule;
+import javax.swing.event.ChangeEvent;
+import javax.swing.event.ChangeListener;
 
 /**
  * Canvas represents a drawing surface that allows the user to draw
@@ -40,13 +42,17 @@ public class Canvas extends JPanel {
     // image where the user's drawing is stored
     private Image drawingBuffer;
     private static Color color = Color.BLACK;
+    private static Color userColor = Color.BLACK;
     private static int stroke = 2;
-    private final static int ERASER_STROKE = 10;
+    private static int userStroke = 2;
+    private static boolean erasing = false;
     private final static int BUTTON_WIDTH = 150;
     private final static int BUTTON_HEIGHT = 100;
     private final static int TABLE_WIDTH = 180;
     private final static int TABLE_HEIGHT = 330;
-    private final static Color PURPLE = new Color(160, 32, 240);
+    private final static int SLIDER_MIN = 1;
+    private final static int SLIDER_MAX = 10;
+    private final static int SLIDER_INIT = 2;
     private final static Color MIT = new Color(163, 31, 52);
     
     
@@ -231,16 +237,16 @@ public class Canvas extends JPanel {
                 JPanel colorPallet = new JPanel();
                 
                 // components of the side panel
-                Label sliderLabel = new Label("Stroke Size:");
-                JSlider strokeSlider = new JSlider(); //TODO: Add JSlider listener
-                Button paintButton = new Button("Draw!");
-                Button eraserButton = new Button("Erase!");
-                Label tableLabel = new Label("List of Artists:"); //TODO: Change the font from Annie's trove
-                JTable playerList = new JTable(0, 1); //TODO: Add table-server comm
-                JScrollPane scrollList = new JScrollPane(playerList);
+                final Label sliderLabel = new Label("Stroke Size:");
+                final JSlider strokeSlider = new JSlider(SLIDER_MIN, SLIDER_MAX, SLIDER_INIT); //TODO: Add JSlider listener
+                final Button paintButton = new Button("Draw!");
+                final Button eraserButton = new Button("Erase!");
+                final Label tableLabel = new Label("List of Artists:"); //TODO: Change the font from Annie's trove
+                final JTable playerList = new JTable(0, 1); //TODO: Add table-server comm
+                final JScrollPane scrollList = new JScrollPane(playerList);
                 
                 //Color pallet buttons
-                Button button1 = new Button(); //TODO: Add a shitload of listeners possible listener class
+                Button button1 = new Button();
                 Button button2 = new Button();
                 Button button3 = new Button();
                 Button button4 = new Button();
@@ -254,7 +260,7 @@ public class Canvas extends JPanel {
                 Button button12 = new Button();
                 Button button13 = new Button();
                 Button button14 = new Button();
-                Button button15 = new Button();
+                Button button15 = new Button("?");
                 
                 // set colors to buttons
                 button1.setBackground(Color.BLACK);
@@ -268,39 +274,100 @@ public class Canvas extends JPanel {
                 button9.setBackground(Color.GREEN);
                 button10.setBackground(Color.BLUE);
                 button11.setBackground(MIT);
-                button12.setBackground(PURPLE);
-                button13.setBackground(Color.MAGENTA);
-                button14.setBackground(Color.PINK);
-                button15.setBackground(Color.CYAN);
+                button12.setBackground(Color.MAGENTA);
+                button13.setBackground(Color.PINK);
+                button14.setBackground(Color.CYAN);
                 
-                
-                paintButton.addMouseListener(new MouseListener() {
-                    @Override
-                    public void mouseClicked(MouseEvent arg0) {
-                        color = Color.BLACK;
+                // Adding action listeners to the buttons and sliders
+                paintButton.addActionListener(new ActionListener() {
+                    public void actionPerformed(ActionEvent ae) {
+                        erasing = false;
+                        color = userColor;
+                        stroke = userStroke;
                         stroke = 2;
                     }
-                    
-                    public void mouseReleased(MouseEvent arg0) { }
-                    public void mousePressed(MouseEvent arg0) { }
-                    public void mouseExited(MouseEvent arg0) { }
-                    public void mouseEntered(MouseEvent arg0) { }
-                });
-
-                eraserButton.addMouseListener(new MouseListener() {
-                    @Override
-                    public void mouseClicked(MouseEvent arg0) {
-                        color = Color.WHITE;
-                        stroke = ERASER_STROKE;
-                    }
-                    
-                    public void mouseReleased(MouseEvent arg0) { }
-                    public void mousePressed(MouseEvent arg0) { }
-                    public void mouseExited(MouseEvent arg0) { }
-                    public void mouseEntered(MouseEvent arg0) { }
                 });
                 
-                // creating layouts
+                eraserButton.addActionListener(new ActionListener() {
+                    public void actionPerformed(ActionEvent ae) {
+                        erasing = true;
+                        userColor = color;
+                        userStroke = stroke;
+                        color = Color.WHITE;
+                        stroke = userStroke * 5;
+                    }
+                });
+                
+                strokeSlider.addChangeListener(new ChangeListener() {
+                    public void stateChanged(ChangeEvent arg0) {
+                        if(!erasing) stroke = strokeSlider.getValue();
+                    }
+                });
+                
+                // Color Buttons
+                button1.addActionListener(new ActionListener() {
+                    public void actionPerformed(ActionEvent e) {if(!erasing) color = Color.BLACK;}
+                });
+                
+                button2.addActionListener(new ActionListener() {
+                    public void actionPerformed(ActionEvent e) {if(!erasing) color = Color.DARK_GRAY;}
+                });
+                
+                button3.addActionListener(new ActionListener() {
+                    public void actionPerformed(ActionEvent e) {if(!erasing) color = Color.GRAY;}
+                });
+                
+                button4.addActionListener(new ActionListener() {
+                    public void actionPerformed(ActionEvent e) {if(!erasing) color = Color.LIGHT_GRAY;}
+                });
+                
+                button5.addActionListener(new ActionListener() {
+                    public void actionPerformed(ActionEvent e) {if(!erasing) color = Color.WHITE;}
+                });
+                
+                button6.addActionListener(new ActionListener() {
+                    public void actionPerformed(ActionEvent e) {if(!erasing) color = Color.RED;}
+                });
+                
+                button7.addActionListener(new ActionListener() {
+                    public void actionPerformed(ActionEvent e) {if(!erasing) color = Color.ORANGE;}
+                });
+                
+                button8.addActionListener(new ActionListener() {
+                    public void actionPerformed(ActionEvent e) {if(!erasing) color = Color.YELLOW;}
+                });
+                
+                button9.addActionListener(new ActionListener() {
+                    public void actionPerformed(ActionEvent e) {if(!erasing) color = Color.GREEN;}
+                });
+                
+                button10.addActionListener(new ActionListener() {
+                    public void actionPerformed(ActionEvent e) {if(!erasing) color = Color.BLUE;}
+                });
+                
+                button11.addActionListener(new ActionListener() {
+                    public void actionPerformed(ActionEvent e) {if(!erasing) color = MIT;}
+                });
+                
+                button12.addActionListener(new ActionListener() {
+                    public void actionPerformed(ActionEvent e) {if(!erasing) color = Color.MAGENTA;}
+                });
+                
+                button13.addActionListener(new ActionListener() {
+                    public void actionPerformed(ActionEvent e) {if(!erasing) color = Color.PINK;}
+                });
+                
+                button14.addActionListener(new ActionListener() {
+                    public void actionPerformed(ActionEvent e) {if(!erasing) color = Color.CYAN;}
+                });
+                
+                button15.addActionListener(new ActionListener() {
+                    public void actionPerformed(ActionEvent e) {
+                        if(!erasing) color = JColorChooser.showDialog(new JPanel(), "Choose a color", color);
+                    }
+                });
+                
+                // creating layouts and customizing components
                 GridLayout palletLayout = new GridLayout(3, 5);
                 BoxLayout panelLayout = new BoxLayout(sidePanel, BoxLayout.Y_AXIS);
                 BoxLayout pButtonLayout = new BoxLayout(paintButtonContainer, BoxLayout.Y_AXIS);
@@ -309,6 +376,9 @@ public class Canvas extends JPanel {
                 window.add(sidePanel, BorderLayout.EAST);
                 playerList.setFillsViewportHeight(true);
                 playerList.setTableHeader(null);
+                strokeSlider.setMajorTickSpacing(1);
+                strokeSlider.setPaintTicks(true);
+                strokeSlider.setPaintLabels(true);
                 
                 // apply layouts to containers
                 paintButtonContainer.setLayout(pButtonLayout);
