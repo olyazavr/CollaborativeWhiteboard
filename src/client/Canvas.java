@@ -22,6 +22,7 @@ import java.awt.event.MouseMotionListener;
 import java.io.File;
 import java.io.IOException;
 
+import javax.swing.JButton;
 import javax.imageio.ImageIO;
 import javax.management.RuntimeErrorException;
 import javax.swing.BoxLayout;
@@ -48,12 +49,12 @@ public class Canvas extends JPanel {
     private static int stroke = 2;
     private static int userStroke = 2;
     private static boolean erasing = false;
-    private final int BUTTON_WIDTH = 150;
-    private final int BUTTON_HEIGHT = 100;
+    private final int BUTTON_WIDTH = 100;
+    private final int BUTTON_HEIGHT = 50;
     private final int TABLE_WIDTH = 180;
     private final int TABLE_HEIGHT = 330;
     private final int SLIDER_MIN = 1;
-    private final int SLIDER_MAX = 10;
+    private final int SLIDER_MAX = 5;
     private final int SLIDER_INIT = 2;
     private final Color MIT = new Color(163, 31, 52);
     
@@ -95,21 +96,21 @@ public class Canvas extends JPanel {
         final JScrollPane scrollList = new JScrollPane(playerList);
         
         //Color pallet buttons
-        Button button1 = new Button();
-        Button button2 = new Button();
-        Button button3 = new Button();
-        Button button4 = new Button();
-        Button button5 = new Button();
-        Button button6 = new Button();
-        Button button7 = new Button();
-        Button button8 = new Button();
-        Button button9 = new Button();
-        Button button10 = new Button();
-        Button button11 = new Button();
-        Button button12 = new Button();
-        Button button13 = new Button();
-        Button button14 = new Button();
-        Button button15 = new Button("?");
+        JButton button1 = new JButton();
+        JButton button2 = new JButton();
+        JButton button3 = new JButton();
+        JButton button4 = new JButton();
+        JButton button5 = new JButton();
+        JButton button6 = new JButton();
+        JButton button7 = new JButton();
+        JButton button8 = new JButton();
+        JButton button9 = new JButton();
+        JButton button10 = new JButton();
+        JButton button11 = new JButton();
+        JButton button12 = new JButton();
+        JButton button13 = new JButton();
+        JButton button14 = new JButton();
+        JButton button15 = new JButton("?");
         
         // set colors to buttons
         button1.setBackground(Color.BLACK);
@@ -133,7 +134,6 @@ public class Canvas extends JPanel {
                 erasing = false;
                 color = userColor;
                 stroke = userStroke;
-                stroke = 2;
             }
         });
         
@@ -149,7 +149,7 @@ public class Canvas extends JPanel {
         
         strokeSlider.addChangeListener(new ChangeListener() {
             public void stateChanged(ChangeEvent arg0) {
-                if(!erasing) stroke = strokeSlider.getValue();
+                if(!erasing) stroke = strokeSlider.getValue() * 2 - 1;
             }
         });
         
@@ -278,8 +278,8 @@ public class Canvas extends JPanel {
         eraserButtonContainer.setBorder(BorderFactory.createEmptyBorder(13, 0, 25, 0));
         Dimension buttonDimension = new Dimension(BUTTON_WIDTH, BUTTON_HEIGHT);
         Dimension tableDimension = new Dimension(TABLE_WIDTH, TABLE_HEIGHT);
-        paintButton.setMaximumSize(buttonDimension);
-        eraserButton.setMaximumSize(buttonDimension);
+        paintButton.setPreferredSize(buttonDimension);
+        eraserButton.setPreferredSize(buttonDimension);
         scrollList.setPreferredSize(tableDimension);
         
         
