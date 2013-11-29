@@ -355,16 +355,15 @@ public class Artist {
 									// whiteboard
 									// make a canvas with that name
 
-									// TODO: this doesn't actually work lolz
-
-									Canvas canvas = new Canvas(whiteboardNamer
-											.getText());
 									// TODO: fix the map to either a BiMap or name --> ID (for whiteboards)
+									// Or just stop using IDs for whiteboards
 									
 									out.println("SELECT" + whiteboardNamer.getText());
 
 								}
-
+								// TODO: this doesn't actually work lolz
+								Canvas canvas = new Canvas(whiteboardNamer
+										.getText(), socket);
 								// Catch invalid inputs
 								// dayum dis is dumb-bitch-proof
 							} catch (Exception badConnection) {

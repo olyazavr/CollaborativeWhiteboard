@@ -118,11 +118,6 @@ public class Whiteboard {
         bg.set(2, blue);
     }
     
-
-    public synchronized String toString() {
-        return this.createListOfPixels();
-    }
-
     /**
      * Converts the board's array of positions and colors to a string of all of
      * the positions and colors (X Y R G B) of the board's pixels separated by
