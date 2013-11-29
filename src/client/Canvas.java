@@ -19,8 +19,12 @@ import java.awt.event.ActionListener;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import java.awt.event.MouseMotionListener;
+import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStreamReader;
+import java.io.PrintWriter;
+import java.net.Socket;
 
 import javax.imageio.ImageIO;
 import javax.swing.BoxLayout;
@@ -65,6 +69,7 @@ public class Canvas extends JPanel {
     private final int SIDE_PANEL_WIDTH = 200;
     private final int SIDE_PANEL_HEIGHT = 600;
     private final Color MIT = new Color(163, 31, 52);
+    private final Socket socket;
     
     
     /**
@@ -73,6 +78,8 @@ public class Canvas extends JPanel {
      * @param height height in pixels
      */
     public Canvas(int width, int height) {
+        // to appease the java gods
+        socket = null;
         this.setPreferredSize(new Dimension(width, height));
         addDrawingController();
         // note: we can't call makeDrawingBuffer here, because it only
@@ -80,7 +87,25 @@ public class Canvas extends JPanel {
         // wait until paintComponent() is first called.
     }
     
-    public Canvas(String boardNumber) {
+    public Canvas(String boardNumber, final Socket socket) {
+        // Connection socket
+        this.socket = socket;
+        
+        // Thread that connects to the server
+        Thread userCommunication = new Thread(new Runnable() {
+            public void run() {
+                try (BufferedReader in = new BufferedReader(new InputStreamReader(
+                        socket.getInputStream()));
+                        PrintWriter out = new PrintWriter(socket.getOutputStream(),
+                                true)) {
+                    //TODO: Query server for users
+                    
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            }
+        });
+        
         // Main Window creation
         JFrame window = new JFrame("Whiteboard #" + boardNumber);
         window.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
@@ -499,7 +524,7 @@ public class Canvas extends JPanel {
         // set up the UI (on the event-handling thread)
         SwingUtilities.invokeLater(new Runnable() {
             public void run() {
-                Canvas canvas = new Canvas("Unknown");
+                Canvas canvas = new Canvas("Unknown", new Socket());
             }
         });
     }
