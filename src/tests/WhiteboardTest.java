@@ -1,6 +1,7 @@
 package tests;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 
 import java.awt.Color;
 import java.util.ArrayList;
@@ -9,8 +10,6 @@ import java.util.List;
 import org.junit.Test;
 
 import server.Whiteboard;
-
-import org.junit.Assert;
 
 public class WhiteboardTest {
 
@@ -25,7 +24,7 @@ public class WhiteboardTest {
 		blackrgb.add(0);
 		blackrgb.add(0);
 
-		final Whiteboard board1 = new Whiteboard(1, "board1", blackrgb);
+        final Whiteboard board1 = new Whiteboard("board1", blackrgb);
 
 		assertEquals(board1.getColor(0, 0), blackrgb);
 		assertEquals(board1.getColor(799, 599), blackrgb);
@@ -34,15 +33,14 @@ public class WhiteboardTest {
 	}
 
 	@Test
-	public void basicNameIdTest() {
+    public void basicNameTest() {
 
 		blackrgb.add(0);
 		blackrgb.add(0);
 		blackrgb.add(0);
 
-		final Whiteboard board1 = new Whiteboard(1, "board1", blackrgb);
+        final Whiteboard board1 = new Whiteboard("board1", blackrgb);
 
-		assertTrue(board1.getID() == 1);
 		assertEquals(board1.getName(), "board1");
 
 	}
@@ -58,7 +56,7 @@ public class WhiteboardTest {
 		whitergb.add(255);
 		whitergb.add(255);
 
-		final Whiteboard board1 = new Whiteboard(1, "board1", blackrgb);
+        final Whiteboard board1 = new Whiteboard("board1", blackrgb);
 
 		board1.setColor(799, 599, 255, 255, 255);
 		assertEquals(board1.getColor(0, 0), blackrgb);
@@ -78,7 +76,7 @@ public class WhiteboardTest {
 		blackrgb.add(0);
 		blackrgb.add(0);
 
-		final Whiteboard board1 = new Whiteboard(1, "board1", blackrgb);
+        final Whiteboard board1 = new Whiteboard("board1", blackrgb);
 
 		String boardString = board1.toString();
 

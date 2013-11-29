@@ -21,8 +21,6 @@ import java.util.Map.Entry;
  */
 
 public class Whiteboard {
-
-    private final int ID; // can't change the ID of a whiteboard after it's made
     private final String name;
     private final List<Integer> bg; // final for now, will change if we
                                     // decide to do the
@@ -31,9 +29,7 @@ public class Whiteboard {
     private static Map<List<Integer>, List<Integer>> colormap = Collections
             .synchronizedMap(new HashMap<List<Integer>, List<Integer>>());
 
-    public Whiteboard(int whiteboardID, String name, List<Integer> bg) {
-
-        this.ID = whiteboardID;
+    public Whiteboard(String name, List<Integer> bg) {
         this.name = name;
         this.bg = Collections.synchronizedList(new ArrayList<Integer>(bg));
 
@@ -62,10 +58,6 @@ public class Whiteboard {
 
     public String getName() {
         return this.name;
-    }
-
-    public int getID() {
-        return this.ID;
     }
 
     /**
