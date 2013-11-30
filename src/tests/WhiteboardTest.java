@@ -13,9 +13,10 @@ import server.Whiteboard;
 
 public class WhiteboardTest {
 
-	private final Color black = new Color(0, 0, 0);
 	private final List<Integer> blackrgb = new ArrayList<Integer>();
 	private final List<Integer> whitergb = new ArrayList<Integer>();
+	private final Color MIT = new Color(163, 31, 52);
+	private final List<Integer> MITcolor = new ArrayList<Integer>();
 
 	@Test
 	public void initializeBackgroundTest() {
@@ -24,7 +25,7 @@ public class WhiteboardTest {
 		blackrgb.add(0);
 		blackrgb.add(0);
 
-        final Whiteboard board1 = new Whiteboard("board1", blackrgb);
+		final Whiteboard board1 = new Whiteboard("board1", blackrgb);
 
 		assertEquals(board1.getColor(0, 0), blackrgb);
 		assertEquals(board1.getColor(799, 599), blackrgb);
@@ -33,13 +34,13 @@ public class WhiteboardTest {
 	}
 
 	@Test
-    public void basicNameTest() {
+	public void basicNameTest() {
 
 		blackrgb.add(0);
 		blackrgb.add(0);
 		blackrgb.add(0);
 
-        final Whiteboard board1 = new Whiteboard("board1", blackrgb);
+		final Whiteboard board1 = new Whiteboard("board1", blackrgb);
 
 		assertEquals(board1.getName(), "board1");
 
@@ -56,7 +57,7 @@ public class WhiteboardTest {
 		whitergb.add(255);
 		whitergb.add(255);
 
-        final Whiteboard board1 = new Whiteboard("board1", blackrgb);
+		final Whiteboard board1 = new Whiteboard("board1", blackrgb);
 
 		board1.setColor(799, 599, 255, 255, 255);
 		assertEquals(board1.getColor(0, 0), blackrgb);
@@ -70,25 +71,60 @@ public class WhiteboardTest {
 	}
 
 	@Test
-	public void toStringTest() {
+	public void toStringTestBlack() {
 
 		blackrgb.add(0);
 		blackrgb.add(0);
 		blackrgb.add(0);
 
-        final Whiteboard board1 = new Whiteboard("board1", blackrgb);
+		final Whiteboard board1 = new Whiteboard("board1", blackrgb);
 
-		String boardString = board1.toString();
+		String[] boardArray = board1.createListOfPixels().split(" ");
 
-		assertTrue(boardString.charAt(0) == '0');
-		assertTrue(boardString.charAt(1) == ' ');
+		// Hashing is not in order, but should have correct spacing and r b g
+		// should all be 0
 
-		// These things don't work boardString is starting with 0 55 0 0 0 1 24
-		// 0 0 what are 55 and 24 how
+		assertTrue(board1.createListOfPixels().charAt(1) == ' ');
 
-		System.out.println(boardString.substring(0, 19));
-		// assertTrue(boardString.charAt(2) == '0');
+		assertEquals(boardArray[2], "0");
+		assertEquals(boardArray[3], "0");
+		assertEquals(boardArray[4], "0");
 
+		assertEquals(boardArray[7], "0");
+		assertEquals(boardArray[8], "0");
+		assertEquals(boardArray[9], "0");
+
+	}
+
+	@Test
+	public void MITColorTest() {
+		blackrgb.add(0);
+		blackrgb.add(0);
+		blackrgb.add(0);
+
+		MITcolor.add(MIT.getRed());
+		MITcolor.add(MIT.getGreen());
+		MITcolor.add(MIT.getBlue());
+
+		final Whiteboard MITboard = new Whiteboard("MIT", blackrgb);
+		String[] boardArray = MITboard.createListOfPixels().split(" ");
+		assertTrue(MITboard.createListOfPixels().charAt(1) == ' ');
+		assertEquals(boardArray[7], "0");
+
+		MITboard.setBackgroundColor(MIT.getRed(), MIT.getGreen(), MIT.getBlue());
+
+		assertEquals(MITboard.getColor(0, 0), MITcolor);
+		assertEquals(MITboard.getColor(57, 82), MITcolor); // arbitrary
+
+		String[] MITarray = MITboard.createListOfPixels().split(" ");
+
+		assertEquals(MITarray[2], "163");
+		assertEquals(MITarray[3], "31");
+		assertEquals(MITarray[4], "52");
+
+		assertEquals(MITarray[12], "163");
+		assertEquals(MITarray[13], "31");
+		assertEquals(MITarray[14], "52");
 	}
 
 }
