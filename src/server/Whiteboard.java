@@ -1,11 +1,9 @@
 package server;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
-import java.util.Map.Entry;
 
 /**
  * Server side hosts the whiteboard class. A map represents the canvas as an
@@ -26,34 +24,13 @@ public class Whiteboard {
                                     // decide to do the
     // drop to change background color thing
 
-    private static Map<List<Integer>, List<Integer>> colormap = Collections
-            .synchronizedMap(new HashMap<List<Integer>, List<Integer>>());
+    private final List<Integer> actions;
 
     public Whiteboard(String name, List<Integer> bg) {
         this.name = name;
         this.bg = Collections.synchronizedList(new ArrayList<Integer>(bg));
+        actions = Collections.synchronizedList(new ArrayList<Integer>());
 
-        // loop through to make the map
-        for (int y = 0; y < 600; y++) {
-            for (int x = 0; x < 800; x++) {
-
-                List<Integer> coords = new ArrayList<Integer>();
-
-                coords.add(x);
-                coords.add(y);
-                colormap.put(coords, this.bg);
-
-            }
-        }
-
-    }
-    
-    public List<Integer> getColor(int x, int y) {
-    	List<Integer> key = new ArrayList<Integer>();
-    	key.add(x);
-    	key.add(y);
-    	return colormap.get(key);
-    	
     }
 
     public String getName() {
@@ -61,36 +38,27 @@ public class Whiteboard {
     }
 
     /**
+     * Adds a draw action to the action list.
      * 
-     * Changes the color of an object on the whiteboard.
-     * 
-     * Synchronized for concurrency
-     * 
-     * @param x
-     *            integer between 0 and 799 representing the x coordinate of the
-     *            pixel
-     * @param y
-     *            between 0 and 599
-     * @param color
-     *            a Color object that you want that pixel's color to be changed
-     *            to
+     * @param x1
+     *            starting x
+     * @param y1
+     *            starting y
+     * @param x2
+     *            ending x
+     * @param y2
+     *            ending y
+     * @param stroke
+     *            stroke size
+     * @param red
+     *            amount of red (0-255)
+     * @param green
+     *            amount of green (0-255)
+     * @param blue
+     *            amount of blue (0-255)
      */
-
-    public synchronized void setColor(int x, int y, int red, int green, int blue) {
-        // we could change the method to take something more usable, idk
-        // like maybe have the parser return a small list of points at once;
-        // we'll what happens
-
-        ArrayList<Integer> coords = new ArrayList<Integer>();
-        coords.add(x);
-        coords.add(y);
-
-        ArrayList<Integer> color = new ArrayList<Integer>();
-        color.add(red);
-        color.add(green);
-        color.add(blue);
-
-        Whiteboard.colormap.put(coords, color);
+    public synchronized void addAction(int x1, int y1, int x2, int y2, int stroke, int red, int green, int blue) {
+        actions.addAll(Arrays.asList(x1, y1, x2, y2, stroke, red, green, blue));
     }
 
     /**
@@ -119,28 +87,22 @@ public class Whiteboard {
     }
     
     /**
-     * Converts the board's array of positions and colors to a string of all of
-     * the positions and colors (X Y R G B) of the board's pixels separated by
-     * spaces
+     * Converts the board's actions to a string (X1 Y1 X2 Y2 STROKE R G B)
+     * separated by spaces
      * 
-     * 
-     * @return string of positions and colors of the pixels of the board
+     * @return string of actions of the board, separated by spaces
      */
 
-    public String createListOfPixels() {
-        StringBuilder points = new StringBuilder();
+    public String createListOfActions() {
+        StringBuilder action = new StringBuilder();
 
         // loop through and add to the string
-        for (Entry<List<Integer>, List<Integer>> point : colormap.entrySet()) {
-
+        for (Integer i : actions) {
             // X Y R G B
-            points.append(point.getKey().get(0) + " " + point.getKey().get(1)
-                    + " " + point.getValue().get(0) + " "
-                    + point.getValue().get(1) + " " + point.getValue().get(2)
-                    + " ");
+            action.append(i + " ");
         }
 
-        return points.toString();
+        return action.toString();
     }
 
 }

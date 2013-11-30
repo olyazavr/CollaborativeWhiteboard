@@ -90,7 +90,7 @@ public class WhiteboardServer {
      *            name of user, can't be empty
      * @param clientID
      *            id of client
-     * @return BG_RED BG_GREEN BG_BLUE "USERS" list of users "PIXELS " list of
+     * @return BG_RED BG_GREEN BG_BLUE "USERS" list of users "ACTIONS " list of
      *         pixels and their colors
      */
     private String selectWhiteboard(String boardName, String userName, int clientID) {
@@ -100,22 +100,22 @@ public class WhiteboardServer {
         // subscribe the client to whiteboard events
         whiteboardClients.get(boardName).add(clientID);
 
-        return board.getBackgroundColorString() + " USERS " + listUsers(boardName) + " PIXELS "
-                + createListOfPixels(boardName);
+        return board.getBackgroundColorString() + " USERS " + listUsers(boardName) + " ACTIONS "
+                + createListOfActions(boardName);
     }
 
     /**
-     * Converts the board's array of positions and colors to a string of all of
-     * the positions and colors (X Y R G B) of the board's pixels separated by
-     * spaces
+     * Converts the board's actions to a string (X1 Y1 X2 Y2 STROKE R G B)
+     * separated by spaces
+     * 
      * 
      * @param boardName
      *            name of the board in question
-     * @return string of positions and colors of the pixels of the board
+     * @return string of actions of the board, separated by spaces
      */
-    private String createListOfPixels(String boardName) {
+    private String createListOfActions(String boardName) {
         Whiteboard board = whiteboards.get(boardName);
-        return board.createListOfPixels();
+        return board.createListOfActions();
     }
 
     /**
@@ -184,38 +184,31 @@ public class WhiteboardServer {
      * 
      * @param boardName
      *            name of board in question
+     * @param x1
+     *            starting x
+     * @param y1
+     *            starting y
+     * @param x2
+     *            ending x
+     * @param y2
+     *            ending y
      * @param stroke
-     *            >1, MUST BE ODD, thickness of the draw action
-     * @param x
-     *            x-coordinate
-     * @param y
-     *            y-coordinate
+     *            stroke size
      * @param red
      *            amount of red (0-255)
      * @param green
      *            amount of green (0-255)
      * @param blue
      *            amount of blue (0-255)
-     * @return "DRAW" ARTSY_METER STROKE X Y COLOR_R COLOR_G COLOR_B
+     * @return "DRAW" ARTSY_METER X1 Y1 X2 Y2 STROKE COLOR_R COLOR_G COLOR_B
      */
-    private String draw(String boardName, int stroke, int x, int y, int red, int green, int blue) {
+    private String draw(String boardName, int x1, int y1, int x2, int y2, int stroke, int red, int green, int blue) {
         Whiteboard board = whiteboards.get(boardName);
-        int width = stroke / 2; // integer division
-
-        // search for width around the x,y center
-        for (int j = y - width; j <= y + width; ++j) {
-            for (int i = x - width; i <= x + width; ++i) {
-                // if within board
-                if (i > 0 && j > 0 && i <= 800 && j <= 600) {
-                    board.setColor(i, j, red, green, blue);
-                }
-            }
-        }
-
-        // int artsy = board.getArtsy();
+        board.addAction(x1, y1, x2, y2, stroke, red, green, blue);
+        // TODO: int artsy = board.getArtsy();
         int artsy = 5;
 
-        return "DRAW " + artsy + " " + stroke + " " + x + " " + y + " " + red + " " + blue;
+        return "DRAW " + artsy + " " + x1 + " " + y1 + " " + x2 + " " + y2 + " " + stroke + " " + red + " " + blue;
     }
 
     /**
@@ -328,6 +321,7 @@ public class WhiteboardServer {
                 System.out.println("got response " + response);
 
                 if (!response.isEmpty()) {
+                    System.out.println("putting the response");
                     out.println(response);
                 }
             }
@@ -350,7 +344,8 @@ public class WhiteboardServer {
      * (3) make new whiteboard and select it ("NEW" WB_NAME COLOR_R COLOR_G
      * COLOR_B USER_NAME),
      * 
-     * (4) new draw actions ("DRAW" WB_NAME STROKE X Y COLOR_R COLOR_G COLOR_B),
+     * (4) new draw actions ("DRAW" WB_NAME X1 Y1 X1 Y2 STROKE COLOR_R COLOR_G
+     * COLOR_B),
      * 
      * (5) change whiteboard bg color ("BG" WB_NAME COLOR_R COLOR_G COLOR_B),
      * 
@@ -361,10 +356,11 @@ public class WhiteboardServer {
      * (1) whiteboard names (WB_NAME WB_NAME...),
      * 
      * (3) whiteboard specs (BG_RED BG_GREEN BG_BLUE "USERS" USER_NAME
-     * USER_NAME... "PIXELS" X1 Y1 COLOR_R1 COLOR_G1 COLOR_B1 X2 Y2 COLOR_R2
-     * COLOR_G2 COLOR_B2...) to new client, ("NEWUSER" USER_NAME) to others,
+     * USER_NAME... "ACTIONS" X1 Y1 X1 Y2 STROKE COLOR_R COLOR_G COLOR_B X1 Y1
+     * X1 Y2 STROKE COLOR_R COLOR_G COLOR_B...) to new client, ("NEWUSER"
+     * USER_NAME) to others,
      * 
-     * (4) new draw actions by others ("DRAW" ARTSY_METER STROKE X Y COLOR_R
+     * (4) new draw actions ("DRAW" ARTSY_METER X1 Y1 X1 Y2 STROKE COLOR_R
      * COLOR_G COLOR_B),
      * 
      * (5) change whiteboard bg color ("BG" COLOR_R COLOR_G COLOR_B),
@@ -419,20 +415,22 @@ public class WhiteboardServer {
             }
 
             // new draw actions
-            // "DRAW" WB_NAME STROKE X Y COLOR_R COLOR_G COLOR_B
+            // "DRAW" WB_NAME X1 Y1 X2 Y2 STROKE COLOR_R COLOR_G COLOR_B
             if (inputSplit[0].equals("DRAW")) {
                 String boardName = inputSplit[1];
-                int stroke = new Integer(inputSplit[2]);
-                int x = new Integer(inputSplit[3]);
-                int y = new Integer(inputSplit[4]);
-                int red = new Integer(inputSplit[5]);
-                int green = new Integer(inputSplit[6]);
-                int blue = new Integer(inputSplit[7]);
+                int x1 = new Integer(inputSplit[2]);
+                int y1 = new Integer(inputSplit[3]);
+                int x2 = new Integer(inputSplit[4]);
+                int y2 = new Integer(inputSplit[5]);
+                int stroke = new Integer(inputSplit[6]);
+                int red = new Integer(inputSplit[7]);
+                int green = new Integer(inputSplit[8]);
+                int blue = new Integer(inputSplit[9]);
 
-                // draw has artsy meter on it "DRAW" ARTSY_METER STROKE X Y
-                // COLOR_R COLOR_G COLOR_B
-                String draw = draw(boardName, stroke, x, y, red, green, blue);
-                putOnAllQueuesBut(clientID, boardName, draw);
+                // draw has artsy meter on it "DRAW" ARTSY_METER X1 Y1 X2 Y2
+                // STROKE COLOR_R COLOR_G COLOR_B
+                String draw = draw(boardName, x1, y1, x2, y2, stroke, red, green, blue);
+                putOnAllQueuesBut(-1, boardName, draw); // put on all queues
                 return;
             }
 

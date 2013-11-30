@@ -31,37 +31,6 @@ import javax.swing.JRadioButton;
 import javax.swing.JTextField;
 import javax.swing.SwingUtilities;
 
-/**
- * * Possible outputs:
- * 
- * (1) initial connect message ("HELLO"),
- * 
- * (2) select whiteboard ("SELECT" WB_NAME USER_NAME),
- * 
- * (3) make new whiteboard and select it ("NEW" WB_NAME COLOR_R COLOR_G COLOR_B
- * USER_NAME),
- * 
- * (4) new draw actions ("DRAW" WB_NAME STROKE X Y COLOR_R COLOR_G COLOR_B),
- * 
- * (5) change whiteboard bg color ("BG" WB_NAME COLOR_R COLOR_G COLOR_B),
- * 
- * (6) disconnect message ("BYE" WB_NAME USER_NAME)
- * 
- * Possible inputs:
- * 
- * (1) whiteboard names (WB_NAME WB_NAME...),
- * 
- * (2)-(3) whiteboard specs ("USERS" USER_NAME USER_NAME... "PIXELS" X1 Y1
- * COLOR_R1 COLOR_G1 COLOR_B1 X2 Y2 COLOR_R2 COLOR_G2 COLOR_B2...) to new
- * client, ("NEWUSER" USER_NAME) to others,
- * 
- * (4) new draw actions by others ("DRAW" ARTSY_METER STROKE X Y COLOR_R COLOR_G
- * COLOR_B),
- * 
- * (5) change whiteboard bg color ("BG" COLOR_R COLOR_G COLOR_B),
- * 
- * (6) user leaves ("BYEUSER" USER_NAME)
- */
 public class Artist {
 
 	private Socket socket;
@@ -377,15 +346,12 @@ public class Artist {
 						} else {
 							// make a new whiteboard!
 							try {
-								System.out.println("making new board "
-										+ whiteboardName);
-								new Canvas(whiteboardName, IP, color, username,
-										true);
+                                System.out.println("making new board " + whiteboardName);
+                                new Canvas(whiteboardName, IP, color, username, true);
 								window.dispose();
 
 							} catch (Exception badConnection) {
-								JOptionPane.showMessageDialog(window,
-										"Invalid IP input!");
+                                JOptionPane.showMessageDialog(window, "Invalid IP input!");
 							}
 						}
 
@@ -395,7 +361,7 @@ public class Artist {
 						// canvas with that name
 						System.out.println("selecting board " + choice);
 						try {
-							new Canvas(whiteboardName, IP, color, choice, false);
+                            new Canvas(choice, IP, color, username, false);
 							window.dispose();
 						} catch (IOException e1) {
 							e1.printStackTrace();

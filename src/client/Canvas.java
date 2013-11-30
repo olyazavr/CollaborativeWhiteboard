@@ -118,7 +118,9 @@ public class Canvas extends JPanel {
             public void run() {
                 try (BufferedReader in = new BufferedReader(new InputStreamReader(socket.getInputStream()))) {
                     while (connected) {
-                        inQueue.put(in.readLine());
+                        String input = in.readLine();
+                        System.out.println(input);
+                        inQueue.put(input);
                     }
 
                 } catch (Exception e) {
@@ -370,14 +372,14 @@ public class Canvas extends JPanel {
                 String[] totalInput = inQueue.take().split(" PIXELS ");
                 String[] usersInput = totalInput[0].split(" ");
                 List<String> usersList = new ArrayList<String>();
-                Map<List<Integer>, Color> pixels = parsePixels(totalInput[1]);
+                Map<List<Integer>, Color> pixels = parseActions(totalInput[1]);
                 for (int i = 4; i < usersInput.length; ++i) {
                     usersList.add(usersInput[i]);
                 }
 
-                int red = new Integer(usersInput[1]);
-                int green = new Integer(usersInput[2]);
-                int blue = new Integer(usersInput[3]);
+                int red = new Integer(usersInput[0]);
+                int green = new Integer(usersInput[1]);
+                int blue = new Integer(usersInput[2]);
                 Color bg = new Color(red, green, blue);
 
                 return Arrays.asList(bg, usersList, pixels);
@@ -390,15 +392,14 @@ public class Canvas extends JPanel {
     }
 
     /**
-     * Converts a string of x, y, r, g, b ... to a map of coordinates to colors
-     * (corresponding to pixels of color)
+     * Converts a string of x1 y1 x2 y2 stroke r g b... to
      * 
      * @param input
      *            X1 Y1 COLOR_R1 COLOR_G1 COLOR_B1 X2 Y2 COLOR_R2 COLOR_G2
      *            COLOR_B2
      * @return a map of (x,y) to Color
      */
-    private Map<List<Integer>, Color> parsePixels(String input) {
+    private Map<List<Integer>, Color> parseActions(String input) {
         String[] pixelsInput = input.split(" ");
         Map<List<Integer>, Color> pixels = new HashMap<List<Integer>, Color>();
         for (int i = 4; i < pixelsInput.length; i += 5) {
