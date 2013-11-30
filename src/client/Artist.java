@@ -63,6 +63,7 @@ import javax.swing.SwingUtilities;
  * (6) user leaves ("BYEUSER" USER_NAME)
  */
 public class Artist {
+
 	private Socket socket;
 	private final int port = 4444;
 	private List<String> whiteboards;
@@ -381,14 +382,14 @@ public class Artist {
 								new Canvas(whiteboardName, IP, color, username,
 										true);
 								window.dispose();
-								
+
 							} catch (Exception badConnection) {
 								JOptionPane.showMessageDialog(window,
 										"Invalid IP input!");
 							}
 						}
 
-					} else { 
+					} else {
 
 						// if the client chose an existing whiteboard make a
 						// canvas with that name
@@ -405,7 +406,7 @@ public class Artist {
 					// dayum dis is dumb-bitch-proof
 
 					// when log in is done close everythannggg
-					
+
 				} else {
 					JOptionPane
 							.showMessageDialog(window,
@@ -446,5 +447,4 @@ public class Artist {
 			}
 		});
 	}
-
 }

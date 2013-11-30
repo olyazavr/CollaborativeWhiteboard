@@ -90,15 +90,18 @@ public class WhiteboardServer {
      *            name of user, can't be empty
      * @param clientID
      *            id of client
-     * @return "USERS" list of users "PIXELS " list of pixels and their colors
+     * @return BG_RED BG_GREEN BG_BLUE "USERS" list of users "PIXELS " list of
+     *         pixels and their colors
      */
     private String selectWhiteboard(String boardName, String userName, int clientID) {
         names.put(clientID, userName);
+        Whiteboard board = whiteboards.get(boardName);
 
         // subscribe the client to whiteboard events
         whiteboardClients.get(boardName).add(clientID);
 
-        return "USERS " + listUsers(boardName) + " PIXELS " + createListOfPixels(boardName);
+        return board.getBackgroundColorString() + " USERS " + listUsers(boardName) + " PIXELS "
+                + createListOfPixels(boardName);
     }
 
     /**
@@ -357,9 +360,9 @@ public class WhiteboardServer {
      * 
      * (1) whiteboard names (WB_NAME WB_NAME...),
      * 
-     * (2)-(3) whiteboard specs ("USERS" USER_NAME USER_NAME... "PIXELS" X1 Y1
-     * COLOR_R1 COLOR_G1 COLOR_B1 X2 Y2 COLOR_R2 COLOR_G2 COLOR_B2...) to new
-     * client, ("NEWUSER" USER_NAME) to others,
+     * (3) whiteboard specs (BG_RED BG_GREEN BG_BLUE "USERS" USER_NAME
+     * USER_NAME... "PIXELS" X1 Y1 COLOR_R1 COLOR_G1 COLOR_B1 X2 Y2 COLOR_R2
+     * COLOR_G2 COLOR_B2...) to new client, ("NEWUSER" USER_NAME) to others,
      * 
      * (4) new draw actions by others ("DRAW" ARTSY_METER STROKE X Y COLOR_R
      * COLOR_G COLOR_B),
