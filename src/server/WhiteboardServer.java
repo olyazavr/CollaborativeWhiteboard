@@ -197,7 +197,6 @@ public class WhiteboardServer {
      */
     private String draw(String boardName, int stroke, int x, int y, int red, int green, int blue) {
         Whiteboard board = whiteboards.get(boardName);
-        List<Integer> color = Arrays.asList(red, green, blue);
         int width = stroke / 2; // integer division
 
         // search for width around the x,y center

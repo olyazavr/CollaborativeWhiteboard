@@ -14,6 +14,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import javax.swing.ButtonGroup;
 import javax.swing.DefaultComboBoxModel;
 import javax.swing.GroupLayout;
 import javax.swing.GroupLayout.Group;
@@ -24,6 +25,7 @@ import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
+import javax.swing.JRadioButton;
 import javax.swing.JTextField;
 import javax.swing.SwingUtilities;
 
@@ -59,22 +61,25 @@ import javax.swing.SwingUtilities;
  * (6) user leaves ("BYEUSER" USER_NAME)
  */
 public class Artist {
-    private final Socket socket;
+    private Socket socket;
     private final int port = 4444;
-    private final List<String> whiteboards;
+    private List<String> whiteboards;
     // always send the server the whiteboard name
     // private final String whiteboardName;
     private String username;
     private String IP;
 
+    private final JLabel IPprompt;
+    private final JRadioButton localhost;
+    private final JRadioButton otherIP;
+    private final JTextField enterIP;
+    private final ButtonGroup ipButtonGroup;
+    private final JButton connect;
+
     private final JLabel usernamePrompt;
     private final JTextField enterUsername;
     private final JLabel board;
     private final JComboBox<String> newBoard;
-
-    private final JLabel IPprompt;
-    private final JTextField enterIP;
-    private final JButton localhost;
 
     private final JLabel whiteboardPrompt;
     private final JTextField whiteboardNamer;
@@ -84,42 +89,29 @@ public class Artist {
 
     private Color color;
     private final JButton GO;
-
     private final JFrame window;
 
     public Artist() throws UnknownHostException, IOException {
-        String ip = "localhost";
-        socket = new Socket(ip, port);
-
         // Create a log-in screen
         this.window = new JFrame("Login");
         this.window.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 
-        // Initiating labels, textfields, etc
-        usernamePrompt = new JLabel();
-        usernamePrompt.setName("usernamePrompt");
-        usernamePrompt.setText("Pick a username: ");
+        IPprompt = new JLabel("Enter IP address: ");
+        localhost = new JRadioButton("localhost", true);
+        otherIP = new JRadioButton();
+        ipButtonGroup = new ButtonGroup();
+        ipButtonGroup.add(localhost);
+        ipButtonGroup.add(otherIP);
+        // default width so it doesn't get shat on by the fatass button
+        enterIP = new JTextField(10);
+        connect = new JButton("Connect!");
 
+        usernamePrompt = new JLabel("Pick a username:");
         enterUsername = new JTextField();
-
-        board = new JLabel();
-        board.setText("Choose/create a board: ");
+        board = new JLabel("Choose/create a board: ");
 
         // The dropdown list to choose a whiteboard is a combobox
-        DefaultComboBoxModel<String> whiteboardCombo = new DefaultComboBoxModel<String>();
-
-        // get whiteboard names from server
-        whiteboards = getWhiteboards();
-
-        // default option (first thing) is a new board
-        whiteboardCombo.addElement("New whiteboard");
-
-        // add all whiteboard names!
-        for (String board : whiteboards) {
-            whiteboardCombo.addElement(board);
-        }
-
-        newBoard = new JComboBox<String>(whiteboardCombo);
+        newBoard = new JComboBox<String>();
 
         // If they want a new board, prompt them to pick name and background
         // color
@@ -137,15 +129,9 @@ public class Artist {
         colors.addElement("Custom...");
 
         bgColorPicker = new JComboBox<String>(colors);
+        bgColorPicker.setSelectedIndex(1); // white is default
 
-        IPprompt = new JLabel("Enter IP address: ");
-        localhost = new JButton("Use localhost");
-
-        // default width so it doesn't get shat on by the fatass button
-        enterIP = new JTextField(10);
-
-        GO = new JButton();
-        GO.setText("Go!");
+        GO = new JButton("Go!");
 
         // use GroupLayout
         GroupLayout layout = new GroupLayout(window.getContentPane());
@@ -153,17 +139,20 @@ public class Artist {
         layout.setAutoCreateContainerGaps(true);
         this.window.setLayout(layout);
 
+        // can't enter anything until IP is selected
+        toggleWhiteboardSelection(false);
+
         // draw all the shits
-        Group row1 = layout.createSequentialGroup().addComponent(usernamePrompt)
+        Group row1 = layout.createSequentialGroup().addComponent(IPprompt).addComponent(localhost)
+                .addComponent(otherIP).addComponent(enterIP).addComponent(connect);
+        Group row2 = layout.createSequentialGroup().addComponent(usernamePrompt)
                 .addComponent(enterUsername);
-        Group row2 = layout.createSequentialGroup().addComponent(board)
+        Group row3 = layout.createSequentialGroup().addComponent(board)
                 .addComponent(newBoard);
-        Group row3 = layout.createSequentialGroup()
+        Group row4 = layout.createSequentialGroup()
                 .addComponent(whiteboardPrompt)
                 .addComponent(whiteboardNamer).addComponent(bgColorPrompt)
                 .addComponent(bgColorPicker);
-        Group row4 = layout.createSequentialGroup().addComponent(IPprompt)
-                .addComponent(enterIP).addComponent(localhost);
         Group row5 = layout.createSequentialGroup().addComponent(GO);
 
         Group horizontal = layout.createSequentialGroup();
@@ -173,15 +162,15 @@ public class Artist {
 
         layout.setHorizontalGroup(horizontal);
 
-        Group ver1 = layout.createParallelGroup().addComponent(usernamePrompt)
+        Group ver1 = layout.createParallelGroup().addComponent(IPprompt).addComponent(localhost)
+                .addComponent(otherIP).addComponent(enterIP).addComponent(connect);
+        Group ver2 = layout.createParallelGroup().addComponent(usernamePrompt, 0, 25, Integer.MAX_VALUE)
                 .addComponent(enterUsername);
-        Group ver2 = layout.createParallelGroup().addComponent(board)
+        Group ver3 = layout.createParallelGroup().addComponent(board)
                 .addComponent(newBoard);
-        Group ver3 = layout.createParallelGroup().addComponent(whiteboardPrompt)
+        Group ver4 = layout.createParallelGroup().addComponent(whiteboardPrompt)
                 .addComponent(whiteboardNamer).addComponent(bgColorPrompt)
                 .addComponent(bgColorPicker);
-        Group ver4 = layout.createParallelGroup().addComponent(IPprompt)
-                .addComponent(enterIP).addComponent(localhost);
         Group ver5 = layout.createParallelGroup().addComponent(GO);
 
         Group vertical = layout.createSequentialGroup();
@@ -192,21 +181,41 @@ public class Artist {
         this.window.pack();
 
         addListeners();
+    }
+
+    /**
+     * Toggles whether or not the rest of the whiteboard selection elements
+     * (besides the IP) should be enabled. All of these should be disabled until
+     * a valid IP is entered.
+     * 
+     * @param enabled
+     *            whether or not the whiteboard selection elements should be
+     *            enabled
+     */
+    private void toggleWhiteboardSelection(boolean enabled) {
+        enterUsername.setEnabled(enabled);
+        newBoard.setEnabled(enabled);
+        whiteboardNamer.setEnabled(enabled);
+        bgColorPicker.setEnabled(enabled);
+        GO.setEnabled(enabled);
 
     }
 
     /**
      * Gets the whiteboard names (all unique) from the server to populate the
-     * drop-down menu
+     * drop-down menu, also add the names to the combo box model, setting that
+     * model for the drop down menu
      * 
-     * @return a list of names of the whiteboards
      * @throws IOException
      */
-    private List<String> getWhiteboards() throws IOException {
-        List<String> whiteboards = new ArrayList<String>();
+    private void getWhiteboards() throws IOException {
+        whiteboards = new ArrayList<String>();
         // try with multiple resources! this is so hot
         try (BufferedReader in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
                 PrintWriter out = new PrintWriter(socket.getOutputStream(), true)) {
+
+            DefaultComboBoxModel<String> whiteboardCombo = new DefaultComboBoxModel<String>();
+            whiteboardCombo.addElement("New whiteboard");
 
             // send initial hello to get whiteboards
             out.println("HELLO");
@@ -214,11 +223,14 @@ public class Artist {
             // retrieve the list of whiteboard names
             String[] input = in.readLine().split(" ");
 
+            // add to the list and combobox
             for (int i = 0; i < input.length; ++i) {
                 whiteboards.add(input[i]);
+                whiteboardCombo.addElement(input[i]);
             }
+
+            newBoard.setModel(whiteboardCombo);
         }
-        return whiteboards;
     }
 
     /**
@@ -247,17 +259,47 @@ public class Artist {
     }
 
     /**
+     * Toggle whether or not the user can see new whiteboard UI elements (if the
+     * user is creating a whiteboard, these should be visible, otherwise they
+     * should not)
+     * 
+     * @param visible
+     *            whether or not the new whiteboard UI stuff should be visible
+     */
+    private void toggleNewWhiteboard(boolean visible) {
+        whiteboardPrompt.setVisible(visible);
+        whiteboardNamer.setVisible(visible);
+        bgColorPrompt.setVisible(visible);
+        bgColorPicker.setVisible(visible);
+        window.pack();
+    }
+
+    /**
      * Adds all the listeners to UI objects
      */
     private void addListeners() {
-        // the localhost button sets the text to local host, parse later
-        localhost.addActionListener(new ActionListener() {
-
+        // connect with the IP given, get whiteboards
+        connect.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                enterIP.setText("localhost");
-            }
+                // get the IP
+                if (localhost.isSelected()) {
+                    IP = "localhost";
+                } else {
+                    IP = enterIP.getText();
+                }
 
+                // try to get whiteboard names from server, enable everything
+                // else if succeed
+                try {
+                    socket = new Socket(IP, port);
+                    getWhiteboards();
+                    toggleWhiteboardSelection(true);
+                } catch (IOException notValidIP) {
+                    JOptionPane.showMessageDialog(window,
+                            "Please enter a valid IP address and try again");
+                }
+            }
         });
 
         // select new whiteboard or create whiteboard
@@ -265,19 +307,10 @@ public class Artist {
             @Override
             public void actionPerformed(ActionEvent e) {
                 String choice = (String) newBoard.getSelectedItem();
-                if (!choice.equals("New whiteboard")) {
-                    // TODO: find some way to hide the shits without making
-                    // all the objects realign
-                    whiteboardPrompt.setVisible(false);
-                    whiteboardNamer.setVisible(false);
-                    bgColorPrompt.setVisible(false);
-                    bgColorPicker.setVisible(false);
+                if (choice.equals("New whiteboard")) {
+                    toggleNewWhiteboard(true);
                 } else {
-                    // if they are a dumbass and cant make up their mind
-                    whiteboardPrompt.setVisible(true);
-                    whiteboardNamer.setVisible(true);
-                    bgColorPrompt.setVisible(true);
-                    bgColorPicker.setVisible(true);
+                    toggleNewWhiteboard(false);
                 }
             }
 
@@ -294,7 +327,6 @@ public class Artist {
                             "Choose a color", color);
 
                 } else {
-
                     // get the chosen color object from the map
                     color = colorMap.get(bgColor);
                 }
@@ -311,8 +343,6 @@ public class Artist {
                 // empty usernames lolz
                 if (!enterUsername.getText().isEmpty() && !enterIP.getText().isEmpty()) {
                     username = enterUsername.getText();
-                    IP = enterIP.getText();
-
                     // see what they chose
                     String choice = (String) newBoard.getSelectedItem();
 
@@ -322,7 +352,6 @@ public class Artist {
                             if (whiteboards.contains(whiteboardNamer.getText())) {
                                 JOptionPane.showMessageDialog(window,
                                         "That whiteboard name is taken. Please choose a different one!");
-
                             } else {
                                 // make a new whiteboard!
                                 System.out.println("NEW "
