@@ -250,9 +250,7 @@ public class WhiteboardServer {
     public void serve() throws IOException {
         while (true) {
             // block until a client connects
-            System.out.println("waiting");
             final Socket socket = serverSocket.accept();
-            System.out.println("got one!");
             final int clientID = clientIDCounter.getAndIncrement();
             queues.put(clientID, new LinkedBlockingQueue<String>());
 
@@ -295,7 +293,6 @@ public class WhiteboardServer {
     private void handleInput(Socket socket, int clientID) {
         // try with resources!
         try (BufferedReader in = new BufferedReader(new InputStreamReader(socket.getInputStream()))) {
-            System.out.println("trying to read in");
             for (String line = in.readLine(); line != null; line = in.readLine()) {
                 System.out.println("read in " + line);
                 handleRequest(line, clientID);

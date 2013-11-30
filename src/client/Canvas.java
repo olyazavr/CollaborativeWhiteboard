@@ -25,10 +25,11 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import java.net.Socket;
+import java.net.UnknownHostException;
 
 import javax.imageio.ImageIO;
-import javax.swing.BoxLayout;
 import javax.swing.BorderFactory;
+import javax.swing.BoxLayout;
 import javax.swing.JButton;
 import javax.swing.JColorChooser;
 import javax.swing.JFrame;
@@ -36,7 +37,6 @@ import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JSlider;
 import javax.swing.JTable;
-import javax.swing.SwingUtilities;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 
@@ -48,6 +48,10 @@ import javax.swing.event.ChangeListener;
  * on it freehand, with the mouse.
  */
 public class Canvas extends JPanel {
+    private static final long serialVersionUID = 1L;
+    private final int port = 4444; // default port
+    private final Socket socket;
+
     // image where the user's drawing is stored
     private Image drawingBuffer;
     private static Color color = Color.BLACK;
@@ -55,6 +59,7 @@ public class Canvas extends JPanel {
     private static int stroke = 3;
     private static int userStroke = 3;
     private static boolean erasing = false;
+
     private final int BUTTON_WIDTH = 100;
     private final int BUTTON_HEIGHT = 50;
     private final int TABLE_WIDTH = 180;
@@ -69,27 +74,10 @@ public class Canvas extends JPanel {
     private final int SIDE_PANEL_WIDTH = 200;
     private final int SIDE_PANEL_HEIGHT = 600;
     private final Color MIT = new Color(163, 31, 52);
-    private final Socket socket;
-    
-    
-    /**
-     * Make a canvas.
-     * @param width width in pixels
-     * @param height height in pixels
-     */
-    public Canvas(int width, int height) {
-        // to appease the java gods
-        socket = null;
-        this.setPreferredSize(new Dimension(width, height));
-        addDrawingController();
-        // note: we can't call makeDrawingBuffer here, because it only
-        // works *after* this canvas has been added to a window.  Have to
-        // wait until paintComponent() is first called.
-    }
-    
-    public Canvas(String boardNumber, final Socket socket) {
-        // Connection socket
-        this.socket = socket;
+
+    public Canvas(String boardName, String IP, Color bgColor, String userName, boolean newWhiteboard)
+            throws UnknownHostException, IOException {
+        socket = new Socket(IP, port);
         
         // Thread that connects to the server
         Thread userCommunication = new Thread(new Runnable() {
@@ -107,13 +95,14 @@ public class Canvas extends JPanel {
         });
         
         // Main Window creation
-        JFrame window = new JFrame("Whiteboard #" + boardNumber);
+        JFrame window = new JFrame("Whiteboard: " + boardName);
         window.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         BorderLayout windowLayout = new BorderLayout();
         window.setLayout(windowLayout);
         
         // Container and Canvas creation
-        Canvas canvas = new Canvas(800, 600);
+        this.setPreferredSize(new Dimension(800, 600));
+        addDrawingController();
         JPanel sidePanel = new JPanel();
         JPanel paintButtonContainer = new JPanel();
         JPanel eraserButtonContainer = new JPanel();
@@ -287,7 +276,7 @@ public class Canvas extends JPanel {
         BoxLayout panelLayout = new BoxLayout(sidePanel, BoxLayout.Y_AXIS);
         BoxLayout pButtonLayout = new BoxLayout(paintButtonContainer, BoxLayout.Y_AXIS);
         BoxLayout eButtonLayout = new BoxLayout(eraserButtonContainer, BoxLayout.Y_AXIS);
-        window.add(canvas, BorderLayout.WEST);
+        window.add(this, BorderLayout.WEST);
         window.add(sidePanel, BorderLayout.EAST);
         playerList.setFillsViewportHeight(true);
         playerList.setTableHeader(null);
@@ -339,7 +328,7 @@ public class Canvas extends JPanel {
         Dimension tableDimension = new Dimension(TABLE_WIDTH, TABLE_HEIGHT);
         Dimension sidePanelDimension = new Dimension(SIDE_PANEL_WIDTH, SIDE_PANEL_HEIGHT);
         window.setSize(WINDOW_WIDTH, WINDOW_HEIGHT);
-        canvas.setSize(CANVAS_WIDTH,  CANVAS_HEIGHT);
+        this.setSize(CANVAS_WIDTH, CANVAS_HEIGHT);
         sidePanel.setPreferredSize(sidePanelDimension);
         sidePanel.setBorder(BorderFactory.createEmptyBorder(20, 5, 20, 5));
         colorPallet.setMaximumSize(new Dimension(200, 100));
@@ -522,10 +511,10 @@ public class Canvas extends JPanel {
      */
     public static void main(String[] args) {
         // set up the UI (on the event-handling thread)
-        SwingUtilities.invokeLater(new Runnable() {
-            public void run() {
-                Canvas canvas = new Canvas("Unknown", new Socket());
-            }
-        });
+        // SwingUtilities.invokeLater(new Runnable() {
+        // public void run() {
+        // Canvas canvas = new Canvas("Unknown", new Socket());
+        // }
+        // });
     }
 }

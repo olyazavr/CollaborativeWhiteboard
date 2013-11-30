@@ -185,20 +185,24 @@ public class Artist {
 
     /**
      * Toggles whether or not the rest of the whiteboard selection elements
-     * (besides the IP) should be enabled. All of these should be disabled until
-     * a valid IP is entered.
+     * (besides the IP) should be visible. All of these should be invisible
+     * until a valid IP is entered.
      * 
-     * @param enabled
+     * @param visible
      *            whether or not the whiteboard selection elements should be
-     *            enabled
+     *            visible
      */
-    private void toggleWhiteboardSelection(boolean enabled) {
-        enterUsername.setEnabled(enabled);
-        newBoard.setEnabled(enabled);
-        whiteboardNamer.setEnabled(enabled);
-        bgColorPicker.setEnabled(enabled);
-        GO.setEnabled(enabled);
-
+    private void toggleWhiteboardSelection(boolean visible) {
+        usernamePrompt.setVisible(visible);
+        enterUsername.setVisible(visible);
+        board.setVisible(visible);
+        newBoard.setVisible(visible);
+        whiteboardPrompt.setVisible(visible);
+        whiteboardNamer.setVisible(visible);
+        bgColorPicker.setVisible(visible);
+        bgColorPrompt.setVisible(visible);
+        GO.setVisible(visible);
+        this.window.pack();
     }
 
     /**
@@ -341,39 +345,30 @@ public class Artist {
             public void actionPerformed(ActionEvent e) {
                 // make sure the client doesn't try to do stupid stuff like
                 // empty usernames lolz
-                if (!enterUsername.getText().isEmpty() && !enterIP.getText().isEmpty()) {
-                    username = enterUsername.getText();
+                username = enterUsername.getText();
+                if (!username.isEmpty()) {
                     // see what they chose
                     String choice = (String) newBoard.getSelectedItem();
+                    String whiteboardName = whiteboardNamer.getText();
 
                     try {
                         if (choice.equals("New whiteboard")) {
                             // if the name has already been taken
-                            if (whiteboards.contains(whiteboardNamer.getText())) {
+                            if (whiteboards.contains(whiteboardName)) {
                                 JOptionPane.showMessageDialog(window,
                                         "That whiteboard name is taken. Please choose a different one!");
                             } else {
                                 // make a new whiteboard!
-                                System.out.println("NEW "
-                                        + whiteboardNamer.getText()
-                                        + " " + color.getRed() + " "
-                                        + color.getGreen() + " "
-                                        + color.getBlue() + username);
-                                // TODO: initialize background color
-                                // stuffs
-
+                                System.out.println("making new board " + whiteboardName);
+                                new Canvas(whiteboardName, IP, color, username, true);
                             }
 
                         } else {
                             // if the client chose an existing whiteboard make a
                             // canvas with that name
-                            System.out.println("SELECT" + whiteboardNamer.getText());
+                            System.out.println("selecting board " + choice);
+                            new Canvas(whiteboardName, IP, color, choice, false);
                         }
-
-                        // TODO: this doesn't actually work lolz
-                        // Canvas canvas = new Canvas(whiteboardNamer.getText(),
-                        // socket);
-
                         // Catch invalid inputs
                         // dayum dis is dumb-bitch-proof
                     } catch (Exception badConnection) {
