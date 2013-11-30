@@ -97,7 +97,7 @@ public class WhiteboardTest {
 	}
 
 	@Test
-	public void MITColorTest() {
+	public void MITColorTest1() {
 		blackrgb.add(0);
 		blackrgb.add(0);
 		blackrgb.add(0);
@@ -111,6 +111,18 @@ public class WhiteboardTest {
 		assertTrue(MITboard.createListOfPixels().charAt(1) == ' ');
 		assertEquals(boardArray[7], "0");
 
+	}
+	@Test
+	public void MITColorTest2() {
+		blackrgb.add(0);
+		blackrgb.add(0);
+		blackrgb.add(0);
+		
+		MITcolor.add(MIT.getRed());
+		MITcolor.add(MIT.getGreen());
+		MITcolor.add(MIT.getBlue());
+		
+		final Whiteboard MITboard = new Whiteboard("MIT", blackrgb);
 		MITboard.setBackgroundColor(MIT.getRed(), MIT.getGreen(), MIT.getBlue());
 
 		assertEquals(MITboard.getColor(0, 0), MITcolor);
@@ -125,6 +137,7 @@ public class WhiteboardTest {
 		assertEquals(MITarray[12], "163");
 		assertEquals(MITarray[13], "31");
 		assertEquals(MITarray[14], "52");
+		
+		
 	}
-
 }
