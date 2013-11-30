@@ -91,7 +91,15 @@ public class Whiteboard {
         color.add(blue);
 
         Whiteboard.colormap.put(coords, color);
+    }
 
+    /**
+     * Gets the background color as a string
+     * 
+     * @return red green blue values of the background
+     */
+    public String getBackgroundColorString() {
+        return bg.get(0) + " " + bg.get(1) + " " + bg.get(2);
     }
 
     /**

@@ -87,7 +87,7 @@ public class Artist {
     private final JComboBox<String> bgColorPicker;
     private final Map<String, Color> colorMap;
 
-    private Color color;
+    private Color color = Color.WHITE;
     private final JButton GO;
     private final JFrame window;
 
@@ -367,7 +367,7 @@ public class Artist {
                             // if the client chose an existing whiteboard make a
                             // canvas with that name
                             System.out.println("selecting board " + choice);
-                            new Canvas(whiteboardName, IP, color, choice, false);
+                            new Canvas(choice, IP, null, username, false);
                         }
                         // Catch invalid inputs
                         // dayum dis is dumb-bitch-proof
