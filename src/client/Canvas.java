@@ -438,6 +438,7 @@ public class Canvas extends JPanel {
                 // "NEW" WB_NAME COLOR_R COLOR_G COLOR_B USER_NAME
                 outQueue.put("NEW " + name + " " + bgColor.getRed() + " " + bgColor.getGreen() + " "
                         + bgColor.getBlue() + " " + user);
+                addRemoveUsers(user, true); // add user
                 fillWithChoice();
                 
             } else {
