@@ -643,7 +643,9 @@ public class Canvas extends JPanel {
      * 
      * (2) change whiteboard bg color ("BG" COLOR_R COLOR_G COLOR_B),
      * 
-     * (3) user leaves ("BYEUSER" USER_NAME)
+     * (3) user enters ("NEWUSER" USER_NAME)
+     * 
+     * (4) user leaves ("BYEUSER" USER_NAME)
      * 
      * @param input
      *            the server's request
@@ -670,12 +672,18 @@ public class Canvas extends JPanel {
             return;
         }
 
+        // user enters
+        // "NEWUSER" USER_NAME
+        if (inputSplit[0].equals("NEWUSER")) {
+            String userName = inputSplit[1];
+            addRemoveUsers(userName, true);
+            return;
+        }
+
         // user leaves
         // "BYEUSER" USER_NAME
         if (inputSplit[0].equals("BYEUSER")) {
             String userName = inputSplit[1];
-
-            // find the user, remove them
             addRemoveUsers(userName, false);
             return;
         }
