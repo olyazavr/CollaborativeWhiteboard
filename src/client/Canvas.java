@@ -19,6 +19,8 @@ import java.awt.event.ActionListener;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import java.awt.event.MouseMotionListener;
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
@@ -44,6 +46,7 @@ import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JSlider;
 import javax.swing.JTable;
+import javax.swing.SwingUtilities;
 import javax.swing.table.DefaultTableModel;
 
 /**
@@ -107,7 +110,7 @@ public class Canvas extends JPanel {
         socket = new Socket(IP, port);
         inQueue = new LinkedBlockingQueue<String>();
         outQueue = new LinkedBlockingQueue<String>();
-        playersModel = new DefaultTableModel();
+        playersModel = new DefaultTableModel(0, 1);
         this.name = boardName;
         this.bgColor = bgColor;
         this.user = userName;
@@ -118,8 +121,8 @@ public class Canvas extends JPanel {
         Thread inCommunication = new Thread(new Runnable() {
             public void run() {
                 try (BufferedReader in = new BufferedReader(new InputStreamReader(socket.getInputStream()))) {
-                    while (connected) {
-                        String input = in.readLine();
+                    String input;
+                    while ((input = in.readLine()) != null) {
                         System.out.println("canvas has read in " + input + " for user " + user);
 
                         // this is on init
@@ -129,6 +132,7 @@ public class Canvas extends JPanel {
                             handleRequest(input);
                         }
                     }
+                    connected = false;
 
                 } catch (Exception e) {
                     e.printStackTrace();
@@ -175,7 +179,6 @@ public class Canvas extends JPanel {
         final Button eraserButton = new Button("Erase!");
         final Label tableLabel = new Label("List of Artists:");
         final JTable playerList = new JTable(playersModel);
-
         final JScrollPane scrollList = new JScrollPane(playerList);
 
         // Color pallet buttons
@@ -206,6 +209,10 @@ public class Canvas extends JPanel {
         window.add(this, BorderLayout.WEST);
         window.add(sidePanel, BorderLayout.EAST);
         playerList.setFillsViewportHeight(true);
+        // don't display grid lines
+        playerList.setShowHorizontalLines(false);
+        playerList.setShowVerticalLines(false);
+        // this removes the headers
         playerList.setTableHeader(null);
         strokeSlider.setMajorTickSpacing(1);
         strokeSlider.setPaintTicks(true);
@@ -262,6 +269,20 @@ public class Canvas extends JPanel {
 
         window.setResizable(false);
         window.setVisible(true);
+
+        // on close, make sure we tell the server
+        window.addWindowListener(new WindowAdapter()
+        {
+            @Override
+            public void windowClosing(WindowEvent e)
+            {
+                try {
+                    outQueue.put("BYE " + name + " " + user);
+                } catch (InterruptedException e1) {
+                    e1.printStackTrace();
+                }
+            }
+        });
 
     }
 
@@ -331,6 +352,36 @@ public class Canvas extends JPanel {
     }
 
     /**
+     * Add or remove a user from the UI
+     * 
+     * @param userName
+     *            user to add/remove
+     * @param add
+     *            true to add, false to remove
+     */
+    private void addRemoveUsers(final String userName, final boolean add) {
+        SwingUtilities.invokeLater(new Runnable() {
+
+            @Override
+            public void run() {
+                if (add) {
+                    String[] row = new String[1];
+                    row[0] = userName;
+                    playersModel.addRow(row);
+                } else {
+                    for (int i = 0; i < playersModel.getRowCount(); ++i) {
+                        if (userName.equals(playersModel.getValueAt(i, 0))) {
+                            playersModel.removeRow(i);
+                            break;
+                        }
+                    }
+                }
+
+            }
+        });
+    }
+
+    /**
      * Send the server the message to create/select a whiteboard, if it's a new
      * whiteboard, nothing is returned, if it's an existing one, set the bg
      * color and users list and draw the actions.
@@ -368,10 +419,7 @@ public class Canvas extends JPanel {
 
                 // add users to the playersModel
                 for (int i = 5; i < usersInput.length; ++i) {
-                    String[] row = new String[1];
-                    row[0] = usersInput[i];
-                    playersModel.addRow(row);
-
+                    addRemoveUsers(usersInput[i], true);
                 }
             }
         } catch (InterruptedException e) {
@@ -628,12 +676,7 @@ public class Canvas extends JPanel {
             String userName = inputSplit[1];
 
             // find the user, remove them
-            for (int i = 0; i < playersModel.getRowCount(); ++i) {
-                if (userName.equals(playersModel.getValueAt(i, 0))) {
-                    playersModel.removeRow(i);
-                    break;
-                }
-            }
+            addRemoveUsers(userName, false);
             return;
         }
 

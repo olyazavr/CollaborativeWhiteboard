@@ -208,8 +208,8 @@ public class WhiteboardServer {
         board.addAction(x1, y1, x2, y2, stroke, red, green, blue);
         int artsy = board.calculateArtsy();
 
-        return "DRAW " + artsy + " " + x1 + " " + y1 + " " + x2 + " " + y2 + " " + stroke + " " + red + " " + blue
-                + " " + green;
+        return "DRAW " + artsy + " " + x1 + " " + y1 + " " + x2 + " " + y2 + " " + stroke + " " + red + " " + green
+                + " " + blue;
     }
 
     /**
@@ -314,11 +314,9 @@ public class WhiteboardServer {
     private void handleOutput(Socket socket, int clientID) {
         // try with resources!
         try (PrintWriter out = new PrintWriter(socket.getOutputStream(), true)) {
-            String response = "";
-
-            while (!"BYE".equals(response)) {
+            String response;
+            while (!(response = queues.get(clientID).take()).equals("BYE")) {
                 // take the latest output, deliver it
-                response = queues.get(clientID).take();
                 System.out.println("got response " + response);
 
                 if (!response.isEmpty()) {
