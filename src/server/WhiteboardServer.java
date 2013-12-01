@@ -99,8 +99,7 @@ public class WhiteboardServer {
 
         // subscribe the client to whiteboard events
         whiteboardClients.get(boardName).add(clientID);
-        // TODO: int artsy = board.getArtsy();
-        int artsy = 5;
+        int artsy = board.calculateArtsy();
 
         return board.getBackgroundColorString() + " " + artsy + " USERS " + listUsers(boardName) + " ACTIONS "
                 + createListOfActions(boardName);
@@ -207,8 +206,7 @@ public class WhiteboardServer {
     private String draw(String boardName, int x1, int y1, int x2, int y2, int stroke, int red, int green, int blue) {
         Whiteboard board = whiteboards.get(boardName);
         board.addAction(x1, y1, x2, y2, stroke, red, green, blue);
-        // TODO: int artsy = board.getArtsy();
-        int artsy = 5;
+        int artsy = board.calculateArtsy();
 
         return "DRAW " + artsy + " " + x1 + " " + y1 + " " + x2 + " " + y2 + " " + stroke + " " + red + " " + blue
                 + " " + green;
