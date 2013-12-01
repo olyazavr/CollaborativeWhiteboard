@@ -28,9 +28,7 @@ import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import java.net.Socket;
 import java.net.UnknownHostException;
-import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.concurrent.BlockingQueue;
@@ -55,6 +53,16 @@ import javax.swing.table.DefaultTableModel;
 /**
  * Canvas represents a drawing surface that allows the user to draw on it
  * freehand, with the mouse.
+ * 
+ * This is threadsafe because the Artist that also holds on to instances of
+ * things passed to it in the constructor is destroyed after a Canvas is
+ * created. Thus, effectively nothing is shared between instances or classes.
+ * The threads created only share a socket, which is only used to get the output
+ * or input stream. To exchange information to and from the server, blocking
+ * queues are used, so that information is all processed in an orderly manner.
+ * Things are only ever drawn if/when a draw command is recieved from the
+ * server, so draw events are processed in the order they happen (no local
+ * drawing). All UI updates are handled in Swing's thread.
  */
 public class Canvas extends JPanel {
     private static final long serialVersionUID = 1L;
@@ -69,10 +77,16 @@ public class Canvas extends JPanel {
     private int stroke = 3;
     private int prevStroke = 3;
     private boolean erasing = false;
+
     private final String name;
     private final String user;
     private final boolean newWhiteboard;
+    private final BlockingQueue<String> inQueue;
+    private final BlockingQueue<String> outQueue;
+    private boolean connected = true;
+
     private final DefaultTableModel playersModel;
+    private final JFrame window;
 
     private final int BUTTON_WIDTH = 100;
     private final int BUTTON_HEIGHT = 50;
@@ -109,10 +123,6 @@ public class Canvas extends JPanel {
     private final JButton buttonPink;
     private final JButton buttonCyan;
     private final JButton buttonMore;
-
-    private final BlockingQueue<String> inQueue;
-    private final BlockingQueue<String> outQueue;
-    private boolean connected = true;
 
     public Canvas(String boardName, String IP, Color bgColor, String userName, boolean newWhiteboard)
             throws UnknownHostException, IOException {
@@ -168,7 +178,7 @@ public class Canvas extends JPanel {
         outCommunication.start();
 
         // Main Window creation
-        JFrame window = new JFrame("Whiteboard: " + boardName);
+        window = new JFrame("Whiteboard: " + boardName);
         window.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         BorderLayout windowLayout = new BorderLayout();
         window.setLayout(windowLayout);
@@ -221,11 +231,11 @@ public class Canvas extends JPanel {
         window.add(artsyMeter, BorderLayout.SOUTH);
         window.add(sidePanel, BorderLayout.EAST);
         playerList.setFillsViewportHeight(true);
-        
+
         // don't display grid lines
         playerList.setShowHorizontalLines(false);
         playerList.setShowVerticalLines(false);
-        
+
         // this removes the headers
         playerList.setTableHeader(null);
         strokeSlider.setMajorTickSpacing(1);
@@ -271,7 +281,7 @@ public class Canvas extends JPanel {
 
         try {
             segoe = Font.createFont(Font.TRUETYPE_FONT, new File("files/SEGOEUI.TTF"));
-            
+
         } catch (FontFormatException | IOException e1) {
             throw new RuntimeException("files/SEGOEUI.TTF has been either tampered or removed");
         }
@@ -285,20 +295,7 @@ public class Canvas extends JPanel {
         window.setResizable(false);
         window.setVisible(true);
 
-        // on close, make sure we tell the server
-        window.addWindowListener(new WindowAdapter()
-        {
-            @Override
-            public void windowClosing(WindowEvent e)
-            {
-                try {
-                    outQueue.put("BYE " + name + " " + user);
-                } catch (InterruptedException e1) {
-                    e1.printStackTrace();
-                }
-            }
-        });
-
+        addListeners();
     }
 
     /**
@@ -364,7 +361,12 @@ public class Canvas extends JPanel {
                     color = JColorChooser.showDialog(new JPanel(), "Choose a color", color);
             }
         });
-        
+    }
+
+    /**
+     * Adds listeners to various UI elements
+     */
+    private void addListeners() {
         // adds listener to the slider
         strokeSlider.addChangeListener(new ChangeListener() {
             public void stateChanged(ChangeEvent e) {
@@ -372,7 +374,7 @@ public class Canvas extends JPanel {
                     stroke = strokeSlider.getValue();
             }
         });
-        
+
         // adds listener to the "DRAW!" button
         paintButton.addActionListener(new ActionListener() {
             public void actionPerformed(ActionEvent e) {
@@ -381,7 +383,7 @@ public class Canvas extends JPanel {
                 stroke = strokeSlider.getValue();
             }
         });
-        
+
         // adds button to the Eraser button
         eraserButton.addActionListener(new ActionListener() {
             public void actionPerformed(ActionEvent e) {
@@ -389,8 +391,66 @@ public class Canvas extends JPanel {
                     erasing = true;
                     prevColor = color;
                     prevStroke = stroke;
-                    color = Color.WHITE;
+                    color = bgColor;
                     stroke = 5 * prevStroke;
+                }
+            }
+        });
+
+        // on close, make sure we tell the server
+        window.addWindowListener(new WindowAdapter()
+        {
+            @Override
+            public void windowClosing(WindowEvent e)
+            {
+                try {
+                    outQueue.put("BYE " + name + " " + user);
+                } catch (InterruptedException e1) {
+                    e1.printStackTrace();
+                }
+            }
+        });
+    }
+
+    /**
+     * Sets the artsy meter and its string value in the UI
+     * 
+     * @param artsy
+     *            from 0-100, how artsy the whiteboard currently is
+     */
+    private void setArtsy(final int artsy) {
+        SwingUtilities.invokeLater(new Runnable() {
+
+            @Override
+            public void run() {
+                // sets the value of the artsy meter
+                artsyMeter.setIndeterminate(false);
+                artsyMeter.setValue(artsy);
+
+                // displays a message depending on the artsiness of the art
+                switch (artsy) {
+                case 0:
+                    artsyMeter.setString("GET ARTSIER!");
+                    break;
+
+                case 25:
+                    artsyMeter.setString("MAKE MORE ARTS!1!");
+                    break;
+
+                case 50:
+                    artsyMeter.setString("DAYUM, GURL, DEM ARTS");
+                    break;
+
+                case 75:
+                    artsyMeter.setString("LOLZ YOU DON'T GO HERE");
+                    break;
+
+                case 100:
+                    artsyMeter.setString("SO ART. MANY PERCENTAGES. WOW.");
+                    break;
+
+                default:
+                    break;
                 }
             }
         });
@@ -410,10 +470,9 @@ public class Canvas extends JPanel {
             @Override
             public void run() {
                 if (add) {
-                    String[] row = new String[1];
-                    row[0] = userName;
+                    String[] row = new String[] { userName };
                     playersModel.addRow(row);
-                    
+
                 } else {
                     for (int i = 0; i < playersModel.getRowCount(); ++i) {
                         if (userName.equals(playersModel.getValueAt(i, 0))) {
@@ -440,7 +499,7 @@ public class Canvas extends JPanel {
                         + bgColor.getBlue() + " " + user);
                 addRemoveUsers(user, true); // add user
                 fillWithChoice();
-                
+
             } else {
                 // "SELECT" WB_NAME USER_NAME
                 outQueue.put("SELECT " + name + " " + user);
@@ -450,13 +509,13 @@ public class Canvas extends JPanel {
                 // COLOR_B X1 Y1 X2 Y2 STROKE COLOR_R COLOR_G COLOR_B...
                 String[] totalInput = inQueue.take().split(" ACTIONS ");
                 String[] usersInput = totalInput[0].split(" ");
-                List<String> usersList = new ArrayList<String>();
 
                 int red = new Integer(usersInput[0]);
                 int green = new Integer(usersInput[1]);
                 int blue = new Integer(usersInput[2]);
                 int artsy = new Integer(usersInput[3]);
-                // TODO: artsy meter??
+
+                setArtsy(artsy);
                 bgColor = new Color(red, green, blue);
                 fillWithChoice();
 
@@ -492,34 +551,11 @@ public class Canvas extends JPanel {
         String[] pixelsInput = input.split(" ");
         for (int i = numOfItems; i < pixelsInput.length; i += numOfItems + 1) {
             int artsy = 0;
-            
+
             if (withArtsy) {
                 // sets artsy
                 artsy = new Integer(pixelsInput[i - 8]);
-                
-                // sets the value of the artsy meter
-                artsyMeter.setIndeterminate(false);
-                artsyMeter.setValue(artsy);
-
-                // displays a message depending on the artsiness of the art
-                switch (artsy) {
-                    case 0: artsyMeter.setString("GET ARTSIER!");
-                            break;
-                            
-                    case 25: artsyMeter.setString("MAKE MORE ARTS!1!");
-                            break;
-                            
-                    case 50: artsyMeter.setString("DAYUM, GURL, DEM ARTS");
-                            break;
-                            
-                    case 75: artsyMeter.setString("LOLZ YOU DON'T GO HERE");
-                            break;
-                            
-                    case 100: artsyMeter.setString("SO ART. MANY PERCENTAGES. WOW.");
-                            break;
-            
-                    default: break;
-                }
+                setArtsy(artsy);
             }
             int x1 = new Integer(pixelsInput[i - 7]);
             int y1 = new Integer(pixelsInput[i - 6]);
@@ -685,15 +721,20 @@ public class Canvas extends JPanel {
         }
 
         // Ignore all these other mouse events.
-        public void mouseMoved(MouseEvent e) { }
+        public void mouseMoved(MouseEvent e) {
+        }
 
-        public void mouseClicked(MouseEvent e) { }
+        public void mouseClicked(MouseEvent e) {
+        }
 
-        public void mouseReleased(MouseEvent e) { }
+        public void mouseReleased(MouseEvent e) {
+        }
 
-        public void mouseEntered(MouseEvent e) { }
+        public void mouseEntered(MouseEvent e) {
+        }
 
-        public void mouseExited(MouseEvent e) { }
+        public void mouseExited(MouseEvent e) {
+        }
     }
 
     /**

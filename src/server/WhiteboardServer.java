@@ -26,10 +26,10 @@ import java.util.concurrent.atomic.AtomicInteger;
  * Every client has two threads- one for input and one for output, and the only
  * shared information is a final socket and an atomic integer. The server knows
  * nothing about the GUI or the client, except for the messages the client
- * sends.
+ * sends. All modifications to queues or Whiteboards is locked on that queue or
+ * whiteboard.
  * 
- * Port is set to 4444 by default, and every whiteboard and client are given
- * unique ID numbers.
+ * Port is set to 4444 by default, and every client is given unique ID numbers.
  * 
  */
 public class WhiteboardServer {
@@ -73,10 +73,14 @@ public class WhiteboardServer {
      *            amount of green in bg (0-255)
      * @param blue
      *            amount of blue in bg (0-255)
+     * @return
      */
     private void createWhiteboard(String boardName, int red, int green, int blue) {
-        whiteboards.put(boardName, new Whiteboard(boardName, Arrays.asList(red, green, blue)));
-        whiteboardClients.put(boardName, new ArrayList<Integer>());
+        Whiteboard board = new Whiteboard(boardName, Arrays.asList(red, green, blue));
+        synchronized (board) {
+            whiteboards.put(boardName, board);
+            whiteboardClients.put(boardName, new ArrayList<Integer>());
+        }
     }
 
     /**
@@ -95,13 +99,21 @@ public class WhiteboardServer {
     private String selectWhiteboard(String boardName, String userName, int clientID) {
         names.put(clientID, userName);
         Whiteboard board = whiteboards.get(boardName);
+        int artsy;
+        String bg;
+        String users;
+        String actions;
 
         // subscribe the client to whiteboard events
         whiteboardClients.get(boardName).add(clientID);
-        int artsy = board.calculateArtsy();
+        synchronized (board) {
+            artsy = board.calculateArtsy();
+            bg = board.getBackgroundColorString();
+            users = listUsers(boardName);
+            actions = createListOfActions(boardName);
+        }
 
-        return board.getBackgroundColorString() + " " + artsy + " USERS " + listUsers(boardName) + " ACTIONS "
-                + createListOfActions(boardName);
+        return bg + " " + artsy + " USERS " + users + " ACTIONS " + actions;
     }
 
     /**
@@ -126,6 +138,7 @@ public class WhiteboardServer {
     private String listWhiteboards() {
         StringBuilder boards = new StringBuilder();
 
+        // iterating is not safe
         synchronized (whiteboards) {
             // make a default board
             if (whiteboards.isEmpty()) {
@@ -153,11 +166,13 @@ public class WhiteboardServer {
         StringBuilder users = new StringBuilder();
         List<Integer> clients = whiteboardClients.get(boardName);
 
-        // get all of the names associated with this whiteboard
-        for (Integer id : clients) {
-            users.append(names.get(id) + " ");
+        // iterating is not safe
+        synchronized (clients) {
+            // get all of the names associated with this whiteboard
+            for (Integer id : clients) {
+                users.append(names.get(id) + " ");
+            }
         }
-
         return users.toString().trim();
     }
 
@@ -175,7 +190,9 @@ public class WhiteboardServer {
      */
     private void changeBackgroundColor(String boardName, int red, int green, int blue) {
         Whiteboard board = whiteboards.get(boardName);
-        board.setBackgroundColor(red, green, blue);
+        synchronized (board) {
+            board.setBackgroundColor(red, green, blue);
+        }
     }
 
     /**
@@ -204,8 +221,12 @@ public class WhiteboardServer {
      */
     private String draw(String boardName, int x1, int y1, int x2, int y2, int stroke, int red, int green, int blue) {
         Whiteboard board = whiteboards.get(boardName);
-        board.addAction(x1, y1, x2, y2, stroke, red, green, blue);
-        int artsy = board.calculateArtsy();
+        int artsy;
+
+        synchronized (board) {
+            board.addAction(x1, y1, x2, y2, stroke, red, green, blue);
+            artsy = board.calculateArtsy();
+        }
 
         return "DRAW " + artsy + " " + x1 + " " + y1 + " " + x2 + " " + y2 + " " + stroke + " " + red + " " + green
                 + " " + blue;
@@ -224,12 +245,15 @@ public class WhiteboardServer {
      */
     private void putOnAllQueuesBut(int clientID, String boardName, String message) {
         List<Integer> clients = whiteboardClients.get(boardName);
-        for (int id : clients) {
-            if (clientID != id) {
-                try {
-                    queues.get(id).put(message);
-                } catch (InterruptedException e) {
-                    e.printStackTrace();
+        // iterating is not safe
+        synchronized (clients) {
+            for (int id : clients) {
+                if (clientID != id) {
+                    try {
+                        queues.get(id).put(message);
+                    } catch (InterruptedException e) {
+                        e.printStackTrace();
+                    }
                 }
             }
         }
@@ -266,10 +290,10 @@ public class WhiteboardServer {
                 @Override
                 public void run() {
                     handleOutput(socket, clientID);
-                    
+
                     try {
                         socket.close();
-                        
+
                     } catch (IOException e) {
                         e.printStackTrace();
                     }
