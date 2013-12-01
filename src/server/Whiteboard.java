@@ -80,8 +80,7 @@ public class Whiteboard {
 			int stroke, int red, int green, int blue) {
 		actions.addAll(Arrays.asList(x1, y1, x2, y2, stroke, red, green, blue));
 
-		List<Integer> used = new ArrayList<Integer>(Arrays.asList(red, green,
-				blue));
+		List<Integer> used = new ArrayList<Integer>(Arrays.asList(red, green, blue));
 		
 		// Won't change unusedColors if not in the list
 		
@@ -134,7 +133,7 @@ public class Whiteboard {
 	}
 
 	public int calculateArtsy() {
-		return (int) Math.round( 100* unusedColors.size()/(colors.length + 0.0));
+		return (int) Math.round( 100 * unusedColors.size() / (colors.length + 0.0));
 	}
 
 }

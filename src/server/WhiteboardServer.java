@@ -56,7 +56,6 @@ public class WhiteboardServer {
     public WhiteboardServer() throws IOException {
         serverSocket = new ServerSocket(port);
         whiteboards = Collections.synchronizedMap(new HashMap<String, Whiteboard>());
-
         clientIDCounter = new AtomicInteger(0);
         names = Collections.synchronizedMap(new HashMap<Integer, String>());
         queues = Collections.synchronizedMap(new HashMap<Integer, BlockingQueue<String>>());
@@ -267,8 +266,10 @@ public class WhiteboardServer {
                 @Override
                 public void run() {
                     handleOutput(socket, clientID);
+                    
                     try {
                         socket.close();
+                        
                     } catch (IOException e) {
                         e.printStackTrace();
                     }

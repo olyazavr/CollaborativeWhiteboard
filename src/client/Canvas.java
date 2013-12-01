@@ -43,10 +43,13 @@ import javax.swing.JButton;
 import javax.swing.JColorChooser;
 import javax.swing.JFrame;
 import javax.swing.JPanel;
+import javax.swing.JProgressBar;
 import javax.swing.JScrollPane;
 import javax.swing.JSlider;
 import javax.swing.JTable;
 import javax.swing.SwingUtilities;
+import javax.swing.event.ChangeEvent;
+import javax.swing.event.ChangeListener;
 import javax.swing.table.DefaultTableModel;
 
 /**
@@ -61,8 +64,10 @@ public class Canvas extends JPanel {
     // image where the user's drawing is stored
     private Image drawingBuffer;
     private Color color = Color.BLACK;
+    private Color prevColor = Color.BLACK;
     private Color bgColor;
     private int stroke = 3;
+    private int prevStroke = 3;
     private boolean erasing = false;
     private final String name;
     private final String user;
@@ -74,10 +79,10 @@ public class Canvas extends JPanel {
     private final int TABLE_WIDTH = 180;
     private final int TABLE_HEIGHT = 330;
     private final int SLIDER_MIN = 1;
-    private final int SLIDER_MAX = 5;
-    private final int SLIDER_INIT = 2;
+    private final int SLIDER_MAX = 10;
+    private final int SLIDER_INIT = 3;
     private final int WINDOW_WIDTH = 1010;
-    private final int WINDOW_HEIGHT = 600;
+    private final int WINDOW_HEIGHT = 620;
     private final int CANVAS_WIDTH = 800;
     private final int CANVAS_HEIGHT = 600;
     private final int SIDE_PANEL_WIDTH = 200;
@@ -85,6 +90,10 @@ public class Canvas extends JPanel {
     private final Color MIT = new Color(163, 31, 52);
 
     private final JPanel colorPallet;
+    private final JSlider strokeSlider;
+    private final JProgressBar artsyMeter;
+    private final Button eraserButton;
+    private final Button paintButton;
     private final JButton buttonBlack;
     private final JButton buttonDarkGray;
     private final JButton buttonGray;
@@ -165,8 +174,10 @@ public class Canvas extends JPanel {
         window.setLayout(windowLayout);
 
         // Container and Canvas creation
-        this.setPreferredSize(new Dimension(800, 600));
+        this.setPreferredSize(new Dimension(CANVAS_WIDTH, CANVAS_HEIGHT));
         addDrawingController();
+        artsyMeter = new JProgressBar(0, 100);
+        artsyMeter.setStringPainted(true);
         JPanel sidePanel = new JPanel();
         JPanel paintButtonContainer = new JPanel();
         JPanel eraserButtonContainer = new JPanel();
@@ -174,9 +185,9 @@ public class Canvas extends JPanel {
 
         // components of the side panel
         final Label sliderLabel = new Label("Stroke Size:");
-        final JSlider strokeSlider = new JSlider(SLIDER_MIN, SLIDER_MAX, SLIDER_INIT);
-        final Button paintButton = new Button("Draw!");
-        final Button eraserButton = new Button("Erase!");
+        strokeSlider = new JSlider(SLIDER_MIN, SLIDER_MAX, SLIDER_INIT);
+        paintButton = new Button("Draw!");
+        eraserButton = new Button("Erase!");
         final Label tableLabel = new Label("List of Artists:");
         final JTable playerList = new JTable(playersModel);
         final JScrollPane scrollList = new JScrollPane(playerList);
@@ -207,11 +218,14 @@ public class Canvas extends JPanel {
         BoxLayout pButtonLayout = new BoxLayout(paintButtonContainer, BoxLayout.Y_AXIS);
         BoxLayout eButtonLayout = new BoxLayout(eraserButtonContainer, BoxLayout.Y_AXIS);
         window.add(this, BorderLayout.WEST);
+        window.add(artsyMeter, BorderLayout.SOUTH);
         window.add(sidePanel, BorderLayout.EAST);
         playerList.setFillsViewportHeight(true);
+        
         // don't display grid lines
         playerList.setShowHorizontalLines(false);
         playerList.setShowVerticalLines(false);
+        
         // this removes the headers
         playerList.setTableHeader(null);
         strokeSlider.setMajorTickSpacing(1);
@@ -244,7 +258,7 @@ public class Canvas extends JPanel {
         window.setSize(WINDOW_WIDTH, WINDOW_HEIGHT);
         this.setSize(CANVAS_WIDTH, CANVAS_HEIGHT);
         sidePanel.setPreferredSize(sidePanelDimension);
-        sidePanel.setBorder(BorderFactory.createEmptyBorder(20, 5, 20, 5));
+        sidePanel.setBorder(BorderFactory.createEmptyBorder(20, 5, 10, 10));
         colorPallet.setMaximumSize(new Dimension(200, 100));
         paintButtonContainer.setBorder(BorderFactory.createEmptyBorder(25, 0, 12, 0));
         eraserButtonContainer.setBorder(BorderFactory.createEmptyBorder(13, 0, 25, 0));
@@ -257,6 +271,7 @@ public class Canvas extends JPanel {
 
         try {
             segoe = Font.createFont(Font.TRUETYPE_FONT, new File("files/SEGOEUI.TTF"));
+            
         } catch (FontFormatException | IOException e1) {
             throw new RuntimeException("files/SEGOEUI.TTF has been either tampered or removed");
         }
@@ -349,6 +364,36 @@ public class Canvas extends JPanel {
                     color = JColorChooser.showDialog(new JPanel(), "Choose a color", color);
             }
         });
+        
+        // adds listener to the slider
+        strokeSlider.addChangeListener(new ChangeListener() {
+            public void stateChanged(ChangeEvent e) {
+                if (!erasing)
+                    stroke = strokeSlider.getValue();
+            }
+        });
+        
+        // adds listener to the "DRAW!" button
+        paintButton.addActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent e) {
+                erasing = false;
+                color = prevColor;
+                stroke = strokeSlider.getValue();
+            }
+        });
+        
+        // adds button to the Eraser button
+        eraserButton.addActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent e) {
+                if (!erasing) {
+                    erasing = true;
+                    prevColor = color;
+                    prevStroke = stroke;
+                    color = Color.WHITE;
+                    stroke = 5 * prevStroke;
+                }
+            }
+        });
     }
 
     /**
@@ -368,6 +413,7 @@ public class Canvas extends JPanel {
                     String[] row = new String[1];
                     row[0] = userName;
                     playersModel.addRow(row);
+                    
                 } else {
                     for (int i = 0; i < playersModel.getRowCount(); ++i) {
                         if (userName.equals(playersModel.getValueAt(i, 0))) {
@@ -393,6 +439,7 @@ public class Canvas extends JPanel {
                 outQueue.put("NEW " + name + " " + bgColor.getRed() + " " + bgColor.getGreen() + " "
                         + bgColor.getBlue() + " " + user);
                 fillWithChoice();
+                
             } else {
                 // "SELECT" WB_NAME USER_NAME
                 outQueue.put("SELECT " + name + " " + user);
@@ -433,8 +480,7 @@ public class Canvas extends JPanel {
      * recieved
      * 
      * @param input
-     *            X1 Y1 X2 Y2 STROKE COLOR_R COLOR_G COLOR_B X1 Y1 X2 Y2 STROKE
-     *            COLOR_R COLOR_G COLOR_B...
+     *            X1 Y1 X2 Y2 STROKE COLOR_R COLOR_G COLOR_B...
      * @param withArtsy
      *            whether or not we expect an artsy meter in the beginning
      */
@@ -445,8 +491,34 @@ public class Canvas extends JPanel {
         String[] pixelsInput = input.split(" ");
         for (int i = numOfItems; i < pixelsInput.length; i += numOfItems + 1) {
             int artsy = 0;
+            
             if (withArtsy) {
+                // sets artsy
                 artsy = new Integer(pixelsInput[i - 8]);
+                
+                // sets the value of the artsy meter
+                artsyMeter.setIndeterminate(false);
+                artsyMeter.setValue(artsy);
+
+                // displays a message depending on the artsiness of the art
+                switch (artsy) {
+                    case 0: artsyMeter.setString("GET ARTSIER!");
+                            break;
+                            
+                    case 25: artsyMeter.setString("MAKE MORE ARTS!1!");
+                            break;
+                            
+                    case 50: artsyMeter.setString("DAYUM, GURL, DEM ARTS");
+                            break;
+                            
+                    case 75: artsyMeter.setString("LOLZ YOU DON'T GO HERE");
+                            break;
+                            
+                    case 100: artsyMeter.setString("SO ART. MANY PERCENTAGES. WOW.");
+                            break;
+            
+                    default: break;
+                }
             }
             int x1 = new Integer(pixelsInput[i - 7]);
             int y1 = new Integer(pixelsInput[i - 6]);
@@ -456,10 +528,6 @@ public class Canvas extends JPanel {
             int red = new Integer(pixelsInput[i - 2]);
             int green = new Integer(pixelsInput[i - 1]);
             int blue = new Integer(pixelsInput[i]);
-
-            if (withArtsy) {
-                // TODO: artsy??
-            }
 
             // draw it!
             drawLineSegment(x1, y1, x2, y2, new Color(red, green, blue), stroke);
@@ -545,8 +613,7 @@ public class Canvas extends JPanel {
         for (int side : new int[] { -1, 1 }) {
             g.fillOval(smileCenter.x + side * eyeOffset.width - eyeSize.width / 2,
                     smileCenter.y - eyeOffset.height - eyeSize.width / 2,
-                    eyeSize.width,
-                    eyeSize.height);
+                    eyeSize.width, eyeSize.height);
         }
 
         // IMPORTANT! every time we draw on the internal drawing buffer, we
@@ -617,20 +684,15 @@ public class Canvas extends JPanel {
         }
 
         // Ignore all these other mouse events.
-        public void mouseMoved(MouseEvent e) {
-        }
+        public void mouseMoved(MouseEvent e) { }
 
-        public void mouseClicked(MouseEvent e) {
-        }
+        public void mouseClicked(MouseEvent e) { }
 
-        public void mouseReleased(MouseEvent e) {
-        }
+        public void mouseReleased(MouseEvent e) { }
 
-        public void mouseEntered(MouseEvent e) {
-        }
+        public void mouseEntered(MouseEvent e) { }
 
-        public void mouseExited(MouseEvent e) {
-        }
+        public void mouseExited(MouseEvent e) { }
     }
 
     /**
@@ -667,7 +729,6 @@ public class Canvas extends JPanel {
             int red = new Integer(inputSplit[1]);
             int green = new Integer(inputSplit[2]);
             int blue = new Integer(inputSplit[3]);
-
             bgColor = new Color(red, green, blue);
             return;
         }

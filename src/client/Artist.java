@@ -74,6 +74,7 @@ public class Artist {
 		ipButtonGroup = new ButtonGroup();
 		ipButtonGroup.add(localhost);
 		ipButtonGroup.add(otherIP);
+		
 		// default width so it doesn't get shat on by the fatass button
 		enterIP = new JTextField(10);
 		connect = new JButton("Connect!");
@@ -85,8 +86,7 @@ public class Artist {
 		// The dropdown list to choose a whiteboard is a combobox
 		newBoard = new JComboBox<String>();
 
-		// If they want a new board, prompt them to pick name and background
-		// color
+		// If they want a new board, prompt them to pick name and background color
 		whiteboardPrompt = new JLabel("New board name:");
 		whiteboardNamer = new JTextField(10);
 		bgColorPrompt = new JLabel("with background: ");
@@ -115,40 +115,76 @@ public class Artist {
 		toggleWhiteboardSelection(false);
 
 		// draw all the shits
-		Group row1 = layout.createSequentialGroup().addComponent(IPprompt)
-				.addComponent(localhost).addComponent(otherIP)
-				.addComponent(enterIP).addComponent(connect);
+		Group row1 = layout.createSequentialGroup()
+		        .addComponent(IPprompt)
+				.addComponent(localhost)
+				.addComponent(otherIP)
+				.addComponent(enterIP)
+				.addComponent(connect);
+		
 		Group row2 = layout.createSequentialGroup()
-				.addComponent(usernamePrompt).addComponent(enterUsername);
-		Group row3 = layout.createSequentialGroup().addComponent(board)
+				.addComponent(usernamePrompt)
+				.addComponent(enterUsername);
+		
+		Group row3 = layout.createSequentialGroup()
+		        .addComponent(board)
 				.addComponent(newBoard);
+		
 		Group row4 = layout.createSequentialGroup()
-				.addComponent(whiteboardPrompt).addComponent(whiteboardNamer)
-				.addComponent(bgColorPrompt).addComponent(bgColorPicker);
-		Group row5 = layout.createSequentialGroup().addComponent(GO);
+				.addComponent(whiteboardPrompt)
+				.addComponent(whiteboardNamer)
+				.addComponent(bgColorPrompt)
+				.addComponent(bgColorPicker);
+		
+		Group row5 = layout.createSequentialGroup()
+		        .addComponent(GO);
 
 		Group horizontal = layout.createSequentialGroup();
-		horizontal.addGroup(layout.createParallelGroup().addGroup(row1)
-				.addGroup(row2).addGroup(row3).addGroup(row4).addGroup(row5));
+		
+		horizontal.addGroup(layout
+		        .createParallelGroup()
+		        .addGroup(row1)
+				.addGroup(row2)
+				.addGroup(row3)
+				.addGroup(row4)
+				.addGroup(row5));
 
 		layout.setHorizontalGroup(horizontal);
 
-		Group ver1 = layout.createParallelGroup().addComponent(IPprompt)
-				.addComponent(localhost).addComponent(otherIP)
-				.addComponent(enterIP).addComponent(connect);
+		Group ver1 = layout.createParallelGroup()
+		        .addComponent(IPprompt)
+				.addComponent(localhost)
+				.addComponent(otherIP)
+				.addComponent(enterIP)
+				.addComponent(connect);
+		
 		Group ver2 = layout.createParallelGroup()
 				.addComponent(usernamePrompt, 0, 25, Integer.MAX_VALUE)
 				.addComponent(enterUsername);
-		Group ver3 = layout.createParallelGroup().addComponent(board)
+		
+		Group ver3 = layout.createParallelGroup()
+		        .addComponent(board)
 				.addComponent(newBoard);
+		
 		Group ver4 = layout.createParallelGroup()
-				.addComponent(whiteboardPrompt).addComponent(whiteboardNamer)
-				.addComponent(bgColorPrompt).addComponent(bgColorPicker);
-		Group ver5 = layout.createParallelGroup().addComponent(GO);
+				.addComponent(whiteboardPrompt)
+				.addComponent(whiteboardNamer)
+				.addComponent(bgColorPrompt)
+				.addComponent(bgColorPicker);
+		
+		Group ver5 = layout.createParallelGroup()
+		        .addComponent(GO);
 
-		Group vertical = layout.createSequentialGroup();
-		vertical.addGroup(ver1).addGroup(ver2).addGroup(ver3).addGroup(ver4)
-				.addGroup(ver4).addGroup(ver5);
+		Group vertical = layout
+		        .createSequentialGroup();
+		
+		vertical.addGroup(ver1)
+		        .addGroup(ver2)
+		        .addGroup(ver3)
+		        .addGroup(ver4)
+				.addGroup(ver4)
+				.addGroup(ver5);
+		
 		layout.setVerticalGroup(vertical);
 
 		this.window.pack();
@@ -188,10 +224,8 @@ public class Artist {
 	private void getWhiteboards() throws IOException {
 		whiteboards = new ArrayList<String>();
 		// try with multiple resources! this is so hot
-		try (BufferedReader in = new BufferedReader(new InputStreamReader(
-				socket.getInputStream()));
-				PrintWriter out = new PrintWriter(socket.getOutputStream(),
-						true)) {
+		try (BufferedReader in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
+				PrintWriter out = new PrintWriter(socket.getOutputStream(),true)) {
 
 			DefaultComboBoxModel<String> whiteboardCombo = new DefaultComboBoxModel<String>();
 			whiteboardCombo.addElement("New whiteboard");
@@ -264,6 +298,7 @@ public class Artist {
 				// get the IP
 				if (localhost.isSelected()) {
 					IP = "localhost";
+					
 				} else {
 					IP = enterIP.getText();
 				}
@@ -274,6 +309,7 @@ public class Artist {
 					socket = new Socket(IP, port);
 					getWhiteboards();
 					toggleWhiteboardSelection(true);
+					
 				} catch (IOException notValidIP) {
 					JOptionPane.showMessageDialog(window,
 							"Please enter a valid IP address and try again");
@@ -286,8 +322,10 @@ public class Artist {
 			@Override
 			public void actionPerformed(ActionEvent e) {
 				String choice = (String) newBoard.getSelectedItem();
+				
 				if (choice.equals("New whiteboard")) {
 					toggleNewWhiteboard(true);
+					
 				} else {
 					toggleNewWhiteboard(false);
 				}
@@ -333,15 +371,13 @@ public class Artist {
 						// if the name has already been taken
 						if (whiteboards.contains(whiteboardName)) {
 							JOptionPane
-									.showMessageDialog(window,
-											"That whiteboard name is taken. Please choose a different one!");
+									.showMessageDialog(window, "That whiteboard name is taken. Please choose a different one!");
 
 							// if the board name contains space or is empty
 						} else if (containsSpace(whiteboardName)
 								|| whiteboardName.isEmpty()) {
 							JOptionPane
-									.showMessageDialog(window,
-											"Whiteboard name cannot be empty and cannot contain spaces.");
+									.showMessageDialog(window, "Whiteboard name cannot be empty and cannot contain spaces.");
 
 						} else {
 							// make a new whiteboard!
@@ -360,9 +396,11 @@ public class Artist {
 						// if the client chose an existing whiteboard make a
 						// canvas with that name
 						System.out.println("selecting board " + choice);
+						
 						try {
                             new Canvas(choice, IP, color, username, false);
 							window.dispose();
+							
 						} catch (IOException e1) {
 							e1.printStackTrace();
 						}
@@ -374,9 +412,7 @@ public class Artist {
 					// when log in is done close everythannggg
 
 				} else {
-					JOptionPane
-							.showMessageDialog(window,
-									"Username cannot be empty and cannot contain spaces.");
+					JOptionPane.showMessageDialog(window,"Username cannot be empty and cannot contain spaces.");
 				}
 
 			}
@@ -403,9 +439,11 @@ public class Artist {
 		SwingUtilities.invokeLater(new Runnable() {
 			public void run() {
 				Artist main;
+				
 				try {
 					main = new Artist();
 					main.window.setVisible(true);
+					
 				} catch (IOException e) {
 					e.printStackTrace();
 				}
