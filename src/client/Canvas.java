@@ -119,8 +119,14 @@ public class Canvas extends JPanel {
                 try (BufferedReader in = new BufferedReader(new InputStreamReader(socket.getInputStream()))) {
                     while (connected) {
                         String input = in.readLine();
-                        System.out.println(input);
-                        inQueue.put(input);
+                        System.out.println("canvas has read in " + input);
+
+                        // this is on init
+                        if (input.contains("ACTIONS")) {
+                            inQueue.put(input);
+                        } else {
+                            handleRequest(input);
+                        }
                     }
 
                 } catch (Exception e) {
@@ -147,6 +153,20 @@ public class Canvas extends JPanel {
 
         outCommunication.start();
 
+        // Main Window creation
+        JFrame window = new JFrame("Whiteboard: " + boardName);
+        window.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        BorderLayout windowLayout = new BorderLayout();
+        window.setLayout(windowLayout);
+
+        // Container and Canvas creation
+        this.setPreferredSize(new Dimension(800, 600));
+        addDrawingController();
+        JPanel sidePanel = new JPanel();
+        JPanel paintButtonContainer = new JPanel();
+        JPanel eraserButtonContainer = new JPanel();
+        colorPallet = new JPanel();
+
         // set up the whiteboard before we paint!
         if (newWhiteboard) {
             setupWhiteboard(true);
@@ -161,25 +181,7 @@ public class Canvas extends JPanel {
                 row[0] = name;
                 playersModel.addRow(row);
             }
-
-            drawPixels((Map<List<Integer>, Color>) inits.get(2));
         }
-
-        socket = new Socket(IP, port);
-
-        // Main Window creation
-        JFrame window = new JFrame("Whiteboard: " + boardName);
-        window.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        BorderLayout windowLayout = new BorderLayout();
-        window.setLayout(windowLayout);
-
-        // Container and Canvas creation
-        this.setPreferredSize(new Dimension(800, 600));
-        addDrawingController();
-        JPanel sidePanel = new JPanel();
-        JPanel paintButtonContainer = new JPanel();
-        JPanel eraserButtonContainer = new JPanel();
-        colorPallet = new JPanel();
 
         // components of the side panel
         final Label sliderLabel = new Label("Stroke Size:");
@@ -346,14 +348,13 @@ public class Canvas extends JPanel {
     /**
      * Send the server the message to create/select a whiteboard, if it's a new
      * whiteboard, nothing is returned, if it's an existing one, get the bg
-     * color, users list, and pixels
+     * color and users list adn draw the actions.
      * 
      * @param newWB
      *            whether or not the whiteboard is newly created, or already
      *            existing
      * 
-     * @return null if new board, list of: bg color, list of users, and map of
-     *         (x, y) to Color (ie. pixel colors)
+     * @return null if new board, list of bg color and list of users
      */
     private List<Object> setupWhiteboard(boolean newWB) {
         try {
@@ -361,18 +362,23 @@ public class Canvas extends JPanel {
                 // "NEW" WB_NAME COLOR_R COLOR_G COLOR_B USER_NAME
                 outQueue.put("NEW " + name + " " + bgColor.getRed() + " " + bgColor.getGreen() + " "
                         + bgColor.getBlue() + " " + user);
+                
             } else {
                 // "SELECT" WB_NAME USER_NAME
-
                 outQueue.put("SELECT " + name + " " + user);
 
                 // BG_RED BG_GREEN BG_BLUE "USERS" USER_NAME USER_NAME...
-                // "PIXELS" X1 Y1 COLOR_R1 COLOR_G1 COLOR_B1 X2 Y2 COLOR_R2
-                // COLOR_G2 COLOR_B2...
-                String[] totalInput = inQueue.take().split(" PIXELS ");
+                // "ACTIONS" X1 Y1 X2 Y2 STROKE COLOR_R COLOR_G COLOR_B X1 Y1 X2
+                // Y2 STROKE COLOR_R COLOR_G COLOR_B...
+                String[] totalInput = inQueue.take().split(" ACTIONS ");
                 String[] usersInput = totalInput[0].split(" ");
                 List<String> usersList = new ArrayList<String>();
-                Map<List<Integer>, Color> pixels = parseActions(totalInput[1]);
+
+                // draw the actions if there are actions to draw
+                if (totalInput.length > 1) {
+                    parseActions(totalInput[1]);
+                }
+
                 for (int i = 4; i < usersInput.length; ++i) {
                     usersList.add(usersInput[i]);
                 }
@@ -382,7 +388,7 @@ public class Canvas extends JPanel {
                 int blue = new Integer(usersInput[2]);
                 Color bg = new Color(red, green, blue);
 
-                return Arrays.asList(bg, usersList, pixels);
+                return Arrays.asList(bg, usersList);
             }
         } catch (InterruptedException e) {
             e.printStackTrace();
@@ -392,36 +398,29 @@ public class Canvas extends JPanel {
     }
 
     /**
-     * Converts a string of x1 y1 x2 y2 stroke r g b... to
+     * Takes in a stream of actions and draws them. This needs to be called on
+     * init if this is an existing board, or every time a new draw action is
+     * recieved
      * 
      * @param input
-     *            X1 Y1 COLOR_R1 COLOR_G1 COLOR_B1 X2 Y2 COLOR_R2 COLOR_G2
-     *            COLOR_B2
-     * @return a map of (x,y) to Color
+     *            X1 Y1 X2 Y2 STROKE COLOR_R COLOR_G COLOR_B X1 Y1 X2 Y2 STROKE
+     *            COLOR_R COLOR_G COLOR_B...
      */
-    private Map<List<Integer>, Color> parseActions(String input) {
+    private void parseActions(String input) {
         String[] pixelsInput = input.split(" ");
-        Map<List<Integer>, Color> pixels = new HashMap<List<Integer>, Color>();
-        for (int i = 4; i < pixelsInput.length; i += 5) {
-            int x = new Integer(pixelsInput[i - 4]);
-            int y = new Integer(pixelsInput[i - 3]);
+        for (int i = 7; i < pixelsInput.length; i += 8) {
+            int x1 = new Integer(pixelsInput[i - 7]);
+            int y1 = new Integer(pixelsInput[i - 6]);
+            int x2 = new Integer(pixelsInput[i - 5]);
+            int y2 = new Integer(pixelsInput[i - 4]);
+            int stroke = new Integer(pixelsInput[i - 3]);
             int red = new Integer(pixelsInput[i - 2]);
             int green = new Integer(pixelsInput[i - 1]);
             int blue = new Integer(pixelsInput[i]);
-            pixels.put(Arrays.asList(x, y), new Color(red, green, blue));
+
+            // draw it!
+            drawLineSegment(x1, y1, x2, y2, new Color(red, green, blue), stroke);
         }
-
-        return pixels;
-    }
-
-    /**
-     * Draws pixels on the board (used when an existing board is selected)
-     * 
-     * @param pixels
-     *            map of (x,y) to Color
-     */
-    private void drawPixels(Map<List<Integer>, Color> pixels) {
-        // TODO: do this shit
     }
 
     /**
@@ -451,13 +450,11 @@ public class Canvas extends JPanel {
     /*
      * Make the drawing buffer entirely white.
      * 
-     * TODO: this still needs to talk to server and get the starting color of
-     * all the pixels
      */
     private void fillWithChoice() {
         final Graphics2D g = (Graphics2D) drawingBuffer.getGraphics();
 
-        g.setColor(Color.WHITE);
+        g.setColor(bgColor);
         g.fillRect(0, 0, getWidth(), getHeight());
 
         // so color
@@ -518,7 +515,7 @@ public class Canvas extends JPanel {
      * Draw a line between two points (x1, y1) and (x2, y2), specified in pixels
      * relative to the upper-left corner of the drawing buffer.
      */
-    private void drawLineSegment(int x1, int y1, int x2, int y2) {
+    private void drawLineSegment(int x1, int y1, int x2, int y2, Color color, int stroke) {
         Graphics2D graphics = (Graphics2D) drawingBuffer.getGraphics();
 
         graphics.setColor(color);
@@ -562,7 +559,16 @@ public class Canvas extends JPanel {
         public void mouseDragged(MouseEvent e) {
             int x = e.getX();
             int y = e.getY();
-            drawLineSegment(lastX, lastY, x, y);
+
+            // put the draw action on the queue!
+            try {
+                // "DRAW" WB_NAME X1 Y1 X2 Y2 STROKE COLOR_R COLOR_G COLOR_B
+                outQueue.put("DRAW " + name + " " + lastX + " " + lastY + " " + x + " " + y + " " + stroke + " "
+                        + color.getRed() + " " + color.getGreen() + " " + color.getBlue());
+            } catch (InterruptedException e1) {
+                e1.printStackTrace();
+            }
+
             lastX = x;
             lastY = y;
         }
@@ -582,5 +588,61 @@ public class Canvas extends JPanel {
 
         public void mouseExited(MouseEvent e) {
         }
+    }
+
+    /**
+     * Respond to the servers's requests appropriately
+     * 
+     * Possible requests:
+     * 
+     * (1) new draw actions ("DRAW" ARTSY_METER X1 Y1 X1 Y2 STROKE COLOR_R
+     * COLOR_G COLOR_B),
+     * 
+     * (2) change whiteboard bg color ("BG" COLOR_R COLOR_G COLOR_B),
+     * 
+     * (3) user leaves ("BYEUSER" USER_NAME)
+     * 
+     * @param input
+     *            the server's request
+     */
+    private void handleRequest(String input) {
+        String[] inputSplit = input.split(" ");
+
+        // new draw action
+        // "DRAW" ARTSY_METER X1 Y1 X1 Y2 STROKE COLOR_R COLOR_G COLOR_B
+        if (inputSplit[0].equals("DRAW")) {
+            // everything in the string but the DRAW
+            parseActions(input.substring(5));
+            return;
+        }
+
+        // change background color
+        // "BG" COLOR_R COLOR_G COLOR_B
+        if (inputSplit[0].equals("BG")) {
+            int red = new Integer(inputSplit[1]);
+            int green = new Integer(inputSplit[2]);
+            int blue = new Integer(inputSplit[3]);
+
+            bgColor = new Color(red, green, blue);
+            return;
+        }
+
+        // user leaves
+        // "BYEUSER" USER_NAME
+        if (inputSplit[0].equals("BYEUSER")) {
+            String userName = inputSplit[1];
+
+            // find the user, remove them
+            for (int i = 0; i < playersModel.getRowCount(); ++i) {
+                if (userName.equals(playersModel.getValueAt(i, 0))) {
+                    playersModel.removeRow(i);
+                    break;
+                }
+            }
+            return;
+        }
+
+        // things that don't adhere to the grammar were put in here, muy bad
+        throw new UnsupportedOperationException();
     }
 }

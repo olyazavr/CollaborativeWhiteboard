@@ -321,7 +321,6 @@ public class WhiteboardServer {
                 System.out.println("got response " + response);
 
                 if (!response.isEmpty()) {
-                    System.out.println("putting the response");
                     out.println(response);
                 }
             }
