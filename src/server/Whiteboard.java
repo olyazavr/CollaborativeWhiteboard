@@ -133,8 +133,8 @@ public class Whiteboard {
 		return action.toString();
 	}
 
-	public double calculateArtsy() {
-		return unusedColors.size()/(colors.length + 0.0);
+	public int calculateArtsy() {
+		return (int) Math.round( 100* unusedColors.size()/(colors.length + 0.0));
 	}
 
 }
