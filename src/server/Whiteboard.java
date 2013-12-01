@@ -136,6 +136,7 @@ public class Whiteboard {
 		// int representation of percent used
 
 		return (int) (100 * (colors.length - unusedColors.size()) / (colors.length + 0.0));
+
 	}
 
 }
