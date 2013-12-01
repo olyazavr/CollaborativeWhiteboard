@@ -27,28 +27,27 @@ public class Whiteboard {
 
 	private final List<Integer> actions;
 
-	private final List<int[]> unusedColors = new ArrayList<int[]>();
+	private List<int[]> unusedColors = new ArrayList<int[]>();
 	private final Color[] colors = new Color[] { Color.BLACK, Color.DARK_GRAY,
-			Color.GRAY, Color.LIGHT_GRAY, Color.WHITE, Color.RED,
-			Color.ORANGE, Color.YELLOW, Color.GREEN, Color.BLUE,
-			Color.MAGENTA, new Color(163, 31, 52), Color.MAGENTA,
-			Color.PINK, Color.CYAN };
+			Color.GRAY, Color.LIGHT_GRAY, Color.WHITE, Color.RED, Color.ORANGE,
+			Color.YELLOW, Color.GREEN, Color.BLUE, Color.MAGENTA,
+			new Color(163, 31, 52), Color.MAGENTA, Color.PINK, Color.CYAN };
 
 	public Whiteboard(String name, List<Integer> bg) {
 		this.name = name;
 		this.bg = Collections.synchronizedList(new ArrayList<Integer>(bg));
 		actions = Collections.synchronizedList(new ArrayList<Integer>());
-		this.makeColorList();
+		unusedColors = this.makeColorList();
 
 	}
 
-	public void makeColorList() {
-
+	public List<int[]> makeColorList() {
 
 		for (Color i : colors) {
 			unusedColors
 					.add(new int[] { i.getRed(), i.getGreen(), i.getBlue() });
 		}
+		return unusedColors;
 
 	}
 
@@ -80,11 +79,10 @@ public class Whiteboard {
 			int stroke, int red, int green, int blue) {
 		actions.addAll(Arrays.asList(x1, y1, x2, y2, stroke, red, green, blue));
 
-		List<Integer> used = new ArrayList<Integer>(Arrays.asList(red, green,
-				blue));
-		
+		int[] used = new int[] { red, green, blue };
+
 		// Won't change unusedColors if not in the list
-		
+
 		unusedColors.remove(used);
 
 	}
@@ -134,7 +132,10 @@ public class Whiteboard {
 	}
 
 	public int calculateArtsy() {
-		return (int) Math.round( 100* unusedColors.size()/(colors.length + 0.0));
+
+		// int representation of percent used
+
+		return (int) (100 * (colors.length - unusedColors.size()) / (colors.length + 0.0));
 	}
 
 }
