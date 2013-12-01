@@ -387,6 +387,7 @@ public class Artist {
 								window.dispose();
 
 							} catch (Exception badConnection) {
+								badConnection.printStackTrace();
                                 JOptionPane.showMessageDialog(window, "Invalid IP input!");
 							}
 						}
