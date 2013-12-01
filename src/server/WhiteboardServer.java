@@ -101,7 +101,7 @@ public class WhiteboardServer {
         whiteboardClients.get(boardName).add(clientID);
 
         return board.getBackgroundColorString() + " USERS " + listUsers(boardName) + " ACTIONS "
-                + createListOfActions(boardName);
+                + createStringOfActions(boardName);
     }
 
     /**
@@ -113,9 +113,9 @@ public class WhiteboardServer {
      *            name of the board in question
      * @return string of actions of the board, separated by spaces
      */
-    private String createListOfActions(String boardName) {
+    private String createStringOfActions(String boardName) {
         Whiteboard board = whiteboards.get(boardName);
-        return board.createListOfActions();
+        return board.createStringOfActions();
     }
 
     /**

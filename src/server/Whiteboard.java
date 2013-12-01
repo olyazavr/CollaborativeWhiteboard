@@ -93,7 +93,7 @@ public class Whiteboard {
      * @return string of actions of the board, separated by spaces
      */
 
-    public String createListOfActions() {
+    public String createStringOfActions() {
         StringBuilder action = new StringBuilder();
 
         // loop through and add to the string
