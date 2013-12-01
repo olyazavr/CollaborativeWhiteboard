@@ -90,8 +90,8 @@ public class WhiteboardServer {
      *            name of user, can't be empty
      * @param clientID
      *            id of client
-     * @return BG_RED BG_GREEN BG_BLUE "USERS" list of users "ACTIONS " list of
-     *         pixels and their colors
+     * @return BG_RED BG_GREEN BG_BLUE ARTSY_METER "USERS" list of users
+     *         "ACTIONS " list of pixels and their colors
      */
     private String selectWhiteboard(String boardName, String userName, int clientID) {
         names.put(clientID, userName);
@@ -99,9 +99,11 @@ public class WhiteboardServer {
 
         // subscribe the client to whiteboard events
         whiteboardClients.get(boardName).add(clientID);
+        // TODO: int artsy = board.getArtsy();
+        int artsy = 5;
 
-        return board.getBackgroundColorString() + " USERS " + listUsers(boardName) + " ACTIONS "
-                + createStringOfActions(boardName);
+        return board.getBackgroundColorString() + " " + artsy + " USERS " + listUsers(boardName) + " ACTIONS "
+                + createListOfActions(boardName);
     }
 
     /**
@@ -113,7 +115,7 @@ public class WhiteboardServer {
      *            name of the board in question
      * @return string of actions of the board, separated by spaces
      */
-    private String createStringOfActions(String boardName) {
+    private String createListOfActions(String boardName) {
         Whiteboard board = whiteboards.get(boardName);
         return board.createStringOfActions();
     }
@@ -208,7 +210,8 @@ public class WhiteboardServer {
         // TODO: int artsy = board.getArtsy();
         int artsy = 5;
 
-        return "DRAW " + artsy + " " + x1 + " " + y1 + " " + x2 + " " + y2 + " " + stroke + " " + red + " " + blue;
+        return "DRAW " + artsy + " " + x1 + " " + y1 + " " + x2 + " " + y2 + " " + stroke + " " + red + " " + blue
+                + " " + green;
     }
 
     /**
@@ -321,7 +324,6 @@ public class WhiteboardServer {
                 System.out.println("got response " + response);
 
                 if (!response.isEmpty()) {
-                    System.out.println("putting the response");
                     out.println(response);
                 }
             }
@@ -355,10 +357,10 @@ public class WhiteboardServer {
      * 
      * (1) whiteboard names (WB_NAME WB_NAME...),
      * 
-     * (3) whiteboard specs (BG_RED BG_GREEN BG_BLUE "USERS" USER_NAME
-     * USER_NAME... "ACTIONS" X1 Y1 X1 Y2 STROKE COLOR_R COLOR_G COLOR_B X1 Y1
-     * X1 Y2 STROKE COLOR_R COLOR_G COLOR_B...) to new client, ("NEWUSER"
-     * USER_NAME) to others,
+     * (3) whiteboard specs (BG_RED BG_GREEN BG_BLUE ARTSY_METER "USERS"
+     * USER_NAME USER_NAME... "ACTIONS" X1 Y1 X1 Y2 STROKE COLOR_R COLOR_G
+     * COLOR_B X1 Y1 X1 Y2 STROKE COLOR_R COLOR_G COLOR_B...) to new client,
+     * ("NEWUSER" USER_NAME) to others,
      * 
      * (4) new draw actions ("DRAW" ARTSY_METER X1 Y1 X1 Y2 STROKE COLOR_R
      * COLOR_G COLOR_B),

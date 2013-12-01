@@ -27,7 +27,6 @@ import java.io.PrintWriter;
 import java.net.Socket;
 import java.net.UnknownHostException;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -64,6 +63,7 @@ public class Canvas extends JPanel {
     private boolean erasing = false;
     private final String name;
     private final String user;
+    private final boolean newWhiteboard;
     private final DefaultTableModel playersModel;
 
     private final int BUTTON_WIDTH = 100;
@@ -111,6 +111,7 @@ public class Canvas extends JPanel {
         this.name = boardName;
         this.bgColor = bgColor;
         this.user = userName;
+        this.newWhiteboard = newWhiteboard;
 
         // Thread that reads in from the server, mainly keeping track of new
         // draw events
@@ -166,22 +167,6 @@ public class Canvas extends JPanel {
         JPanel paintButtonContainer = new JPanel();
         JPanel eraserButtonContainer = new JPanel();
         colorPallet = new JPanel();
-
-        // set up the whiteboard before we paint!
-        if (newWhiteboard) {
-            setupWhiteboard(true);
-        } else {
-            // inits is bgColor, usersList, pixelsMap
-            List<Object> inits = setupWhiteboard(false);
-            bgColor = (Color) inits.get(0);
-
-            // add all names to the model
-            for (String name : (List<String>) inits.get(1)) {
-                String[] row = new String[1];
-                row[0] = name;
-                playersModel.addRow(row);
-            }
-        }
 
         // components of the side panel
         final Label sliderLabel = new Label("Stroke Size:");
@@ -347,54 +332,51 @@ public class Canvas extends JPanel {
 
     /**
      * Send the server the message to create/select a whiteboard, if it's a new
-     * whiteboard, nothing is returned, if it's an existing one, get the bg
-     * color and users list adn draw the actions.
-     * 
-     * @param newWB
-     *            whether or not the whiteboard is newly created, or already
-     *            existing
-     * 
-     * @return null if new board, list of bg color and list of users
+     * whiteboard, nothing is returned, if it's an existing one, set the bg
+     * color and users list and draw the actions.
      */
-    private List<Object> setupWhiteboard(boolean newWB) {
+    private void setupWhiteboard() {
         try {
-            if (newWB) {
+            if (newWhiteboard) {
                 // "NEW" WB_NAME COLOR_R COLOR_G COLOR_B USER_NAME
                 outQueue.put("NEW " + name + " " + bgColor.getRed() + " " + bgColor.getGreen() + " "
                         + bgColor.getBlue() + " " + user);
-                
+                fillWithChoice();
             } else {
                 // "SELECT" WB_NAME USER_NAME
                 outQueue.put("SELECT " + name + " " + user);
 
-                // BG_RED BG_GREEN BG_BLUE "USERS" USER_NAME USER_NAME...
-                // "ACTIONS" X1 Y1 X2 Y2 STROKE COLOR_R COLOR_G COLOR_B X1 Y1 X2
-                // Y2 STROKE COLOR_R COLOR_G COLOR_B...
+                // BG_RED BG_GREEN BG_BLUE ARTSY_METER "USERS" USER_NAME
+                // USER_NAME... "ACTIONS" X1 Y1 X2 Y2 STROKE COLOR_R COLOR_G
+                // COLOR_B X1 Y1 X2 Y2 STROKE COLOR_R COLOR_G COLOR_B...
                 String[] totalInput = inQueue.take().split(" ACTIONS ");
                 String[] usersInput = totalInput[0].split(" ");
                 List<String> usersList = new ArrayList<String>();
 
-                // draw the actions if there are actions to draw
-                if (totalInput.length > 1) {
-                    parseActions(totalInput[1]);
-                }
-
-                for (int i = 4; i < usersInput.length; ++i) {
-                    usersList.add(usersInput[i]);
-                }
-
                 int red = new Integer(usersInput[0]);
                 int green = new Integer(usersInput[1]);
                 int blue = new Integer(usersInput[2]);
-                Color bg = new Color(red, green, blue);
+                int artsy = new Integer(usersInput[3]);
+                // TODO: artsy meter??
+                bgColor = new Color(red, green, blue);
+                fillWithChoice();
 
-                return Arrays.asList(bg, usersList);
+                // draw the actions if there are actions to draw
+                if (totalInput.length > 1) {
+                    parseActions(totalInput[1], false);
+                }
+
+                // add users to the playersModel
+                for (int i = 5; i < usersInput.length; ++i) {
+                    String[] row = new String[1];
+                    row[0] = usersInput[i];
+                    playersModel.addRow(row);
+
+                }
             }
         } catch (InterruptedException e) {
             e.printStackTrace();
         }
-
-        return null;
     }
 
     /**
@@ -405,10 +387,19 @@ public class Canvas extends JPanel {
      * @param input
      *            X1 Y1 X2 Y2 STROKE COLOR_R COLOR_G COLOR_B X1 Y1 X2 Y2 STROKE
      *            COLOR_R COLOR_G COLOR_B...
+     * @param withArtsy
+     *            whether or not we expect an artsy meter in the beginning
      */
-    private void parseActions(String input) {
+    private void parseActions(String input, boolean withArtsy) {
+        // one more thing if we have artsy
+        int numOfItems = withArtsy ? 8 : 7;
+
         String[] pixelsInput = input.split(" ");
-        for (int i = 7; i < pixelsInput.length; i += 8) {
+        for (int i = numOfItems; i < pixelsInput.length; i += numOfItems + 1) {
+            int artsy = 0;
+            if (withArtsy) {
+                artsy = new Integer(pixelsInput[i - 8]);
+            }
             int x1 = new Integer(pixelsInput[i - 7]);
             int y1 = new Integer(pixelsInput[i - 6]);
             int x2 = new Integer(pixelsInput[i - 5]);
@@ -417,6 +408,10 @@ public class Canvas extends JPanel {
             int red = new Integer(pixelsInput[i - 2]);
             int green = new Integer(pixelsInput[i - 1]);
             int blue = new Integer(pixelsInput[i]);
+
+            if (withArtsy) {
+                // TODO: artsy??
+            }
 
             // draw it!
             drawLineSegment(x1, y1, x2, y2, new Color(red, green, blue), stroke);
@@ -443,13 +438,13 @@ public class Canvas extends JPanel {
      */
     private void makeDrawingBuffer() {
         drawingBuffer = createImage(getWidth(), getHeight());
-        fillWithChoice();
+        // set up the whiteboard before we paint!
+        setupWhiteboard();
         drawSmile();
     }
 
     /*
      * Make the drawing buffer entirely white.
-     * 
      */
     private void fillWithChoice() {
         final Graphics2D g = (Graphics2D) drawingBuffer.getGraphics();
@@ -611,8 +606,8 @@ public class Canvas extends JPanel {
         // new draw action
         // "DRAW" ARTSY_METER X1 Y1 X1 Y2 STROKE COLOR_R COLOR_G COLOR_B
         if (inputSplit[0].equals("DRAW")) {
-            // everything in the string but the DRAW
-            parseActions(input.substring(5));
+            // everything but "DRAW ", also we have artsy!!
+            parseActions(input.substring(5), true);
             return;
         }
 
