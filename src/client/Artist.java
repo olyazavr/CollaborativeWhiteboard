@@ -59,7 +59,7 @@ public class Artist {
 	private final JComboBox<String> bgColorPicker;
 	private final Map<String, Color> colorMap;
 
-	private Color color;
+    private Color color = Color.WHITE;
 	private final JButton GO;
 	private final JFrame window;
 
