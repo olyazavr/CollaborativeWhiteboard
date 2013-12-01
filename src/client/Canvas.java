@@ -124,6 +124,23 @@ public class Canvas extends JPanel {
     private final JButton buttonCyan;
     private final JButton buttonMore;
 
+    /**
+     * Creates a new Canvas object, entirely blank, except maybe some shibas
+     * 
+     * @param boardName
+     *            unique name of the board
+     * @param IP
+     *            IP address to talk to the server
+     * @param bgColor
+     *            background color
+     * @param userName
+     *            name of user making/selecting the board
+     * @param newWhiteboard
+     *            whether or not this is a new whiteboard, or we are selecting
+     *            an existing one
+     * @throws UnknownHostException
+     * @throws IOException
+     */
     public Canvas(String boardName, String IP, Color bgColor, String userName, boolean newWhiteboard)
             throws UnknownHostException, IOException {
         socket = new Socket(IP, port);

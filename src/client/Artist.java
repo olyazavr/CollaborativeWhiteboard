@@ -31,6 +31,20 @@ import javax.swing.JRadioButton;
 import javax.swing.JTextField;
 import javax.swing.SwingUtilities;
 
+/**
+ * This is the login screen that the user must navigate through to get a canvas.
+ * First, they must enter a valid IP to connect to, then they can make a new
+ * whiteboard or select an existing one. To make a new whiteboard, the user must
+ * supply a username, unique board name, and background color. To select a
+ * whiteboard, the user only needs to provide a username.
+ * 
+ * This is threadsafe because there is only one thread, and no information is
+ * shared except for the arguments passed to the new Canvas. However, this is ok
+ * because as soon as that happens, the Artist is destroyed and thus no longer
+ * holds references to those objects.
+ * 
+ * Default port is 4444.
+ */
 public class Artist {
 
 	private Socket socket;
@@ -63,6 +77,12 @@ public class Artist {
 	private final JButton GO;
 	private final JFrame window;
 
+    /**
+     * Creates a new Artist login screen
+     * 
+     * @throws UnknownHostException
+     * @throws IOException
+     */
 	public Artist() throws UnknownHostException, IOException {
 		// Create a log-in screen
 		this.window = new JFrame("Login");

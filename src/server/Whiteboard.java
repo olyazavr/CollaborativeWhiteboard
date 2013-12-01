@@ -19,40 +19,43 @@ import java.util.List;
  * or change in bg, and returns strings of its current state.
  * 
  */
-
 public class Whiteboard {
     private final String name;
-    private final List<Integer> bg; // final for now, will change if we
-                                    // decide to do the
-    // drop to change background color thing
-
+    private final List<Integer> bg;
     private final List<Integer> actions;
 
-    private List<int[]> unusedColors;
+    private List<Color> unusedColors;
     private final static Color[] colors = new Color[] { Color.BLACK, Color.DARK_GRAY,
             Color.GRAY, Color.LIGHT_GRAY, Color.WHITE, Color.RED, Color.ORANGE,
             Color.YELLOW, Color.GREEN, Color.BLUE, Color.MAGENTA,
             new Color(163, 31, 52), Color.MAGENTA, Color.PINK, Color.CYAN };
 
+    /**
+     * Creates a new Whiteboard object, with an empty artsy meter and no actions
+     * 
+     * @param name
+     *            unique name of the board
+     * @param bg
+     *            a list of (r, g, b) of the background color
+     */
     public Whiteboard(String name, List<Integer> bg) {
         this.name = name;
         this.bg = Collections.synchronizedList(new ArrayList<Integer>(bg));
         actions = Collections.synchronizedList(new ArrayList<Integer>());
         unusedColors = Collections.synchronizedList(makeColorList());
-
     }
 
     /**
      * Makes the list of unused colors (currently, all of the colors) to be used
      * in calculation of artsy meter.
      * 
-     * @return a list of int arrays of unused colors (r, g, b)
+     * @return a list of unused colors
      */
-    private List<int[]> makeColorList() {
-        List<int[]> uColors = new ArrayList<int[]>();
+    private List<Color> makeColorList() {
+        List<Color> uColors = new ArrayList<Color>();
 
         for (Color i : colors) {
-            uColors.add(new int[] { i.getRed(), i.getGreen(), i.getBlue() });
+            uColors.add(i);
         }
 
         return uColors;
@@ -92,10 +95,8 @@ public class Whiteboard {
         synchronized (actions) {
             actions.addAll(Arrays.asList(x1, y1, x2, y2, stroke, red, green, blue));
 
-            int[] used = new int[] { red, green, blue };
-
             // Won't change unusedColors if not in the list
-            unusedColors.remove(used);
+            unusedColors.remove(new Color(red, green, blue));
         }
     }
 
