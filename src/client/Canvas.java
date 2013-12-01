@@ -65,7 +65,7 @@ import javax.swing.table.DefaultTableModel;
  * drawing). All UI updates are handled in Swing's thread.
  */
 public class Canvas extends JPanel {
-    private static final long serialVersionUID = 1L;
+    private static final long serialVersionUID = -4896602587258968937L;
     private final int port = 4444; // default port
     private Socket socket;
 
@@ -146,7 +146,18 @@ public class Canvas extends JPanel {
         socket = new Socket(IP, port);
         inQueue = new LinkedBlockingQueue<String>();
         outQueue = new LinkedBlockingQueue<String>();
-        playersModel = new DefaultTableModel(0, 1);
+
+        playersModel = new DefaultTableModel(0, 1) {
+            private static final long serialVersionUID = 2045698881619435427L;
+
+            @Override
+            public boolean isCellEditable(int row, int column) {
+
+                // Make the cells not editable
+                return false;
+            }
+        };
+
         this.name = boardName;
         this.bgColor = bgColor;
         this.user = userName;
