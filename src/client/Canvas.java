@@ -457,19 +457,19 @@ public class Canvas extends JPanel {
 
                 // displays a message depending on the artsiness of the art
                 if (artsy >= 0 && artsy < 25) {
-                    artsyMeter.setString("GET ARTSIER!");
+                    artsyMeter.setString("GET ARTSIER! (" + artsy + "%)");
                     
                 } else if (artsy >= 25 && artsy < 50) {
-                    artsyMeter.setString("MAKE MORE ARTS!1!");
+                    artsyMeter.setString("MAKE MORE ARTS!1! (" + artsy + "%)");
                     
                 } else if (artsy >= 50 && artsy < 75) {
-                    artsyMeter.setString("DAYUM, GURL, DEM ARTS");
+                    artsyMeter.setString("DAYUM, GURL, DEM ARTS (" + artsy + "%)");
                     
                 } else if (artsy >= 75 && artsy < 100) {
-                    artsyMeter.setString("LOLZ YOU DON'T GO HERE");
+                    artsyMeter.setString("LOLZ YOU DON'T GO HERE (" + artsy + "%)");
                     
                 } else if (artsy >= 100) {
-                    artsyMeter.setString("SO ART. MANY PERCENTAGES. WOW.");
+                    artsyMeter.setString("SO ART. MANY PERCENTAGES. WOW. (" + artsy + "%)");
                 }
             }
         });
