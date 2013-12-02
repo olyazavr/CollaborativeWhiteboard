@@ -98,7 +98,6 @@ public class Artist {
 		// default width so it doesn't get shat on by the fatass button
 		enterIP = new JTextField(10);
 		connect = new JButton("Connect!");
-
 		usernamePrompt = new JLabel("Pick a username:");
 		enterUsername = new JTextField();
 		board = new JLabel("Choose/create a board: ");
