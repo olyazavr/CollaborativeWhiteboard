@@ -346,6 +346,7 @@ public class Canvas extends JPanel {
         buttonMagenta.setBackground(Color.MAGENTA);
         buttonPink.setBackground(Color.PINK);
         buttonCyan.setBackground(Color.CYAN);
+        buttonWhite.setBackground(Color.WHITE);
 
         // set up the map
         Map<JButton, Color> colorButtons = new HashMap<JButton, Color>();
@@ -362,6 +363,7 @@ public class Canvas extends JPanel {
         colorButtons.put(buttonMagenta, Color.MAGENTA);
         colorButtons.put(buttonPink, Color.PINK);
         colorButtons.put(buttonCyan, Color.CYAN);
+        colorButtons.put(buttonWhite, Color.WHITE);
 
         // set properties of all buttons
         for (final Entry<JButton, Color> button : colorButtons.entrySet()) {
