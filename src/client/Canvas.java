@@ -35,6 +35,8 @@ import java.util.concurrent.LinkedBlockingQueue;
 import javax.imageio.ImageIO;
 import javax.swing.BorderFactory;
 import javax.swing.BoxLayout;
+import javax.swing.GroupLayout;
+import javax.swing.GroupLayout.Group;
 import javax.swing.JButton;
 import javax.swing.JColorChooser;
 import javax.swing.JFrame;
@@ -86,7 +88,7 @@ public class Canvas extends JPanel {
     private final DefaultTableModel playersModel;
     private final JFrame window;
 
-    private final int BUTTON_WIDTH = 100;
+    private final int BUTTON_WIDTH = 10;
     private final int BUTTON_HEIGHT = 50;
     private final int TABLE_WIDTH = 180;
     private final int TABLE_HEIGHT = 330;
@@ -107,6 +109,7 @@ public class Canvas extends JPanel {
     private final Button eraserButton;
     private final Button paintButton;
     private final Button clearButton;
+    private final Button dogeButton;
     private final JButton buttonBlack;
     private final JButton buttonDarkGray;
     private final JButton buttonGray;
@@ -216,9 +219,7 @@ public class Canvas extends JPanel {
         artsyMeter = new JProgressBar(0, 100);
         artsyMeter.setStringPainted(true);
         JPanel sidePanel = new JPanel();
-        JPanel paintButtonContainer = new JPanel();
-        JPanel eraserButtonContainer = new JPanel();
-        JPanel clearButtonContainer = new JPanel();
+        JPanel controlButtonContainer = new JPanel();
         colorPallet = new JPanel();
 
         // components of the side panel
@@ -229,6 +230,7 @@ public class Canvas extends JPanel {
         eraserButton = new Button("Erase!");
         eraserButton.setEnabled(true);
         clearButton = new Button ("Clear");
+        dogeButton = new Button("DOGE");
         final Label tableLabel = new Label("List of Artists:");
         final JTable playerList = new JTable(playersModel);
         final JScrollPane scrollList = new JScrollPane(playerList);
@@ -256,14 +258,12 @@ public class Canvas extends JPanel {
         // creating layouts and customizing components
         GridLayout palletLayout = new GridLayout(3, 5);
         BoxLayout panelLayout = new BoxLayout(sidePanel, BoxLayout.Y_AXIS);
-        BoxLayout pButtonLayout = new BoxLayout(paintButtonContainer, BoxLayout.Y_AXIS);
-        BoxLayout eButtonLayout = new BoxLayout(eraserButtonContainer, BoxLayout.Y_AXIS);
-        BoxLayout cButtonLayout = new BoxLayout(clearButtonContainer, BoxLayout.Y_AXIS);
+        GridLayout controlButtonLayout = new GridLayout(2, 2);
         window.add(this, BorderLayout.WEST);
         window.add(artsyMeter, BorderLayout.SOUTH);
         window.add(sidePanel, BorderLayout.EAST);
         playerList.setFillsViewportHeight(true);
-
+        
         // don't display grid lines
         playerList.setShowHorizontalLines(false);
         playerList.setShowVerticalLines(false);
@@ -275,23 +275,20 @@ public class Canvas extends JPanel {
         strokeSlider.setPaintLabels(true);
 
         // apply layouts to containers
-        paintButtonContainer.setLayout(pButtonLayout);
-        eraserButtonContainer.setLayout(eButtonLayout);
-        clearButtonContainer.setLayout(cButtonLayout);
+        controlButtonContainer.setLayout(controlButtonLayout);
         colorPallet.setLayout(palletLayout);
         sidePanel.setLayout(panelLayout);
 
-        // adding components to the button container
-        paintButtonContainer.add(paintButton);
-        eraserButtonContainer.add(eraserButton);
-        clearButtonContainer.add(clearButton);
+        controlButtonContainer.add(paintButton);
+        controlButtonContainer.add(eraserButton);
+        controlButtonContainer.add(clearButton);
+        controlButtonContainer.add(dogeButton);
+        
 
         // adding components to the side panel
         sidePanel.add(sliderLabel);
         sidePanel.add(strokeSlider);
-        sidePanel.add(paintButtonContainer);
-        sidePanel.add(eraserButtonContainer);
-        sidePanel.add(clearButtonContainer);
+        sidePanel.add(controlButtonContainer);
         sidePanel.add(colorPallet);
         sidePanel.add(tableLabel);
         sidePanel.add(scrollList);
@@ -305,9 +302,8 @@ public class Canvas extends JPanel {
         sidePanel.setPreferredSize(sidePanelDimension);
         sidePanel.setBorder(BorderFactory.createEmptyBorder(20, 5, 10, 10));
         colorPallet.setMaximumSize(new Dimension(200, 100));
-        paintButtonContainer.setBorder(BorderFactory.createEmptyBorder(10, 0, 10, 0));
-        eraserButtonContainer.setBorder(BorderFactory.createEmptyBorder(0, 0, 10, 0));
-        clearButtonContainer.setBorder(BorderFactory.createEmptyBorder(0, 0, 10, 0));
+        controlButtonContainer.setPreferredSize(new Dimension(100, 200));
+        controlButtonContainer.setBorder(BorderFactory.createEmptyBorder(30, 0, 30, 0));
         paintButton.setPreferredSize(buttonDimension);
         eraserButton.setPreferredSize(buttonDimension);
         clearButton.setPreferredSize(buttonDimension);
@@ -325,9 +321,10 @@ public class Canvas extends JPanel {
 
         // set fonts
         sliderLabel.setFont(segoe.deriveFont(20f));
-        paintButton.setFont(segoe.deriveFont(35f));
-        eraserButton.setFont(segoe.deriveFont(35f));
-        clearButton.setFont(segoe.deriveFont(35f));
+        paintButton.setFont(segoe.deriveFont(25f));
+        eraserButton.setFont(segoe.deriveFont(25f));
+        clearButton.setFont(segoe.deriveFont(25f));
+        dogeButton.setFont(segoe.deriveFont(25f));
         tableLabel.setFont(segoe.deriveFont(20f));
 
         // adds listeners to all of the components
@@ -443,8 +440,15 @@ public class Canvas extends JPanel {
                 }
             }
         });
+        
+        // adds listener to the DOGE button
+        dogeButton.addActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent e) {
+                doge();
+            }
+        });
 
-        // on close, make sure we tell the server
+     // on close, make sure we tell the server
         window.addWindowListener(new WindowAdapter()
         {
             @Override
@@ -457,6 +461,8 @@ public class Canvas extends JPanel {
                 }
             }
         });
+        
+        
     }
 
     /**
@@ -561,7 +567,7 @@ public class Canvas extends JPanel {
                 setArtsy(artsy);
                 bgColor = new Color(red, green, blue);
                 fillBackground();
-
+                
                 // draw the actions if there are actions to draw
                 if (totalInput.length > 1) {
                     parseActions(totalInput[1], false);
@@ -659,7 +665,7 @@ public class Canvas extends JPanel {
             // wow.
             Image img = null;
             try {
-                img = ImageIO.read(new File("files/DOGE.jpg"));
+                img = ImageIO.read(new File("files/DOGE.png"));
             } catch (IOException e) {
                 e.printStackTrace();
             }
