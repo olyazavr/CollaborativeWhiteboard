@@ -12,8 +12,6 @@ import java.awt.Graphics2D;
 import java.awt.GridLayout;
 import java.awt.Image;
 import java.awt.Label;
-import java.awt.Point;
-import java.awt.Rectangle;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.MouseEvent;
@@ -515,7 +513,7 @@ public class Canvas extends JPanel {
                 outQueue.put("NEW " + name + " " + bgColor.getRed() + " " + bgColor.getGreen() + " "
                         + bgColor.getBlue() + " " + user);
                 addRemoveUsers(user, true); // add user
-                fillWithChoice();
+                fillBackground();
 
             } else {
                 // "SELECT" WB_NAME USER_NAME
@@ -534,7 +532,7 @@ public class Canvas extends JPanel {
 
                 setArtsy(artsy);
                 bgColor = new Color(red, green, blue);
-                fillWithChoice();
+                fillBackground();
 
                 // draw the actions if there are actions to draw
                 if (totalInput.length > 1) {
@@ -603,26 +601,33 @@ public class Canvas extends JPanel {
         g.drawImage(drawingBuffer, 0, 0, null);
     }
 
-    /*
-     * Make the drawing buffer and draw some starting content for it.
+    /**
+     * Make the drawing buffer and draw some starting content for it
      */
     private void makeDrawingBuffer() {
         drawingBuffer = createImage(getWidth(), getHeight());
         // set up the whiteboard before we paint!
         setupWhiteboard();
-        drawSmile();
+        if (name.equals("Default")) {
+            defaultSetup();
+        }
     }
 
-    /*
-     * Make the drawing buffer with the chosen background color and doge.
+    /**
+     * Fill the background with the background color
      */
-    private void fillWithChoice() {
+    private void fillBackground() {
         final Graphics2D g = (Graphics2D) drawingBuffer.getGraphics();
-
         g.setColor(bgColor);
         g.fillRect(0, 0, getWidth(), getHeight());
-        
-        if (bgColor.equals(Color.WHITE)) {
+        this.repaint();
+    }
+
+    /**
+     * Draw a welcoming image on the whiteboard for the Default whiteboard only
+     */
+    private void defaultSetup() {
+        final Graphics2D g = (Graphics2D) drawingBuffer.getGraphics();
             // so color
             // much pixel
             // many image
@@ -635,51 +640,29 @@ public class Canvas extends JPanel {
             }
     
             g.drawImage(img, (800 - 550) / 2, (600 - 550) / 2, null);
-        }
+
 
         // IMPORTANT! every time we draw on the internal drawing buffer, we
         // have to notify Swing to repaint this component on the screen.
         this.repaint();
     }
 
-    /*
-     * Draw a happy smile on the drawing buffer.
-     */
-    private void drawSmile() {
-        final Graphics2D g = (Graphics2D) drawingBuffer.getGraphics();
-
-        // all positions and sizes below are in pixels
-        final Rectangle smileBox = new Rectangle(20, 20, 100, 100); // x, y,
-                                                                    // width,
-                                                                    // height
-        final Point smileCenter = new Point(smileBox.x + smileBox.width / 2, smileBox.y + smileBox.height / 2);
-        final int smileStrokeWidth = 3;
-        final Dimension eyeSize = new Dimension(9, 9);
-        final Dimension eyeOffset = new Dimension(smileBox.width / 6, smileBox.height / 6);
-
-        g.setColor(Color.BLACK);
-        g.setStroke(new BasicStroke(smileStrokeWidth));
-
-        // draw the smile -- an arc inscribed in smileBox, starting at -30
-        // degrees (southeast)
-        // and covering 120 degrees
-        g.drawArc(smileBox.x, smileBox.y, smileBox.width, smileBox.height, -30, -120);
-
-        // draw some eyes to make it look like a smile rather than an arc
-        for (int side : new int[] { -1, 1 }) {
-            g.fillOval(smileCenter.x + side * eyeOffset.width - eyeSize.width / 2,
-                    smileCenter.y - eyeOffset.height - eyeSize.width / 2,
-                    eyeSize.width, eyeSize.height);
-        }
-
-        // IMPORTANT! every time we draw on the internal drawing buffer, we
-        // have to notify Swing to repaint this component on the screen.
-        this.repaint();
-    }
-
-    /*
+    /**
      * Draw a line between two points (x1, y1) and (x2, y2), specified in pixels
      * relative to the upper-left corner of the drawing buffer.
+     * 
+     * @param x1
+     *            starting x
+     * @param y1
+     *            starting y
+     * @param x2
+     *            ending x
+     * @param y2
+     *            ending y
+     * @param color
+     *            color of the drawing
+     * @param stroke
+     *            thickness of the drawing (>=0)
      */
     private void drawLineSegment(int x1, int y1, int x2, int y2, Color color, int stroke) {
         Graphics2D graphics = (Graphics2D) drawingBuffer.getGraphics();
@@ -688,12 +671,10 @@ public class Canvas extends JPanel {
         graphics.setStroke(new BasicStroke(stroke));
         graphics.drawLine(x1, y1, x2, y2);
 
-        // IMPORTANT! every time we draw on the internal drawing buffer, we
-        // have to notify Swing to repaint this component on the screen.
         this.repaint();
     }
 
-    /*
+    /**
      * Add the mouse listener that supports the user's freehand drawing.
      */
     private void addDrawingController() {
