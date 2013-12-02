@@ -206,9 +206,10 @@ public class Artist {
 		
 		layout.setVerticalGroup(vertical);
 
-		this.window.pack();
+        addListeners();
 
-		addListeners();
+		this.window.pack();
+        this.window.setVisible(true);
 	}
 
 	/**
@@ -457,11 +458,8 @@ public class Artist {
 	public static void main(String[] args) {
 		SwingUtilities.invokeLater(new Runnable() {
 			public void run() {
-				Artist main;
-				
 				try {
-					main = new Artist();
-					main.window.setVisible(true);
+                    new Artist();
 					
 				} catch (IOException e) {
 					e.printStackTrace();

@@ -320,10 +320,10 @@ public class Canvas extends JPanel {
         eraserButton.setFont(segoe.deriveFont(35f));
         tableLabel.setFont(segoe.deriveFont(20f));
 
+        addListeners();
+
         window.setResizable(false);
         window.setVisible(true);
-
-        addListeners();
     }
 
     /**
@@ -331,23 +331,6 @@ public class Canvas extends JPanel {
      * listeners to them
      */
     private void setupButtons() {
-        // set colors to buttons
-        buttonBlack.setBackground(Color.BLACK);
-        buttonDarkGray.setBackground(Color.DARK_GRAY);
-        buttonGray.setBackground(Color.GRAY);
-        buttonLightGray.setBackground(Color.LIGHT_GRAY);
-        buttonWhite.setBackground(Color.WHITE);
-        buttonRed.setBackground(Color.RED);
-        buttonOrange.setBackground(Color.ORANGE);
-        buttonYellow.setBackground(Color.YELLOW);
-        buttonGreen.setBackground(Color.GREEN);
-        buttonBlue.setBackground(Color.BLUE);
-        buttonMITcolor.setBackground(MIT);
-        buttonMagenta.setBackground(Color.MAGENTA);
-        buttonPink.setBackground(Color.PINK);
-        buttonCyan.setBackground(Color.CYAN);
-        buttonWhite.setBackground(Color.WHITE);
-
         // set up the map
         Map<JButton, Color> colorButtons = new HashMap<JButton, Color>();
         colorButtons.put(buttonBlack, Color.BLACK);
@@ -367,9 +350,11 @@ public class Canvas extends JPanel {
 
         // set properties of all buttons
         for (final Entry<JButton, Color> button : colorButtons.entrySet()) {
-            // This removes the default buttons
+            // set the bg color of the button
+            button.getKey().setBackground(button.getValue());
+            // remove the default buttons
             button.getKey().setBorderPainted(false);
-            // This makes the background visible
+            // make the background visible
             button.getKey().setOpaque(true);
 
             // adding components to the pallet
@@ -435,7 +420,7 @@ public class Canvas extends JPanel {
             {
                 try {
                     outQueue.put("BYE " + name + " " + user);
-                } catch (InterruptedException e1) {
+                } catch (Exception e1) {
                     e1.printStackTrace();
                 }
             }
@@ -458,20 +443,25 @@ public class Canvas extends JPanel {
                 artsyMeter.setValue(artsy);
 
                 // displays a message depending on the artsiness of the art
-                if (artsy >= 0 && artsy < 25) {
+                if (artsy < 25) {
                     artsyMeter.setString("GET ARTSIER! (" + artsy + "%)");
-                    
-                } else if (artsy >= 25 && artsy < 50) {
+                    return;
+                }
+                if (artsy < 50) {
                     artsyMeter.setString("MAKE MORE ARTS!1! (" + artsy + "%)");
-                    
-                } else if (artsy >= 50 && artsy < 75) {
+                    return;
+                }
+                if (artsy < 75) {
                     artsyMeter.setString("DAYUM, GURL, DEM ARTS (" + artsy + "%)");
-                    
-                } else if (artsy >= 75 && artsy < 100) {
+                    return;
+                }
+                if (artsy < 100) {
                     artsyMeter.setString("LOLZ YOU DON'T GO HERE (" + artsy + "%)");
-                    
-                } else if (artsy >= 100) {
+                    return;
+                }
+                if (artsy == 100) {
                     artsyMeter.setString("SO ART. MANY PERCENTAGES. WOW. (" + artsy + "%)");
+                    return;
                 }
             }
         });
