@@ -28,7 +28,7 @@ public class Whiteboard {
     private final static Color[] colors = new Color[] { Color.BLACK, Color.DARK_GRAY,
             Color.GRAY, Color.LIGHT_GRAY, Color.WHITE, Color.RED, Color.ORANGE,
             Color.YELLOW, Color.GREEN, Color.BLUE, Color.MAGENTA,
-            new Color(163, 31, 52), Color.MAGENTA, Color.PINK, Color.CYAN };
+            new Color(163, 31, 52), Color.PINK, Color.CYAN };
 
     /**
      * Creates a new Whiteboard object, with an empty artsy meter and no actions
@@ -75,10 +75,12 @@ public class Whiteboard {
      * events. Scary.
      */
     public void clear() {
-        actions.clear();
-        
-        // Reset all colors to unused
-        unusedColors = Collections.synchronizedList(makeColorList());
+        synchronized (actions) {
+            actions.clear();
+
+            // Reset all colors to unused
+            unusedColors = Collections.synchronizedList(makeColorList());
+        }
     }
 
     /**
@@ -106,8 +108,12 @@ public class Whiteboard {
         synchronized (actions) {
             actions.addAll(Arrays.asList(x1, y1, x2, y2, stroke, red, green, blue));
 
-            // Won't change unusedColors if not in the list
-            unusedColors.remove(new Color(red, green, blue));
+            // doge is all -1's, will break this
+            if (red >= 0) {
+                // Won't change unusedColors if not in the list
+                unusedColors.remove(new Color(red, green, blue));
+            }
+
         }
     }
 

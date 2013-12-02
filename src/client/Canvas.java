@@ -35,8 +35,6 @@ import java.util.concurrent.LinkedBlockingQueue;
 import javax.imageio.ImageIO;
 import javax.swing.BorderFactory;
 import javax.swing.BoxLayout;
-import javax.swing.GroupLayout;
-import javax.swing.GroupLayout.Group;
 import javax.swing.JButton;
 import javax.swing.JColorChooser;
 import javax.swing.JFrame;
@@ -229,7 +227,7 @@ public class Canvas extends JPanel {
         paintButton.setEnabled(false);
         eraserButton = new Button("Erase!");
         eraserButton.setEnabled(true);
-        clearButton = new Button ("Clear");
+        clearButton = new Button("Clear");
         dogeButton = new Button("DOGE");
         final Label tableLabel = new Label("List of Artists:");
         final JTable playerList = new JTable(playersModel);
@@ -263,7 +261,7 @@ public class Canvas extends JPanel {
         window.add(artsyMeter, BorderLayout.SOUTH);
         window.add(sidePanel, BorderLayout.EAST);
         playerList.setFillsViewportHeight(true);
-        
+
         // don't display grid lines
         playerList.setShowHorizontalLines(false);
         playerList.setShowVerticalLines(false);
@@ -283,7 +281,6 @@ public class Canvas extends JPanel {
         controlButtonContainer.add(eraserButton);
         controlButtonContainer.add(clearButton);
         controlButtonContainer.add(dogeButton);
-        
 
         // adding components to the side panel
         sidePanel.add(sliderLabel);
@@ -365,7 +362,7 @@ public class Canvas extends JPanel {
             button.getKey().setBorderPainted(false);
             // make the background visible
             button.getKey().setOpaque(true);
-            
+
             // adding components to the pallet
             colorPallet.add(button.getKey());
 
@@ -424,31 +421,39 @@ public class Canvas extends JPanel {
                 }
             }
         });
-        
+
         // adds listener to the Clear button
         clearButton.addActionListener(new ActionListener() {
             public void actionPerformed(ActionEvent e) {
-                //clears the canvas with the BG color
+                // clears the canvas with the BG color
                 fillBackground();
-                
-                // Tells  server board has been cleared
+
+                // Tells server board has been cleared
                 try {
                     outQueue.put("CLEAR " + name);
-                    
+
                 } catch (InterruptedException e1) {
                     e1.printStackTrace();
                 }
             }
         });
-        
+
         // adds listener to the DOGE button
         dogeButton.addActionListener(new ActionListener() {
             public void actionPerformed(ActionEvent e) {
-                doge();
+                // put the doge action on the queue!
+                try {
+                    // "DRAW" WB_NAME X1 Y1 X2 Y2 STROKE COLOR_R COLOR_G COLOR_B
+                    // (everything is -1 for doge)
+                    outQueue.put("DRAW " + name + " " + -1 + " " + -1 + " " + -1 + " " + -1 + " " + -1 + " " + -1 + " "
+                            + -1 + " " + -1);
+                } catch (InterruptedException e1) {
+                    e1.printStackTrace();
+                }
             }
         });
 
-     // on close, make sure we tell the server
+        // on close, make sure we tell the server
         window.addWindowListener(new WindowAdapter()
         {
             @Override
@@ -461,8 +466,7 @@ public class Canvas extends JPanel {
                 }
             }
         });
-        
-        
+
     }
 
     /**
@@ -567,7 +571,7 @@ public class Canvas extends JPanel {
                 setArtsy(artsy);
                 bgColor = new Color(red, green, blue);
                 fillBackground();
-                
+
                 // draw the actions if there are actions to draw
                 if (totalInput.length > 1) {
                     parseActions(totalInput[1], false);
@@ -616,7 +620,11 @@ public class Canvas extends JPanel {
             int blue = new Integer(pixelsInput[i]);
 
             // draw it!
-            drawLineSegment(x1, y1, x2, y2, new Color(red, green, blue), stroke);
+            if (x1 == -1) { // this is doge
+                doge();
+            } else { // not doge, normal line
+                drawLineSegment(x1, y1, x2, y2, new Color(red, green, blue), stroke);
+            }
         }
     }
 
@@ -659,22 +667,19 @@ public class Canvas extends JPanel {
      */
     private void doge() {
         final Graphics2D g = (Graphics2D) drawingBuffer.getGraphics();
-            // so color
-            // much pixel
-            // many image
-            // wow.
-            Image img = null;
-            try {
-                img = ImageIO.read(new File("files/DOGE.png"));
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-    
-            g.drawImage(img, (800 - 550) / 2, (600 - 550) / 2, null);
+        // so color
+        // much pixel
+        // many image
+        // wow.
+        Image img = null;
+        try {
+            img = ImageIO.read(new File("files/DOGE.png"));
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
 
+        g.drawImage(img, (800 - 550) / 2, (600 - 550) / 2, null);
 
-        // IMPORTANT! every time we draw on the internal drawing buffer, we
-        // have to notify Swing to repaint this component on the screen.
         this.repaint();
     }
 
@@ -715,10 +720,10 @@ public class Canvas extends JPanel {
     }
 
     /**
-     * Handles the user's freehand drawing. This was implemented by the staff code.
-     * It implements MouseListener and MouseMotionListener which is used to track
-     * mouse motion such as button presses and mouse drags. This is critical for
-     * drawing and mouse input on the canvas.
+     * Handles the user's freehand drawing. This was implemented by the staff
+     * code. It implements MouseListener and MouseMotionListener which is used
+     * to track mouse motion such as button presses and mouse drags. This is
+     * critical for drawing and mouse input on the canvas.
      */
     private class DrawingController implements MouseListener, MouseMotionListener {
         // store the coordinates of the last mouse event, so we can
@@ -735,8 +740,8 @@ public class Canvas extends JPanel {
         }
 
         /*
-         * When mouse moves while a button is pressed down, draw a line segment. Send the points
-         * to the server's queue
+         * When mouse moves while a button is pressed down, draw a line segment.
+         * Send the points to the server's queue
          */
         public void mouseDragged(MouseEvent e) {
             int x = e.getX();
@@ -756,15 +761,20 @@ public class Canvas extends JPanel {
         }
 
         // Ignore all these other mouse events.
-        public void mouseMoved(MouseEvent e) { }
+        public void mouseMoved(MouseEvent e) {
+        }
 
-        public void mouseClicked(MouseEvent e) { }
+        public void mouseClicked(MouseEvent e) {
+        }
 
-        public void mouseReleased(MouseEvent e) { }
+        public void mouseReleased(MouseEvent e) {
+        }
 
-        public void mouseEntered(MouseEvent e) { }
+        public void mouseEntered(MouseEvent e) {
+        }
 
-        public void mouseExited(MouseEvent e) { }
+        public void mouseExited(MouseEvent e) {
+        }
     }
 
     /**
@@ -820,16 +830,16 @@ public class Canvas extends JPanel {
             addRemoveUsers(userName, false);
             return;
         }
-        
+
         // user clears the board
         // "CLEAR" WB_NAME
         if (inputSplit[0].equals("CLEAR")) {
             fillBackground();
             setArtsy(0);
-            
+
             return;
         }
-        
+
         // things that don't adhere to the grammar were put in here, muy bad
         throw new UnsupportedOperationException();
     }
