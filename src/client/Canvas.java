@@ -636,9 +636,6 @@ public class Canvas extends JPanel {
         drawingBuffer = createImage(getWidth(), getHeight());
         // set up the whiteboard before we paint!
         setupWhiteboard();
-        if (name.equals("Default")) {
-            defaultSetup();
-        }
     }
 
     /**
@@ -652,9 +649,9 @@ public class Canvas extends JPanel {
     }
 
     /**
-     * Draw a welcoming image on the whiteboard for the Default whiteboard only
+     * Draw a welcoming image on the whiteboard
      */
-    private void defaultSetup() {
+    private void doge() {
         final Graphics2D g = (Graphics2D) drawingBuffer.getGraphics();
             // so color
             // much pixel
