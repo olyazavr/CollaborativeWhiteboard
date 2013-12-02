@@ -114,9 +114,11 @@ public class Artist {
 
 		// add all the colors, as well as a custom option
 		DefaultComboBoxModel<String> colors = new DefaultComboBoxModel<String>();
+		
 		for (String s : colorMap.keySet()) {
 			colors.addElement(s);
 		}
+		
 		colors.addElement("Custom...");
 
 		bgColorPicker = new JComboBox<String>(colors);

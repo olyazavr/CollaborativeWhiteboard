@@ -106,6 +106,7 @@ public class Canvas extends JPanel {
     private final JProgressBar artsyMeter;
     private final Button eraserButton;
     private final Button paintButton;
+    private final Button clearButton;
     private final JButton buttonBlack;
     private final JButton buttonDarkGray;
     private final JButton buttonGray;
@@ -217,6 +218,7 @@ public class Canvas extends JPanel {
         JPanel sidePanel = new JPanel();
         JPanel paintButtonContainer = new JPanel();
         JPanel eraserButtonContainer = new JPanel();
+        JPanel clearButtonContainer = new JPanel();
         colorPallet = new JPanel();
 
         // components of the side panel
@@ -226,6 +228,7 @@ public class Canvas extends JPanel {
         paintButton.setEnabled(false);
         eraserButton = new Button("Erase!");
         eraserButton.setEnabled(true);
+        clearButton = new Button ("Clear");
         final Label tableLabel = new Label("List of Artists:");
         final JTable playerList = new JTable(playersModel);
         final JScrollPane scrollList = new JScrollPane(playerList);
@@ -255,6 +258,7 @@ public class Canvas extends JPanel {
         BoxLayout panelLayout = new BoxLayout(sidePanel, BoxLayout.Y_AXIS);
         BoxLayout pButtonLayout = new BoxLayout(paintButtonContainer, BoxLayout.Y_AXIS);
         BoxLayout eButtonLayout = new BoxLayout(eraserButtonContainer, BoxLayout.Y_AXIS);
+        BoxLayout cButtonLayout = new BoxLayout(clearButtonContainer, BoxLayout.Y_AXIS);
         window.add(this, BorderLayout.WEST);
         window.add(artsyMeter, BorderLayout.SOUTH);
         window.add(sidePanel, BorderLayout.EAST);
@@ -273,18 +277,21 @@ public class Canvas extends JPanel {
         // apply layouts to containers
         paintButtonContainer.setLayout(pButtonLayout);
         eraserButtonContainer.setLayout(eButtonLayout);
+        clearButtonContainer.setLayout(cButtonLayout);
         colorPallet.setLayout(palletLayout);
         sidePanel.setLayout(panelLayout);
 
         // adding components to the button container
         paintButtonContainer.add(paintButton);
         eraserButtonContainer.add(eraserButton);
+        clearButtonContainer.add(clearButton);
 
         // adding components to the side panel
         sidePanel.add(sliderLabel);
         sidePanel.add(strokeSlider);
         sidePanel.add(paintButtonContainer);
         sidePanel.add(eraserButtonContainer);
+        sidePanel.add(clearButtonContainer);
         sidePanel.add(colorPallet);
         sidePanel.add(tableLabel);
         sidePanel.add(scrollList);
@@ -298,10 +305,12 @@ public class Canvas extends JPanel {
         sidePanel.setPreferredSize(sidePanelDimension);
         sidePanel.setBorder(BorderFactory.createEmptyBorder(20, 5, 10, 10));
         colorPallet.setMaximumSize(new Dimension(200, 100));
-        paintButtonContainer.setBorder(BorderFactory.createEmptyBorder(25, 0, 12, 0));
-        eraserButtonContainer.setBorder(BorderFactory.createEmptyBorder(13, 0, 25, 0));
+        paintButtonContainer.setBorder(BorderFactory.createEmptyBorder(10, 0, 10, 0));
+        eraserButtonContainer.setBorder(BorderFactory.createEmptyBorder(0, 0, 10, 0));
+        clearButtonContainer.setBorder(BorderFactory.createEmptyBorder(0, 0, 10, 0));
         paintButton.setPreferredSize(buttonDimension);
         eraserButton.setPreferredSize(buttonDimension);
+        clearButton.setPreferredSize(buttonDimension);
         scrollList.setPreferredSize(tableDimension);
 
         // Create segoe font from the font file
@@ -318,10 +327,13 @@ public class Canvas extends JPanel {
         sliderLabel.setFont(segoe.deriveFont(20f));
         paintButton.setFont(segoe.deriveFont(35f));
         eraserButton.setFont(segoe.deriveFont(35f));
+        clearButton.setFont(segoe.deriveFont(35f));
         tableLabel.setFont(segoe.deriveFont(20f));
 
+        // adds listeners to all of the components
         addListeners();
 
+        // does not allow resizing of the window and makes it visible
         window.setResizable(false);
         window.setVisible(true);
     }
@@ -356,7 +368,7 @@ public class Canvas extends JPanel {
             button.getKey().setBorderPainted(false);
             // make the background visible
             button.getKey().setOpaque(true);
-
+            
             // adding components to the pallet
             colorPallet.add(button.getKey());
 
@@ -401,7 +413,7 @@ public class Canvas extends JPanel {
             }
         });
 
-        // adds button to the Eraser button
+        // adds listener to the Eraser button
         eraserButton.addActionListener(new ActionListener() {
             public void actionPerformed(ActionEvent e) {
                 if (!erasing) {
@@ -412,6 +424,22 @@ public class Canvas extends JPanel {
                     stroke = 5 * prevStroke;
                     paintButton.setEnabled(true);
                     eraserButton.setEnabled(false);
+                }
+            }
+        });
+        
+        // adds listener to the Clear button
+        clearButton.addActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent e) {
+                //clears the canvas with the BG color
+                fillBackground();
+                
+                // Tells  server board has been cleared
+                try {
+                    outQueue.put("CLEAR " + name);
+                    
+                } catch (InterruptedException e1) {
+                    e1.printStackTrace();
                 }
             }
         });
@@ -789,7 +817,14 @@ public class Canvas extends JPanel {
             addRemoveUsers(userName, false);
             return;
         }
-
+        
+        // user clears the board
+        // "CLEAR" WB_NAME
+        if (inputSplit[0].equals("CLEAR")) {
+            fillBackground();
+            return;
+        }
+        
         // things that don't adhere to the grammar were put in here, muy bad
         throw new UnsupportedOperationException();
     }
