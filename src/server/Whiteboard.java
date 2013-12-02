@@ -71,6 +71,14 @@ public class Whiteboard {
     }
 
     /**
+     * Clears everything from the actions list, effectively wiping out all draw
+     * events. Scary.
+     */
+    public void clear() {
+        actions.clear();
+    }
+
+    /**
      * Adds a draw action to the action list.
      * 
      * @param x1

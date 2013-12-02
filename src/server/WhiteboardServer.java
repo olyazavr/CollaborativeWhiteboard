@@ -180,7 +180,7 @@ public class WhiteboardServer {
      * Change the background color of the board
      * 
      * @param boardName
-     *            board in question
+     *            name of board in question
      * @param red
      *            amount of red (0-255)
      * @param green
@@ -192,6 +192,19 @@ public class WhiteboardServer {
         Whiteboard board = whiteboards.get(boardName);
         synchronized (board) {
             board.setBackgroundColor(red, green, blue);
+        }
+    }
+
+    /**
+     * Clears everything from the board, leaving only the background color
+     * 
+     * @param boardName
+     *            name of board in question
+     */
+    private void clearBoard(String boardName) {
+        Whiteboard board = whiteboards.get(boardName);
+        synchronized (board) {
+            board.clear();
         }
     }
 
@@ -372,7 +385,9 @@ public class WhiteboardServer {
      * 
      * (5) change whiteboard bg color ("BG" WB_NAME COLOR_R COLOR_G COLOR_B),
      * 
-     * (6) disconnect message ("BYE" WB_NAME USER_NAME)
+     * (6) clear everything from board ("CLEAR" WB_NAME),
+     * 
+     * (7) disconnect message ("BYE" WB_NAME USER_NAME)
      * 
      * Possible outputs:
      * 
@@ -388,7 +403,9 @@ public class WhiteboardServer {
      * 
      * (5) change whiteboard bg color ("BG" COLOR_R COLOR_G COLOR_B),
      * 
-     * (6) user leaves ("BYEUSER" USER_NAME)
+     * (6) clear everything from board ("CLEAR"),
+     * 
+     * (7) user leaves ("BYEUSER" USER_NAME)
      * 
      * @param input
      *            the client's request
@@ -468,6 +485,17 @@ public class WhiteboardServer {
                 // change color, inform others
                 changeBackgroundColor(boardName, red, green, blue);
                 putOnAllQueuesBut(clientID, boardName, "BG " + red + " " + green + " " + blue);
+                return;
+            }
+
+            // clear everything from board
+            // "CLEAR" WB_NAME
+            if (inputSplit[0].equals("CLEAR")) {
+                String boardName = inputSplit[1];
+
+                // change color, inform others
+                clearBoard(boardName);
+                putOnAllQueuesBut(-1, boardName, "CLEAR"); // put on all queues
                 return;
             }
 
