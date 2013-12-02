@@ -616,26 +616,28 @@ public class Canvas extends JPanel {
     }
 
     /*
-     * Make the drawing buffer entirely white.
+     * Make the drawing buffer with the chosen background color and doge.
      */
     private void fillWithChoice() {
         final Graphics2D g = (Graphics2D) drawingBuffer.getGraphics();
 
         g.setColor(bgColor);
         g.fillRect(0, 0, getWidth(), getHeight());
-
-        // so color
-        // much pixel
-        // many image
-        // wow.
-        Image img = null;
-        try {
-            img = ImageIO.read(new File("files/DOGE.jpg"));
-        } catch (IOException e) {
-            e.printStackTrace();
+        
+        if (bgColor.equals(Color.WHITE)) {
+            // so color
+            // much pixel
+            // many image
+            // wow.
+            Image img = null;
+            try {
+                img = ImageIO.read(new File("files/DOGE.jpg"));
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+    
+            g.drawImage(img, (800 - 550) / 2, (600 - 550) / 2, null);
         }
-
-        g.drawImage(img, (800 - 550) / 2, (600 - 550) / 2, null);
 
         // IMPORTANT! every time we draw on the internal drawing buffer, we
         // have to notify Swing to repaint this component on the screen.
@@ -702,8 +704,11 @@ public class Canvas extends JPanel {
         addMouseMotionListener(controller);
     }
 
-    /*
-     * DrawingController handles the user's freehand drawing.
+    /**
+     * Handles the user's freehand drawing. This was implemented by the staff code.
+     * It implements MouseListener and MouseMotionListener which is used to track
+     * mouse motion such as button presses and mouse drags. This is critical for
+     * drawing and mouse input on the canvas.
      */
     private class DrawingController implements MouseListener, MouseMotionListener {
         // store the coordinates of the last mouse event, so we can
@@ -720,7 +725,8 @@ public class Canvas extends JPanel {
         }
 
         /*
-         * When mouse moves while a button is pressed down, draw a line segment.
+         * When mouse moves while a button is pressed down, draw a line segment. Send the points
+         * to the server's queue
          */
         public void mouseDragged(MouseEvent e) {
             int x = e.getX();
@@ -740,20 +746,15 @@ public class Canvas extends JPanel {
         }
 
         // Ignore all these other mouse events.
-        public void mouseMoved(MouseEvent e) {
-        }
+        public void mouseMoved(MouseEvent e) { }
 
-        public void mouseClicked(MouseEvent e) {
-        }
+        public void mouseClicked(MouseEvent e) { }
 
-        public void mouseReleased(MouseEvent e) {
-        }
+        public void mouseReleased(MouseEvent e) { }
 
-        public void mouseEntered(MouseEvent e) {
-        }
+        public void mouseEntered(MouseEvent e) { }
 
-        public void mouseExited(MouseEvent e) {
-        }
+        public void mouseExited(MouseEvent e) { }
     }
 
     /**

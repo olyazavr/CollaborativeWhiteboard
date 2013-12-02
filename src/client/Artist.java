@@ -331,8 +331,7 @@ public class Artist {
 					toggleWhiteboardSelection(true);
 					
 				} catch (IOException notValidIP) {
-					JOptionPane.showMessageDialog(window,
-							"Please enter a valid IP address and try again");
+					JOptionPane.showMessageDialog(window, "Please enter a valid IP address and try again");
 				}
 			}
 		});
