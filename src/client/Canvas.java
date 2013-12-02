@@ -825,6 +825,8 @@ public class Canvas extends JPanel {
         // "CLEAR" WB_NAME
         if (inputSplit[0].equals("CLEAR")) {
             fillBackground();
+            setArtsy(0);
+            
             return;
         }
         

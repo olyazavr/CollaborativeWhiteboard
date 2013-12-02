@@ -76,6 +76,9 @@ public class Whiteboard {
      */
     public void clear() {
         actions.clear();
+        
+        // Reset all colors to unused
+        unusedColors = Collections.synchronizedList(makeColorList());
     }
 
     /**
