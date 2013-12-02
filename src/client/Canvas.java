@@ -225,7 +225,9 @@ public class Canvas extends JPanel {
         final Label sliderLabel = new Label("Stroke Size:");
         strokeSlider = new JSlider(SLIDER_MIN, SLIDER_MAX, SLIDER_INIT);
         paintButton = new Button("Draw!");
+        paintButton.setEnabled(false);
         eraserButton = new Button("Erase!");
+        eraserButton.setEnabled(true);
         final Label tableLabel = new Label("List of Artists:");
         final JTable playerList = new JTable(playersModel);
         final JScrollPane scrollList = new JScrollPane(playerList);
@@ -396,6 +398,8 @@ public class Canvas extends JPanel {
                 erasing = false;
                 color = prevColor;
                 stroke = strokeSlider.getValue();
+                paintButton.setEnabled(false);
+                eraserButton.setEnabled(true);
             }
         });
 
@@ -408,6 +412,8 @@ public class Canvas extends JPanel {
                     prevStroke = stroke;
                     color = bgColor;
                     stroke = 5 * prevStroke;
+                    paintButton.setEnabled(true);
+                    eraserButton.setEnabled(false);
                 }
             }
         });
