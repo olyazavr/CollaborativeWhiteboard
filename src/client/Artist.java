@@ -50,8 +50,6 @@ public class Artist {
 	private Socket socket;
 	private final int port = 4444;
 	private List<String> whiteboards;
-	// always send the server the whiteboard name
-	// private final String whiteboardName;
 	private String username;
 	private String IP;
 
@@ -448,7 +446,7 @@ public class Artist {
 	 * 
 	 * @return boolean, true if it contains a space
 	 */
-	public static boolean containsSpace(String name) {
+    public boolean containsSpace(String name) {
 		Pattern pattern = Pattern.compile("\\s");
 		Matcher matcher = pattern.matcher(name);
 		return matcher.find();
