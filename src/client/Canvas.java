@@ -170,8 +170,6 @@ public class Canvas extends JPanel {
                 try (BufferedReader in = new BufferedReader(new InputStreamReader(socket.getInputStream()))) {
                     String input;
                     while ((input = in.readLine()) != null) {
-                        System.out.println("canvas has read in " + input + " for user " + user);
-
                         // this is on init
                         if (input.contains("ACTIONS")) {
                             inQueue.put(input);

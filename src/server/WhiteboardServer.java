@@ -329,7 +329,6 @@ public class WhiteboardServer {
         // try with resources!
         try (BufferedReader in = new BufferedReader(new InputStreamReader(socket.getInputStream()))) {
             for (String line = in.readLine(); line != null; line = in.readLine()) {
-                System.out.println("read in " + line);
                 handleRequest(line, clientID);
             }
 
@@ -355,8 +354,6 @@ public class WhiteboardServer {
             String response;
             while (!(response = queues.get(clientID).take()).equals("BYE")) {
                 // take the latest output, deliver it
-                System.out.println("got response " + response);
-
                 if (!response.isEmpty()) {
                     out.println(response);
                 }

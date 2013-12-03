@@ -14,139 +14,152 @@ import server.Whiteboard;
 
 public class WhiteboardTest {
 
-	private final List<Integer> blackrgb = new ArrayList<Integer>();
-	private final List<Integer> whitergb = new ArrayList<Integer>();
-	private final Color MIT = new Color(163, 31, 52);
-	private final List<Integer> MITcolor = Arrays.asList(163, 31, 52);
+    private final List<Integer> blackrgb = new ArrayList<Integer>();
+    private final List<Integer> whitergb = new ArrayList<Integer>();
+    private final List<Integer> MITcolor = Arrays.asList(163, 31, 52);
 
-	@Test
-	public void basicNameBGcolorTest() {
+    @Test
+    public void initBoardTest() {
+        // test to make sure actions and artsy meter are empty
+        blackrgb.add(0);
+        blackrgb.add(0);
+        blackrgb.add(0);
 
-		blackrgb.add(0);
-		blackrgb.add(0);
-		blackrgb.add(0);
+        final Whiteboard board1 = new Whiteboard("board1", blackrgb);
 
-		final Whiteboard board1 = new Whiteboard("board1", blackrgb);
+        // actions should be empty
+        assertEquals("", board1.createStringOfActions());
 
-		assertEquals(board1.getBackgroundColorString(), "0 0 0");
+        // artsy should be zero
+        assertEquals(0, board1.calculateArtsy());
+    }
 
-		assertEquals(board1.getName(), "board1");
-		
-		// Shouldn't have any actions
-		assertTrue(board1.createStringOfActions().length() == 0);
-		board1.setBackgroundColor(255, 255, 255);
-		
-		// changing background color is not an action
-		assertTrue(board1.createStringOfActions().length() == 0);
+    @Test
+    public void nameTest() {
+        // test name getter
+        blackrgb.add(0);
+        blackrgb.add(0);
+        blackrgb.add(0);
 
-		assertEquals(board1.getBackgroundColorString(), "255 255 255");
+        final Whiteboard board1 = new Whiteboard("board1", blackrgb);
 
-	}
+        assertEquals(board1.getName(), "board1");
+    }
 
-	@Test
-	public void MITinitializationTest() {
-		
+    @Test
+    public void backgroundColorTest() {
+        // test bgcolor getters/setters
+        blackrgb.add(0);
+        blackrgb.add(0);
+        blackrgb.add(0);
 
-		final Whiteboard MITboard = new Whiteboard("MIT", MITcolor);
+        final Whiteboard board1 = new Whiteboard("board1", blackrgb);
+        assertEquals(board1.getBackgroundColorString(), "0 0 0");
 
-		assertEquals(MITboard.getName(), "MIT");
-		
-		System.out.println(MITboard.getBackgroundColorString());
-		assertEquals(MITboard.getBackgroundColorString(), "163, 31, 52");
+        board1.setBackgroundColor(255, 255, 255);
 
-		MITboard.setBackgroundColor(0, 0, 0);
-		assertTrue(MITboard.createStringOfActions().length() == 0);
-		assertEquals(MITboard.getBackgroundColorString(), "0 0 0");
+        // changing background color is not an action
+        assertEquals("", board1.createStringOfActions());
+        assertEquals(board1.getBackgroundColorString(), "255 255 255");
+    }
 
-	}
+    @Test
+    public void MITinitializationTest() {
+        // test a board with a custom color
+        final Whiteboard MITboard = new Whiteboard("MIT", MITcolor);
 
-	@Test
-	public void newActionTest() {
+        assertEquals(MITboard.getName(), "MIT");
+        assertEquals(MITboard.getBackgroundColorString(), "163 31 52");
 
-		blackrgb.add(0);
-		blackrgb.add(0);
-		blackrgb.add(0);
+        MITboard.setBackgroundColor(0, 0, 0);
 
-		whitergb.add(255);
-		whitergb.add(255);
-		whitergb.add(255);
+        // changing background color is not an action
+        assertTrue(MITboard.createStringOfActions().length() == 0);
+        assertEquals(MITboard.getBackgroundColorString(), "0 0 0");
+    }
 
-		final Whiteboard board1 = new Whiteboard("board1", blackrgb);
+    @Test
+    public void newActionTest() {
+        // test adding and getting an action
+        blackrgb.add(0);
+        blackrgb.add(0);
+        blackrgb.add(0);
 
-		String bgString = board1.getBackgroundColorString();
+        whitergb.add(255);
+        whitergb.add(255);
+        whitergb.add(255);
 
-		assertEquals(bgString, "0 0 0");
+        final Whiteboard board1 = new Whiteboard("board1", blackrgb);
 
-		assertEquals(board1.getName(), "board1");
+        board1.addAction(0, 7, 2, 9, 10, 157, 33, 56);
+        assertEquals(board1.createStringOfActions(),
+                "0 7 2 9 10 157 33 56");
 
-		board1.addAction(0, 7, 2, 9, 10, 157, 33, 56);
+        board1.addAction(88, 96, 72, 30, 3, 33, 56, 0);
+        assertEquals(board1.createStringOfActions(),
+                "0 7 2 9 10 157 33 56 88 96 72 30 3 33 56 0");
 
-		assertTrue(board1.createStringOfActions().length() == 21);
-		assertTrue(board1.createStringOfActions().charAt(4) == '2');
-		assertTrue(board1.createStringOfActions().charAt(5) == ' ');
-		assertTrue(board1.createStringOfActions().charAt(6) == '9');
+        board1.addAction(0, 0, 99, 99, 6, Color.MAGENTA.getRed(),
+                Color.MAGENTA.getGreen(), Color.MAGENTA.getBlue());
+        assertEquals(board1.createStringOfActions(),
+                "0 7 2 9 10 157 33 56 88 96 72 30 3 33 56 0 0 0 99 99 6 255 0 255");
 
-		board1.addAction(88, 96, 72, 30, 3, 33, 56, 0);
+        // adding a doge
+        board1.addAction(-1, -1, -1, -1, -1, -1, -1, -1);
+        assertEquals(
+                board1.createStringOfActions(),
+                "0 7 2 9 10 157 33 56 88 96 72 30 3 33 56 0 0 0 99 99 6 255 0 255 -1 -1 -1 -1 -1 -1 -1 -1");
+    }
 
-		assertTrue(board1.createStringOfActions().length() == 43);
-		assertTrue(board1.createStringOfActions().charAt(4) == '2');
-		assertTrue(board1.createStringOfActions().charAt(5) == ' ');
-		assertTrue(board1.createStringOfActions().charAt(6) == '9');
+    @Test
+    public void clearActionsTest() {
+        // test that clearing clears all actions
+        blackrgb.add(0);
+        blackrgb.add(0);
+        blackrgb.add(0);
 
-		assertTrue(board1.calculateArtsy() == 0);
+        final Whiteboard board1 = new Whiteboard("board1", blackrgb);
+        board1.addAction(0, 7, 2, 9, 10, 157, 33, 56);
+        assertEquals(board1.createStringOfActions(),
+                "0 7 2 9 10 157 33 56");
 
-		board1.addAction(0, 24, 73, 19, 10, 255, 255, 255);
+        // Check that clear makes board start over
+        board1.clear();
+        assertEquals("", board1.createStringOfActions());
+    }
 
-		assertEquals(board1.createStringOfActions(),
-				"0 7 2 9 10 157 33 56 88 96 72 30 3 33 56 0 0 24 73 19 10 255 255 255 ");
+    @Test
+    public void testOfArtsiness() {
+        // test things that should change the artsy meter
+        final Whiteboard MITboard = new Whiteboard("MIT", MITcolor);
 
-		board1.addAction(3, 41, 96, 5, 5, 255, 255, 255);
+        // Using color not on pallet does not increase artsy
+        MITboard.addAction(0, 7, 2, 9, 10, 157, 33, 56);
+        assertTrue(MITboard.calculateArtsy() == 0);
 
-		assertEquals(
-				board1.createStringOfActions(),
-				"0 7 2 9 10 157 33 56 88 96 72 30 3 33 56 0 0 24 73 19 10 255 255 255 3 41 96 5 5 255 255 255 ");
+        // This should increase artsy
+        MITboard.addAction(0, 24, 73, 19, 10, 255, 255, 255);
+        assertTrue(MITboard.calculateArtsy() == 7);
 
-		board1.addAction(0, 0, 99, 99, 6, Color.MAGENTA.getRed(),
-				Color.MAGENTA.getGreen(), Color.MAGENTA.getBlue());
+        // Using same color again does not increase artsy
+        MITboard.addAction(3, 41, 96, 5, 5, 255, 255, 255);
+        assertTrue(MITboard.calculateArtsy() == 7);
 
-		// Check that clear makes board start over
-		board1.clear();
+        // This should increase artsy
+        MITboard.addAction(0, 0, 99, 99, 6, Color.MAGENTA.getRed(),
+                Color.MAGENTA.getGreen(), Color.MAGENTA.getBlue());
+        assertTrue(MITboard.calculateArtsy() == 14);
 
-		assertTrue(board1.createStringOfActions().length() == 0);
+        // Check that clear makes board start over
+        MITboard.clear();
+        assertTrue(MITboard.calculateArtsy() == 0);
 
-	}
+        // Drawing the same stuff should still increase artsy
+        MITboard.addAction(0, 24, 73, 19, 10, 255, 255, 255);
+        assertTrue(MITboard.calculateArtsy() == 7);
 
-	@Test
-	public void testOfArtsiness() {
-
-		final Whiteboard MITboard = new Whiteboard("MIT", MITcolor);
-
-		// Using color not on pallet does not increase artsy
-		MITboard.addAction(0, 7, 2, 9, 10, 157, 33, 56);
-		assertTrue(MITboard.calculateArtsy() == 0);
-
-		MITboard.addAction(0, 24, 73, 19, 10, 255, 255, 255);
-		assertTrue(MITboard.calculateArtsy() == 7);
-
-		// Using same color again does not increase artsy
-		MITboard.addAction(3, 41, 96, 5, 5, 255, 255, 255);
-		assertTrue(MITboard.calculateArtsy() == 7);
-
-		MITboard.addAction(0, 0, 99, 99, 6, Color.MAGENTA.getRed(),
-				Color.MAGENTA.getGreen(), Color.MAGENTA.getBlue());
-
-		assertTrue(MITboard.calculateArtsy() == 14);
-
-		// Check that clear makes board start over
-		MITboard.clear();
-		assertTrue(MITboard.calculateArtsy() == 0);
-
-		// Drawing the same stuff should still increase artsy
-		MITboard.addAction(0, 24, 73, 19, 10, 255, 255, 255);
-		assertTrue(MITboard.calculateArtsy() == 7);
-
-		MITboard.addAction(0, 0, 99, 99, 6, Color.MAGENTA.getRed(),
-				Color.MAGENTA.getGreen(), Color.MAGENTA.getBlue());
-		assertTrue(MITboard.calculateArtsy() == 14);
-	}
+        MITboard.addAction(0, 0, 99, 99, 6, Color.MAGENTA.getRed(),
+                Color.MAGENTA.getGreen(), Color.MAGENTA.getBlue());
+        assertTrue(MITboard.calculateArtsy() == 14);
+    }
 }

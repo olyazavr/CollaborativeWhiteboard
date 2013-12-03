@@ -403,7 +403,6 @@ public class Artist {
 						} else {
 							// make a new whiteboard!
 							try {
-                                System.out.println("making new board " + whiteboardName);
                                 new Canvas(whiteboardName, IP, color, username, true);
 								window.dispose();
 
@@ -417,8 +416,6 @@ public class Artist {
 
 						// if the client chose an existing whiteboard make a
 						// canvas with that name
-						System.out.println("selecting board " + choice);
-						
 						try {
                             new Canvas(choice, IP, color, username, false);
 							window.dispose();

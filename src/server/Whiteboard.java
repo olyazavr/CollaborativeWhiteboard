@@ -165,7 +165,7 @@ public class Whiteboard {
                 action.append(i + " ");
             }
         }
-        return action.toString();
+        return action.toString().trim();
     }
 
     /**
