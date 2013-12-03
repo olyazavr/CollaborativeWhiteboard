@@ -12,6 +12,17 @@ import org.junit.Test;
 
 import server.Whiteboard;
 
+/**
+ * Testing strategy: Make sure on initialization, the whiteboard has an artsy
+ * meter of zero, and no actions. Test the name getter. Test the background
+ * color setter and getter. Test adding new actions and getting them in string
+ * format. Test clearing all actions. Test the artsy meter increasing when new
+ * colors are in actions, but not when custom or repeated colors are added. Test
+ * that the artsy meter returns to 0 when the board is cleared. We can partition
+ * on different names and colors, and different actions sent (different pixels,
+ * colors, or doge code, which is all -1s). We allow no empty strings in names.
+ * 
+ */
 public class WhiteboardTest {
 
     private final List<Integer> blackrgb = new ArrayList<Integer>();
