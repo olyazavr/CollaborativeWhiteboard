@@ -259,8 +259,8 @@ public class WhiteboardServer {
     private String fixDuplicate(String name) {
         if (whiteboards.containsKey(name)) {
             if (name.contains("(") && name.contains(")")) {
-                int start = name.indexOf('(');
-                int end = name.indexOf(')');
+                int start = name.lastIndexOf('(');
+                int end = name.lastIndexOf(')');
                 String possibleNum = name.substring(start + 1, end);
                 if (possibleNum.matches("[0-9]+")) {
                     int nextNum = new Integer(possibleNum) + 1;
