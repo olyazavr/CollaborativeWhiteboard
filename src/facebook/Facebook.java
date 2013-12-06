@@ -1,10 +1,10 @@
 package facebook;
 
-import restfb.restfb.BinaryAttachment;
-import restfb.restfb.DefaultFacebookClient;
-import restfb.restfb.FacebookClient;
-import restfb.restfb.Parameter;
-import restfb.restfb.types.FacebookType;
+import restfb.BinaryAttachment;
+import restfb.DefaultFacebookClient;
+import restfb.FacebookClient;
+import restfb.Parameter;
+import restfb.types.FacebookType;
 
 /**
  * Finds Olga's facebook. Use this to post images.
@@ -33,4 +33,3 @@ public class Facebook {
         System.out.println("Published photo ID: " + publishPhotoResponse.getId());
     }
 }
-
