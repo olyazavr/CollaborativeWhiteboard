@@ -78,6 +78,7 @@ public class Canvas extends JPanel {
 
     private final String name;
     private final String user;
+    private final String IP;
     private final BlockingQueue<String> inQueue;
     private final BlockingQueue<String> outQueue;
     private boolean connected = true;
@@ -107,6 +108,9 @@ public class Canvas extends JPanel {
     private final Button paintButton;
     private final Button clearButton;
     private final Button dogeButton;
+    private final Button facebook;
+    private final Button switchBoards;
+
     private final JButton buttonBlack;
     private final JButton buttonDarkGray;
     private final JButton buttonGray;
@@ -140,6 +144,7 @@ public class Canvas extends JPanel {
     public Canvas(String boardName, String IP, Color bgColor, String userName)
             throws UnknownHostException, IOException {
         socket = new Socket(IP, port);
+        this.IP = IP;
         inQueue = new LinkedBlockingQueue<String>();
         outQueue = new LinkedBlockingQueue<String>();
 
@@ -222,6 +227,8 @@ public class Canvas extends JPanel {
         eraserButton.setEnabled(true);
         clearButton = new Button("Clear");
         dogeButton = new Button("DOGE");
+        facebook = new Button("Post to Facebook");
+        switchBoards = new Button("Switch boards");
         final Label tableLabel = new Label("List of Artists:");
         final JTable playerList = new JTable(playersModel);
         final JScrollPane scrollList = new JScrollPane(playerList);
@@ -249,7 +256,7 @@ public class Canvas extends JPanel {
         // creating layouts and customizing components
         GridLayout palletLayout = new GridLayout(3, 5);
         BoxLayout panelLayout = new BoxLayout(sidePanel, BoxLayout.Y_AXIS);
-        GridLayout controlButtonLayout = new GridLayout(2, 2);
+        GridLayout controlButtonLayout = new GridLayout(3, 2);
         window.add(this, BorderLayout.WEST);
         window.add(artsyMeter, BorderLayout.SOUTH);
         window.add(sidePanel, BorderLayout.EAST);
@@ -274,6 +281,8 @@ public class Canvas extends JPanel {
         controlButtonContainer.add(eraserButton);
         controlButtonContainer.add(clearButton);
         controlButtonContainer.add(dogeButton);
+        controlButtonContainer.add(switchBoards);
+        controlButtonContainer.add(facebook);
 
         // adding components to the side panel
         sidePanel.add(sliderLabel);
@@ -441,6 +450,19 @@ public class Canvas extends JPanel {
                     outQueue.put("DRAW " + name + " " + -1 + " " + -1 + " " + -1 + " " + -1 + " " + -1 + " " + -1 + " "
                             + -1 + " " + -1);
                 } catch (InterruptedException e1) {
+                    e1.printStackTrace();
+                }
+            }
+        });
+
+        // to switch boards, open an Artist, and close this window
+        switchBoards.addActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent e) {
+                try {
+                    outQueue.put("BYE " + name + " " + user);
+                    new Artist(IP);
+                    window.dispose();
+                } catch (Exception e1) {
                     e1.printStackTrace();
                 }
             }

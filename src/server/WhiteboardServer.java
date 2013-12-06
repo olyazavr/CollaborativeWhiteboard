@@ -258,17 +258,25 @@ public class WhiteboardServer {
      */
     private String fixDuplicate(String name) {
         if (whiteboards.containsKey(name)) {
+            // does this even have parens (have we fixed this before)
             if (name.contains("(") && name.contains(")")) {
+                // make sure we get the last ones
                 int start = name.lastIndexOf('(');
                 int end = name.lastIndexOf(')');
+
+                // check to make sure the thing in parens is a number (so, we've
+                // already made a duplicate copy)
                 String possibleNum = name.substring(start + 1, end);
                 if (possibleNum.matches("[0-9]+")) {
+                    // increment!
                     int nextNum = new Integer(possibleNum) + 1;
 
+                    // recurse because we may already have "name(1)"
                     // much recursive. such 006. wow.
                     return fixDuplicate(name.substring(0, start) + "(" + nextNum + ")");
                 }
             }
+            // nope, we haven't fixed this before, just add a (1)
             return fixDuplicate(name + "(1)");
         }
         return name;
@@ -368,7 +376,6 @@ public class WhiteboardServer {
         // try with resources!
         try (BufferedReader in = new BufferedReader(new InputStreamReader(socket.getInputStream()))) {
             for (String line = in.readLine(); line != null; line = in.readLine()) {
-                System.out.println("SERVER IN " + line);
                 handleRequest(line, clientID);
             }
 
@@ -394,8 +401,9 @@ public class WhiteboardServer {
             String response;
             while (!(response = queues.get(clientID).take()).equals("BYE")) {
                 // take the latest output, deliver it
-                System.out.println("SERVER OUT " + response);
                 if (!response.isEmpty()) {
+
+                    System.out.println("OUT " + response);
                     out.println(response);
                 }
             }
@@ -582,10 +590,7 @@ public class WhiteboardServer {
             // disconnect message for Artist
             // "BYEARTIST"
             if (inputSplit[0].equals("BYEARTIST")) {
-                // un-subscribe the client from new whiteboard events
                 clientQueue.put("BYE"); // poison pill
-                artistClients.remove(clientID);
-                queues.remove(clientID);
                 return;
             }
 

@@ -222,14 +222,14 @@ public class Artist {
 
         addListeners();
 
+        // can't enter anything until IP is selected
+        toggleWhiteboardSelection(false);
+
         // if we have an IP, set that IP and get whiteboard names
         if (IP != null) {
             enterIP.setText(IP);
             socket = new Socket(IP, port);
             startConnection();
-        } else {
-            // can't enter anything until IP is selected
-            toggleWhiteboardSelection(false);
         }
 
         this.window.pack();
@@ -270,13 +270,11 @@ public class Artist {
             public void run() {
                 try (BufferedReader in = new BufferedReader(new InputStreamReader(socket.getInputStream()))) {
                     while (connected) {
-                        String input = in.readLine();
-                        System.out.println("IN " + input);
-                        handleInput(input);
+                        handleInput(in.readLine());
                     }
 
                 } catch (Exception e) {
-                    // socket has been closed
+                    // socket has been closed by other thread, this is ok
                 }
             }
         });
@@ -289,9 +287,11 @@ public class Artist {
             public void run() {
                 try (PrintWriter out = new PrintWriter(socket.getOutputStream(), true)) {
 
+                    // send initial hello to get whiteboards
+                    outQueue.put("HELLO");
+
                     while (connected) {
                         String message = outQueue.take();
-                        System.out.println("OUT " + message);
                         out.println(message);
 
                         // we disconnect!
@@ -312,8 +312,7 @@ public class Artist {
     }
 
     /**
-     * Setup the new whiteboard option and send the HELLO message to the server
-     * to get the list of whiteboards
+     * Initialize all the whiteboard stuff and set up the new whiteboard option
      */
     private void setupWhiteboards() {
         whiteboards = new ArrayList<String>();
@@ -322,13 +321,6 @@ public class Artist {
 
         // make a new whiteboard option
         addWhiteboard("New whiteboard");
-
-        // send initial hello to get whiteboards
-        try {
-            outQueue.put("HELLO");
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        }
     }
 
     /**
@@ -411,7 +403,6 @@ public class Artist {
                 try {
                     socket = new Socket(IP, port);
                     startConnection();
-                    toggleWhiteboardSelection(true);
 
                 } catch (IOException notValidIP) {
                     JOptionPane.showMessageDialog(window, "Please enter a valid IP address and try again");
@@ -568,6 +559,9 @@ public class Artist {
             for (int i = 1; i < inputSplit.length; ++i) {
                 addWhiteboard(inputSplit[i]);
             }
+
+            // now that we've received whiteboards, make sure we can select them
+            toggleWhiteboardSelection(true);
             return;
         }
         // the new whiteboard name to avoid duplicates if that is the case)
