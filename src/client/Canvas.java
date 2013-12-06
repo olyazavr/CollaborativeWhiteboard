@@ -48,6 +48,8 @@ import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 import javax.swing.table.DefaultTableModel;
 
+import facebook.Facebook;
+
 /**
  * Canvas represents a drawing surface that allows the user to draw on it
  * freehand, with the mouse.
@@ -506,6 +508,14 @@ public class Canvas extends JPanel {
                 } catch (Exception e1) {
                     e1.printStackTrace();
                 }
+            }
+        });
+
+        // post the thing to facebook!
+        facebook.addActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent e) {
+                Facebook facebook = new Facebook();
+                facebook.publishImage("sharks.png"); // TODO: doesn't work
             }
         });
 
