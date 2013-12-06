@@ -46,6 +46,8 @@ public class WhiteboardServer {
     private final Map<Integer, String> names;
     // client ID -> queue
     private final Map<Integer, BlockingQueue<String>> queues;
+    // all the clients that are Artists
+    private final List<Integer> artistClients;
 
     /**
      * Creates a new server, with no whiteboards or users
@@ -60,6 +62,7 @@ public class WhiteboardServer {
         names = Collections.synchronizedMap(new HashMap<Integer, String>());
         queues = Collections.synchronizedMap(new HashMap<Integer, BlockingQueue<String>>());
         whiteboardClients = Collections.synchronizedMap(new HashMap<String, List<Integer>>());
+        artistClients = Collections.synchronizedList(new ArrayList<Integer>());
     }
 
     /**
@@ -133,7 +136,7 @@ public class WhiteboardServer {
     /**
      * Lists all of the whiteboard names
      * 
-     * @return a string of all whiteboard names separated by spaces
+     * @return "LIST" and a string of all whiteboard names separated by spaces
      */
     private String listWhiteboards() {
         StringBuilder boards = new StringBuilder();
@@ -152,7 +155,7 @@ public class WhiteboardServer {
             }
         }
 
-        return boards.toString().trim();
+        return "LIST " + boards.toString().trim();
     }
 
     /**
@@ -247,17 +250,27 @@ public class WhiteboardServer {
 
     /**
      * Put the message on all of the queues of clients that are in the
-     * particular whiteboard except the specified client.
+     * particular whiteboard except the specified client. If we are sending to
+     * Artists, leave boardName null.
      * 
      * @param clientID
-     *            id of client not to recieve message
+     *            id of client not to receive message
      * @param boardName
-     *            name of whiteboard in question
+     *            name of whiteboard in question, or null if we are looking for
+     *            Artists
      * @param message
      *            message to put on the queues
      */
     private void putOnAllQueuesBut(int clientID, String boardName, String message) {
-        List<Integer> clients = whiteboardClients.get(boardName);
+        List<Integer> clients;
+        if (boardName != null) {
+            // we are looking for Canvases
+            clients = whiteboardClients.get(boardName);
+        } else {
+            // we are looking for Artists
+            clients = artistClients;
+        }
+
         // iterating is not safe
         synchronized (clients) {
             for (int id : clients) {
@@ -329,6 +342,7 @@ public class WhiteboardServer {
         // try with resources!
         try (BufferedReader in = new BufferedReader(new InputStreamReader(socket.getInputStream()))) {
             for (String line = in.readLine(); line != null; line = in.readLine()) {
+                System.out.println("SERVER IN " + line);
                 handleRequest(line, clientID);
             }
 
@@ -354,6 +368,7 @@ public class WhiteboardServer {
             String response;
             while (!(response = queues.get(clientID).take()).equals("BYE")) {
                 // take the latest output, deliver it
+                System.out.println("SERVER OUT " + response);
                 if (!response.isEmpty()) {
                     out.println(response);
                 }
@@ -374,8 +389,7 @@ public class WhiteboardServer {
      * 
      * (2) select whiteboard ("SELECT" WB_NAME USER_NAME),
      * 
-     * (3) make new whiteboard and select it ("NEW" WB_NAME COLOR_R COLOR_G
-     * COLOR_B USER_NAME),
+     * (3) make new whiteboard ("NEW" WB_NAME COLOR_R COLOR_G COLOR_B),
      * 
      * (4) new draw actions ("DRAW" WB_NAME X1 Y1 X1 Y2 STROKE COLOR_R COLOR_G
      * COLOR_B),
@@ -386,14 +400,19 @@ public class WhiteboardServer {
      * 
      * (7) disconnect message ("BYE" WB_NAME USER_NAME)
      * 
+     * (7) disconnect message for Artist ("BYEARTIST")
+     * 
      * Possible outputs:
      * 
      * (1) whiteboard names (WB_NAME WB_NAME...),
      * 
-     * (3) whiteboard specs (BG_RED BG_GREEN BG_BLUE ARTSY_METER "USERS"
+     * (2) whiteboard specs (BG_RED BG_GREEN BG_BLUE ARTSY_METER "USERS"
      * USER_NAME USER_NAME... "ACTIONS" X1 Y1 X1 Y2 STROKE COLOR_R COLOR_G
      * COLOR_B X1 Y1 X1 Y2 STROKE COLOR_R COLOR_G COLOR_B...) to new client,
      * ("NEWUSER" USER_NAME) to others,
+     * 
+     * (3) announce a new whiteboard to everyone ("NEWBOARD" WB_NAME) if name
+     * not taken and send back ("OK"), if name taken, then send back ("TAKEN")
      * 
      * (4) new draw actions ("DRAW" ARTSY_METER X1 Y1 X1 Y2 STROKE COLOR_R
      * COLOR_G COLOR_B),
@@ -402,7 +421,7 @@ public class WhiteboardServer {
      * 
      * (6) clear everything from board ("CLEAR"),
      * 
-     * (7) user leaves ("BYEUSER" USER_NAME)
+     * (7) user leaves ("BYEUSER" USER_NAME) to everyone but the user
      * 
      * @param input
      *            the client's request
@@ -418,6 +437,8 @@ public class WhiteboardServer {
             // initial connect message
             // "HELLO"
             if (inputSplit[0].equals("HELLO")) {
+                queues.put(clientID, new LinkedBlockingQueue<String>());
+                artistClients.add(clientID);
                 clientQueue.put(listWhiteboards());
                 return;
             }
@@ -435,20 +456,36 @@ public class WhiteboardServer {
             }
 
             // make new whiteboard and select it
-            // "NEW" WB_NAME COLOR_R COLOR_G COLOR_B USER_NAME
+            // "NEW" WB_NAME COLOR_R COLOR_G COLOR_B
             if (inputSplit[0].equals("NEW")) {
                 String boardName = inputSplit[1];
                 int red = new Integer(inputSplit[2]);
                 int green = new Integer(inputSplit[3]);
                 int blue = new Integer(inputSplit[4]);
-                String userName = inputSplit[5];
 
-                // make a new whiteboard
-                createWhiteboard(boardName, red, green, blue);
-                // we don't care about the result of select, because the board
-                // is brand new
-                selectWhiteboard(boardName, userName, clientID);
-                return;
+                // ensure name is unique
+                synchronized (whiteboards) {
+                    // if taken, send taken, don't do anything
+                    if (whiteboards.containsKey(boardName)) {
+                        clientQueue.put("TAKEN");
+                        return;
+
+                    } else {
+                        // make a new whiteboard otherwise!
+                        createWhiteboard(boardName, red, green, blue);
+                        // tell all Artists there's a new board and tell the
+                        // origin that it's not taken
+                        clientQueue.put("OK");
+                        putOnAllQueuesBut(clientID, null, "NEWBOARD " + boardName);
+
+                        // the Artist is leaving, so un-subscribe the client
+                        // from new whiteboard events
+                        clientQueue.put("BYE"); // poison pill
+                        artistClients.remove(clientID);
+                        queues.remove(clientID);
+                        return;
+                    }
+                }
             }
 
             // new draw actions
@@ -481,7 +518,8 @@ public class WhiteboardServer {
 
                 // change color, inform others
                 changeBackgroundColor(boardName, red, green, blue);
-                putOnAllQueuesBut(clientID, boardName, "BG " + red + " " + green + " " + blue);
+                // put on all queues
+                putOnAllQueuesBut(-1, boardName, "BG " + red + " " + green + " " + blue);
                 return;
             }
 
@@ -511,6 +549,16 @@ public class WhiteboardServer {
                 // tell others the user is gone
                 putOnAllQueuesBut(clientID, boardName, "BYEUSER " + userName);
                 clientQueue.put("BYE"); // poison pill
+                return;
+            }
+
+            // disconnect message for Artist
+            // "BYEARTIST"
+            if (inputSplit[0].equals("BYEARTIST")) {
+                // un-subscribe the client from new whiteboard events
+                clientQueue.put("BYE"); // poison pill
+                artistClients.remove(clientID);
+                queues.remove(clientID);
                 return;
             }
 

@@ -3,6 +3,8 @@ package client;
 import java.awt.Color;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
@@ -13,6 +15,8 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.LinkedBlockingQueue;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -47,422 +51,564 @@ import javax.swing.SwingUtilities;
  */
 public class Artist {
 
-	private Socket socket;
-	private final int port = 4444;
-	private List<String> whiteboards;
-	private String username;
-	private String IP;
+    private Socket socket;
+    private final int port = 4444;
+    private List<String> whiteboards;
+    private String username;
 
-	private final JLabel IPprompt;
-	private final JRadioButton localhost;
-	private final JRadioButton otherIP;
-	private final JTextField enterIP;
-	private final ButtonGroup ipButtonGroup;
-	private final JButton connect;
+    private String IP;
+    private boolean connected = true;
+    private final BlockingQueue<String> inQueue;
+    private final BlockingQueue<String> outQueue;
 
-	private final JLabel usernamePrompt;
-	private final JTextField enterUsername;
-	private final JLabel board;
-	private final JComboBox<String> newBoard;
+    private final JLabel IPprompt;
+    private final JRadioButton localhost;
+    private final JRadioButton otherIP;
+    private final JTextField enterIP;
+    private final ButtonGroup ipButtonGroup;
+    private final JButton connect;
 
-	private final JLabel whiteboardPrompt;
-	private final JTextField whiteboardNamer;
-	private final JLabel bgColorPrompt;
-	private final JComboBox<String> bgColorPicker;
-	private final Map<String, Color> colorMap;
+    private final JLabel usernamePrompt;
+    private final JTextField enterUsername;
+    private final JLabel board;
+    private final JComboBox<String> newBoard;
+    private DefaultComboBoxModel<String> whiteboardCombo;
+
+    private final JLabel whiteboardPrompt;
+    private final JTextField whiteboardNamer;
+    private final JLabel bgColorPrompt;
+    private final JComboBox<String> bgColorPicker;
+    private final Map<String, Color> colorMap;
 
     private Color color = Color.WHITE;
-	private final JButton GO;
-	private final JFrame window;
+    private final JButton GO;
+    private final JFrame window;
 
     /**
      * Creates a new Artist login screen
      * 
+     * @param IP
+     *            optional IP address if reconnecting, null otherwise
+     * 
      * @throws UnknownHostException
      * @throws IOException
      */
-	public Artist() throws UnknownHostException, IOException {
-		// Create a log-in screen
-		this.window = new JFrame("Login");
-		this.window.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+    public Artist(String IP) throws UnknownHostException, IOException {
+        // Create a log-in screen
+        this.window = new JFrame("Login");
+        this.window.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 
-		IPprompt = new JLabel("Enter IP address: ");
-		localhost = new JRadioButton("localhost", true);
-		otherIP = new JRadioButton();
-		ipButtonGroup = new ButtonGroup();
-		ipButtonGroup.add(localhost);
-		ipButtonGroup.add(otherIP);
-		
-		// default width so it doesn't get shat on by the fatass button
-		enterIP = new JTextField(10);
-		connect = new JButton("Connect!");
-		usernamePrompt = new JLabel("Pick a username:");
-		enterUsername = new JTextField();
-		board = new JLabel("Choose/create a board: ");
+        this.IP = IP;
+        inQueue = new LinkedBlockingQueue<String>();
+        outQueue = new LinkedBlockingQueue<String>();
 
-		// The dropdown list to choose a whiteboard is a combobox
-		newBoard = new JComboBox<String>();
+        IPprompt = new JLabel("Enter IP address: ");
+        localhost = new JRadioButton("localhost", true);
+        otherIP = new JRadioButton();
+        ipButtonGroup = new ButtonGroup();
+        ipButtonGroup.add(localhost);
+        ipButtonGroup.add(otherIP);
 
-		// If they want a new board, prompt them to pick name and background color
-		whiteboardPrompt = new JLabel("New board name:");
-		whiteboardNamer = new JTextField(10);
-		bgColorPrompt = new JLabel("with background: ");
+        // default width so it doesn't get shat on by the fatass button
+        enterIP = new JTextField(10);
+        connect = new JButton("Connect!");
+        usernamePrompt = new JLabel("Pick a username:");
+        enterUsername = new JTextField();
+        board = new JLabel("Choose/create a board: ");
 
-		colorMap = makeColors();
+        // The dropdown list to choose a whiteboard is a combobox
+        newBoard = new JComboBox<String>();
 
-		// add all the colors, as well as a custom option
-		DefaultComboBoxModel<String> colors = new DefaultComboBoxModel<String>();
-		
-		for (String s : colorMap.keySet()) {
-			colors.addElement(s);
-		}
-		
-		colors.addElement("Custom...");
+        // If they want a new board, prompt them to pick name and background
+        // color
+        whiteboardPrompt = new JLabel("New board name:");
+        whiteboardNamer = new JTextField(10);
+        bgColorPrompt = new JLabel("with background: ");
 
-		bgColorPicker = new JComboBox<String>(colors);
-		bgColorPicker.setSelectedIndex(1); // white is default
+        colorMap = makeColors();
 
-		GO = new JButton("Go!");
+        // add all the colors, as well as a custom option
+        DefaultComboBoxModel<String> colors = new DefaultComboBoxModel<String>();
 
-		// use GroupLayout
-		GroupLayout layout = new GroupLayout(window.getContentPane());
-		layout.setAutoCreateGaps(true);
-		layout.setAutoCreateContainerGaps(true);
-		this.window.setLayout(layout);
+        for (String s : colorMap.keySet()) {
+            colors.addElement(s);
+        }
 
-		// can't enter anything until IP is selected
-		toggleWhiteboardSelection(false);
+        colors.addElement("Custom...");
 
-		// draw all the shits
-		Group row1 = layout.createSequentialGroup()
-		        .addComponent(IPprompt)
-				.addComponent(localhost)
-				.addComponent(otherIP)
-				.addComponent(enterIP)
-				.addComponent(connect);
-		
-		Group row2 = layout.createSequentialGroup()
-				.addComponent(usernamePrompt)
-				.addComponent(enterUsername);
-		
-		Group row3 = layout.createSequentialGroup()
-		        .addComponent(board)
-				.addComponent(newBoard);
-		
-		Group row4 = layout.createSequentialGroup()
-				.addComponent(whiteboardPrompt)
-				.addComponent(whiteboardNamer)
-				.addComponent(bgColorPrompt)
-				.addComponent(bgColorPicker);
-		
-		Group row5 = layout.createSequentialGroup()
-		        .addComponent(GO);
+        bgColorPicker = new JComboBox<String>(colors);
+        bgColorPicker.setSelectedIndex(1); // white is default
 
-		Group horizontal = layout.createSequentialGroup();
-		
-		horizontal.addGroup(layout
-		        .createParallelGroup()
-		        .addGroup(row1)
-				.addGroup(row2)
-				.addGroup(row3)
-				.addGroup(row4)
-				.addGroup(row5));
+        GO = new JButton("Go!");
 
-		layout.setHorizontalGroup(horizontal);
+        // use GroupLayout
+        GroupLayout layout = new GroupLayout(window.getContentPane());
+        layout.setAutoCreateGaps(true);
+        layout.setAutoCreateContainerGaps(true);
+        this.window.setLayout(layout);
 
-		Group ver1 = layout.createParallelGroup()
-		        .addComponent(IPprompt)
-				.addComponent(localhost)
-				.addComponent(otherIP)
-				.addComponent(enterIP)
-				.addComponent(connect);
-		
-		Group ver2 = layout.createParallelGroup()
-				.addComponent(usernamePrompt, 0, 25, Integer.MAX_VALUE)
-				.addComponent(enterUsername);
-		
-		Group ver3 = layout.createParallelGroup()
-		        .addComponent(board)
-				.addComponent(newBoard);
-		
-		Group ver4 = layout.createParallelGroup()
-				.addComponent(whiteboardPrompt)
-				.addComponent(whiteboardNamer)
-				.addComponent(bgColorPrompt)
-				.addComponent(bgColorPicker);
-		
-		Group ver5 = layout.createParallelGroup()
-		        .addComponent(GO);
+        // draw all the shits
+        Group row1 = layout.createSequentialGroup()
+                .addComponent(IPprompt)
+                .addComponent(localhost)
+                .addComponent(otherIP)
+                .addComponent(enterIP)
+                .addComponent(connect);
 
-		Group vertical = layout
-		        .createSequentialGroup();
-		
-		vertical.addGroup(ver1)
-		        .addGroup(ver2)
-		        .addGroup(ver3)
-		        .addGroup(ver4)
-				.addGroup(ver4)
-				.addGroup(ver5);
-		
-		layout.setVerticalGroup(vertical);
+        Group row2 = layout.createSequentialGroup()
+                .addComponent(usernamePrompt)
+                .addComponent(enterUsername);
+
+        Group row3 = layout.createSequentialGroup()
+                .addComponent(board)
+                .addComponent(newBoard);
+
+        Group row4 = layout.createSequentialGroup()
+                .addComponent(whiteboardPrompt)
+                .addComponent(whiteboardNamer)
+                .addComponent(bgColorPrompt)
+                .addComponent(bgColorPicker);
+
+        Group row5 = layout.createSequentialGroup()
+                .addComponent(GO);
+
+        Group horizontal = layout.createSequentialGroup();
+
+        horizontal.addGroup(layout
+                .createParallelGroup()
+                .addGroup(row1)
+                .addGroup(row2)
+                .addGroup(row3)
+                .addGroup(row4)
+                .addGroup(row5));
+
+        layout.setHorizontalGroup(horizontal);
+
+        Group ver1 = layout.createParallelGroup()
+                .addComponent(IPprompt)
+                .addComponent(localhost)
+                .addComponent(otherIP)
+                .addComponent(enterIP)
+                .addComponent(connect);
+
+        Group ver2 = layout.createParallelGroup()
+                .addComponent(usernamePrompt, 0, 25, Integer.MAX_VALUE)
+                .addComponent(enterUsername);
+
+        Group ver3 = layout.createParallelGroup()
+                .addComponent(board)
+                .addComponent(newBoard);
+
+        Group ver4 = layout.createParallelGroup()
+                .addComponent(whiteboardPrompt)
+                .addComponent(whiteboardNamer)
+                .addComponent(bgColorPrompt)
+                .addComponent(bgColorPicker);
+
+        Group ver5 = layout.createParallelGroup()
+                .addComponent(GO);
+
+        Group vertical = layout
+                .createSequentialGroup();
+
+        vertical.addGroup(ver1)
+                .addGroup(ver2)
+                .addGroup(ver3)
+                .addGroup(ver4)
+                .addGroup(ver4)
+                .addGroup(ver5);
+
+        layout.setVerticalGroup(vertical);
 
         addListeners();
 
-		this.window.pack();
+        // if we have an IP, set that IP and get whiteboard names
+        if (IP != null) {
+            enterIP.setText(IP);
+            startConnection();
+        } else {
+            // can't enter anything until IP is selected
+            toggleWhiteboardSelection(false);
+        }
+
+        this.window.pack();
         this.window.setVisible(true);
-	}
+    }
 
-	/**
-	 * Toggles whether or not the rest of the whiteboard selection elements
-	 * (besides the IP) should be visible. All of these should be invisible
-	 * until a valid IP is entered.
-	 * 
-	 * @param visible
-	 *            whether or not the whiteboard selection elements should be
-	 *            visible
-	 */
-	private void toggleWhiteboardSelection(boolean visible) {
-		usernamePrompt.setVisible(visible);
-		enterUsername.setVisible(visible);
-		board.setVisible(visible);
-		newBoard.setVisible(visible);
-		whiteboardPrompt.setVisible(visible);
-		whiteboardNamer.setVisible(visible);
-		bgColorPicker.setVisible(visible);
-		bgColorPrompt.setVisible(visible);
-		GO.setVisible(visible);
-		this.window.pack();
-	}
+    /**
+     * Toggles whether or not the rest of the whiteboard selection elements
+     * (besides the IP) should be visible. All of these should be invisible
+     * until a valid IP is entered.
+     * 
+     * @param visible
+     *            whether or not the whiteboard selection elements should be
+     *            visible
+     */
+    private void toggleWhiteboardSelection(boolean visible) {
+        usernamePrompt.setVisible(visible);
+        enterUsername.setVisible(visible);
+        board.setVisible(visible);
+        newBoard.setVisible(visible);
+        whiteboardPrompt.setVisible(visible);
+        whiteboardNamer.setVisible(visible);
+        bgColorPicker.setVisible(visible);
+        bgColorPrompt.setVisible(visible);
+        GO.setVisible(visible);
+        this.window.pack();
+    }
 
-	/**
-	 * Gets the whiteboard names (all unique) from the server to populate the
-	 * drop-down menu, also add the names to the combo box model, setting that
-	 * model for the drop down menu
-	 * 
-	 * @throws IOException
-	 */
-	private void getWhiteboards() throws IOException {
-		whiteboards = new ArrayList<String>();
-		// try with multiple resources! this is so hot
-		try (BufferedReader in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
-				PrintWriter out = new PrintWriter(socket.getOutputStream(),true)) {
+    /**
+     * Starts the threads to read in and print out information to/from the
+     * server. Also sets up the whiteboards. This should only be called whenever
+     * IP is something valid.
+     */
+    private void startConnection() {
+        // Thread that reads in from the server, mainly keeping track of new
+        // whiteboards
+        Thread inCommunication = new Thread(new Runnable() {
+            public void run() {
+                try (BufferedReader in = new BufferedReader(new InputStreamReader(socket.getInputStream()))) {
+                    while (connected) {
+                        String input = in.readLine();
+                        System.out.println("IN " + input);
+                        handleInput(input);
+                    }
 
-			DefaultComboBoxModel<String> whiteboardCombo = new DefaultComboBoxModel<String>();
-			whiteboardCombo.addElement("New whiteboard");
+                } catch (Exception e) {
+                    // socket has been closed
+                }
+            }
+        });
 
-			// send initial hello to get whiteboards
-			out.println("HELLO");
+        inCommunication.start();
 
-			// retrieve the list of whiteboard names
-			String[] input = in.readLine().split(" ");
+        // Thread that prints out to the server, mainly informing it of HELLO
+        // and BYE messages
+        Thread outCommunication = new Thread(new Runnable() {
+            public void run() {
+                try (PrintWriter out = new PrintWriter(socket.getOutputStream(), true)) {
 
-			// add to the list and combobox
-			for (int i = 0; i < input.length; ++i) {
-				whiteboards.add(input[i]);
-				whiteboardCombo.addElement(input[i]);
-			}
+                    while (connected) {
+                        String message = outQueue.take();
+                        System.out.println("OUT " + message);
+                        out.println(message);
 
-			newBoard.setModel(whiteboardCombo);
-		}
-	}
+                        // we disconnect!
+                        if (message.equals("BYEARTIST")) {
+                            connected = false;
+                        }
+                    }
 
-	/**
-	 * Makes the color map with all of the standard colors in Color, as well as
-	 * MIT's color ;)
-	 * 
-	 * @return the map of string to color
-	 */
-	private Map<String, Color> makeColors() {
-		Map<String, Color> colorMap = new HashMap<String, Color>();
-		colorMap.put("White", Color.WHITE);
-		colorMap.put("Black", Color.BLACK);
-		colorMap.put("Gray", Color.GRAY);
-		colorMap.put("Light gray", Color.LIGHT_GRAY);
-		colorMap.put("Red", Color.RED);
-		colorMap.put("Orange", Color.ORANGE);
-		colorMap.put("Yellow", Color.YELLOW);
-		colorMap.put("Green", Color.GREEN);
-		colorMap.put("Blue", Color.BLUE);
-		colorMap.put("MIT Special", new Color(163, 31, 52));
-		colorMap.put("Magenta", Color.MAGENTA);
-		colorMap.put("Pink", Color.PINK);
-		colorMap.put("Cyan", Color.CYAN);
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+            }
+        });
 
-		return colorMap;
-	}
+        outCommunication.start();
 
-	/**
-	 * Toggle whether or not the user can see new whiteboard UI elements (if the
-	 * user is creating a whiteboard, these should be visible, otherwise they
-	 * should not)
-	 * 
-	 * @param visible
-	 *            whether or not the new whiteboard UI stuff should be visible
-	 */
-	private void toggleNewWhiteboard(boolean visible) {
-		whiteboardPrompt.setVisible(visible);
-		whiteboardNamer.setVisible(visible);
-		bgColorPrompt.setVisible(visible);
-		bgColorPicker.setVisible(visible);
-		window.pack();
-	}
+        setupWhiteboards();
+    }
 
-	/**
-	 * Adds all the listeners to UI objects
-	 */
-	private void addListeners() {
-		// connect with the IP given, get whiteboards
-		connect.addActionListener(new ActionListener() {
-			@Override
-			public void actionPerformed(ActionEvent e) {
-				// get the IP
-				if (localhost.isSelected()) {
-					IP = "localhost";
-					
-				} else {
-					IP = enterIP.getText();
-				}
+    /**
+     * Setup the new whiteboard option and send the HELLO message to the server
+     * to get the list of whiteboards
+     */
+    private void setupWhiteboards() {
+        whiteboards = new ArrayList<String>();
+        whiteboardCombo = new DefaultComboBoxModel<String>();
+        newBoard.setModel(whiteboardCombo);
 
-				// try to get whiteboard names from server, enable everything
-				// else if succeed
-				try {
-					socket = new Socket(IP, port);
-					getWhiteboards();
-					toggleWhiteboardSelection(true);
-					
-				} catch (IOException notValidIP) {
-					JOptionPane.showMessageDialog(window, "Please enter a valid IP address and try again");
-				}
-			}
-		});
+        // make a new whiteboard option
+        addWhiteboard("New whiteboard");
 
-		// select new whiteboard or create whiteboard
-		newBoard.addActionListener(new ActionListener() {
-			@Override
-			public void actionPerformed(ActionEvent e) {
-				String choice = (String) newBoard.getSelectedItem();
-				
-				if (choice.equals("New whiteboard")) {
-					toggleNewWhiteboard(true);
-					
-				} else {
-					toggleNewWhiteboard(false);
-				}
-			}
+        // send initial hello to get whiteboards
+        try {
+            outQueue.put("HELLO");
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+    }
 
-		});
+    /**
+     * Adds a whiteboard to the list and the combobox model
+     * 
+     * @param boardName
+     *            name of the whiteboard to add
+     */
+    private void addWhiteboard(final String boardName) {
+        whiteboards.add(boardName);
 
-		// select background color for new whiteboard
-		bgColorPicker.addActionListener(new ActionListener() {
-			@Override
-			public void actionPerformed(ActionEvent e) {
-				String bgColor = (String) bgColorPicker.getSelectedItem();
-				if (bgColor.equals("Custom...")) {
-					color = Color.WHITE;
-					JColorChooser.showDialog(new JPanel(), "Choose a color",
-							color);
+        SwingUtilities.invokeLater(new Runnable() {
 
-				} else {
-					// get the chosen color object from the map
-					color = colorMap.get(bgColor);
-				}
-			}
+            @Override
+            public void run() {
+                whiteboardCombo.addElement(boardName);
+            }
+        });
+    }
 
-		});
+    /**
+     * Makes the color map with all of the standard colors in Color, as well as
+     * MIT's color ;)
+     * 
+     * @return the map of string to color
+     */
+    private Map<String, Color> makeColors() {
+        Map<String, Color> colorMap = new HashMap<String, Color>();
+        colorMap.put("White", Color.WHITE);
+        colorMap.put("Black", Color.BLACK);
+        colorMap.put("Gray", Color.GRAY);
+        colorMap.put("Light gray", Color.LIGHT_GRAY);
+        colorMap.put("Red", Color.RED);
+        colorMap.put("Orange", Color.ORANGE);
+        colorMap.put("Yellow", Color.YELLOW);
+        colorMap.put("Green", Color.GREEN);
+        colorMap.put("Blue", Color.BLUE);
+        colorMap.put("MIT Special", new Color(163, 31, 52));
+        colorMap.put("Magenta", Color.MAGENTA);
+        colorMap.put("Pink", Color.PINK);
+        colorMap.put("Cyan", Color.CYAN);
 
-		// clicking go makes new canvas and gets rid of the log in screen
-		// finalize choices and sends dat shit to server
-		GO.addActionListener(new ActionListener() {
-			@Override
-			public void actionPerformed(ActionEvent e) {
-				// make sure the client doesn't try to do stupid stuff like
-				// empty usernames lolz
-				username = enterUsername.getText();
-				String whiteboardName = whiteboardNamer.getText();
+        return colorMap;
+    }
 
-				// Usernames can't be empty and can't contain space
-				if (!username.isEmpty() && !containsSpace(username)) {
-					// see what they chose
-					String choice = (String) newBoard.getSelectedItem();
+    /**
+     * Toggle whether or not the user can see new whiteboard UI elements (if the
+     * user is creating a whiteboard, these should be visible, otherwise they
+     * should not)
+     * 
+     * @param visible
+     *            whether or not the new whiteboard UI stuff should be visible
+     */
+    private void toggleNewWhiteboard(boolean visible) {
+        whiteboardPrompt.setVisible(visible);
+        whiteboardNamer.setVisible(visible);
+        bgColorPrompt.setVisible(visible);
+        bgColorPicker.setVisible(visible);
+        window.pack();
+    }
 
-					if (choice.equals("New whiteboard")) {
+    /**
+     * Adds all the listeners to UI objects
+     */
+    private void addListeners() {
+        // connect with the IP given, get whiteboards
+        connect.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                // get the IP
+                if (localhost.isSelected()) {
+                    IP = "localhost";
 
-						// if the name has already been taken
-						if (whiteboards.contains(whiteboardName)) {
-							JOptionPane
-									.showMessageDialog(window, "That whiteboard name is taken. Please choose a different one!");
+                } else {
+                    IP = enterIP.getText();
+                }
 
-							// if the board name contains space or is empty
-						} else if (containsSpace(whiteboardName)
-								|| whiteboardName.isEmpty()) {
-							JOptionPane
-									.showMessageDialog(window, "Whiteboard name cannot be empty and cannot contain spaces.");
+                // try to start connection with server, enable everything else
+                // if succeed
+                try {
+                    socket = new Socket(IP, port);
+                    startConnection();
+                    toggleWhiteboardSelection(true);
 
-						} else {
-							// make a new whiteboard!
-							try {
-                                new Canvas(whiteboardName, IP, color, username, true);
-								window.dispose();
+                } catch (IOException notValidIP) {
+                    JOptionPane.showMessageDialog(window, "Please enter a valid IP address and try again");
+                }
+            }
+        });
 
-							} catch (Exception badConnection) {
-								badConnection.printStackTrace();
-                                JOptionPane.showMessageDialog(window, "Invalid IP input!");
-							}
-						}
+        // select new whiteboard or create whiteboard
+        newBoard.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                String choice = (String) newBoard.getSelectedItem();
 
-					} else {
+                if (choice.equals("New whiteboard")) {
+                    toggleNewWhiteboard(true);
 
-						// if the client chose an existing whiteboard make a
-						// canvas with that name
-						try {
-                            new Canvas(choice, IP, color, username, false);
-							window.dispose();
-							
-						} catch (IOException e1) {
-							e1.printStackTrace();
-						}
-					}
+                } else {
+                    toggleNewWhiteboard(false);
+                }
+            }
 
-					// Catch invalid inputs
-					// dayum dis is dumb-bitch-proof
+        });
 
-					// when log in is done close everythannggg
+        // on close, make sure we tell the server
+        window.addWindowListener(new WindowAdapter()
+        {
+            @Override
+            public void windowClosing(WindowEvent e)
+            {
+                try {
+                    outQueue.put("BYEARTIST");
+                } catch (Exception e1) {
+                    e1.printStackTrace();
+                }
+            }
+        });
 
-				} else {
-					JOptionPane.showMessageDialog(window,"Username cannot be empty and cannot contain spaces.");
-				}
+        // select background color for new whiteboard
+        bgColorPicker.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                String bgColor = (String) bgColorPicker.getSelectedItem();
+                if (bgColor.equals("Custom...")) {
+                    color = Color.WHITE;
+                    JColorChooser.showDialog(new JPanel(), "Choose a color",
+                            color);
 
-			}
-		});
+                } else {
+                    // get the chosen color object from the map
+                    color = colorMap.get(bgColor);
+                }
+            }
 
-	}
+        });
 
-	/**
-	 * Checks to see if a string contains whitespace. Used here to make sure
-	 * usernames and whiteboard names don't have whitespace in them
-	 * 
-	 * @param name
-	 *            a string
-	 * 
-	 * @return boolean, true if it contains a space
-	 */
+        // clicking go makes new canvas and gets rid of the log in screen
+        // finalize choices and sends info to server
+        GO.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                username = enterUsername.getText();
+                String whiteboardName = whiteboardNamer.getText();
+
+                // usernames can't be empty and can't contain spaces
+                if (username.isEmpty() || containsSpace(username)) {
+                    JOptionPane.showMessageDialog(window, "Username cannot be empty and cannot contain spaces.");
+                    return;
+                }
+                // see what they chose
+                String choice = (String) newBoard.getSelectedItem();
+
+                // try to make a new whiteboard!
+                if (choice.equals("New whiteboard")) {
+                    makeNewWhiteboard(username, whiteboardName);
+
+                } else {
+                    // if the client chose an existing whiteboard make a
+                    // canvas with that name, and close Artist
+                    try {
+                        new Canvas(choice, IP, color, username);
+                        window.dispose();
+                    } catch (Exception e1) {
+                        e1.printStackTrace();
+                    }
+                }
+            }
+        });
+
+    }
+
+    /**
+     * Attempts to make a new whiteboard. On success, will close the Artist.
+     * 
+     * @param userName
+     *            VALID username
+     * @param whiteboardName
+     *            not necessary valid whiteboard name
+     */
+    private void makeNewWhiteboard(String userName, String whiteboardName) {
+        // sanitize the boardName
+        if (containsSpace(whiteboardName) || whiteboardName.isEmpty()) {
+            JOptionPane.showMessageDialog(window,
+                    "Whiteboard name cannot be empty and cannot contain spaces.");
+            return;
+        }
+
+        // ask server if the board name has already been taken
+        try {
+            // "NEW" WB_NAME COLOR_R COLOR_G COLOR_B
+            outQueue.put("NEW " + whiteboardName + " " + color.getRed() + " " + color.getGreen() + " "
+                    + color.getBlue());
+            if (inQueue.take().equals("OK")) {
+                // make a new whiteboard! Then close Artist
+                new Canvas(whiteboardName, IP, color, username);
+                window.dispose();
+            }
+            // name is taken, fail
+            else {
+                JOptionPane.showMessageDialog(window, "That whiteboard name is taken. Please choose a different one!");
+                return;
+            }
+        } catch (Exception e1) {
+            e1.printStackTrace();
+        }
+    }
+
+    /**
+     * Respond to the servers's requests appropriately
+     * 
+     * Possible requests:
+     * 
+     * (1) new whiteboard is made ("NEWBOARD" WB_NAME)
+     * 
+     * (2) the list of whiteboard names ("LIST" WB_NAME WB_NAME)
+     * 
+     * (3) the whiteboard name is taken ("TAKEN")
+     * 
+     * @param input
+     *            the input to analyze
+     */
+    private void handleInput(String input) {
+        // new whiteboard name
+        // "NEWBOARD" WB_NAME
+        if (input.startsWith("NEWBOARD")) {
+            // (everything but "NEWBOARD ")
+            addWhiteboard(input.substring(9));
+            return;
+        }
+
+        // this is the list of whiteboards
+        // "LIST" WB_NAME WB_NAME...
+        if (input.startsWith("LIST")) {
+            String[] inputSplit = input.split(" ");
+            for (int i = 1; i < inputSplit.length; ++i) {
+                addWhiteboard(inputSplit[i]);
+            }
+            return;
+        }
+        // the whiteboard name is taken or not
+        // "TAKEN" or "OK"
+        if (input.equals("TAKEN") || input.equals("OK")) {
+            try {
+                inQueue.put(input);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+        }
+
+        // things that don't adhere to the grammar were put in here, muy bad
+        throw new UnsupportedOperationException();
+    }
+
+    /**
+     * Checks to see if a string contains whitespace. Used here to make sure
+     * usernames and whiteboard names don't have whitespace in them
+     * 
+     * @param name
+     *            a string
+     * 
+     * @return boolean, true if it contains a space
+     */
     public boolean containsSpace(String name) {
-		Pattern pattern = Pattern.compile("\\s");
-		Matcher matcher = pattern.matcher(name);
-		return matcher.find();
-	}
+        Pattern pattern = Pattern.compile("\\s");
+        Matcher matcher = pattern.matcher(name);
+        return matcher.find();
+    }
 
-	public static void main(String[] args) {
-		SwingUtilities.invokeLater(new Runnable() {
-			public void run() {
-				try {
-                    new Artist();
-					
-				} catch (IOException e) {
-					e.printStackTrace();
-				}
+    public static void main(String[] args) {
+        SwingUtilities.invokeLater(new Runnable() {
+            public void run() {
+                try {
+                    // we have no IP to give yet
+                    new Artist(null);
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
 
-			}
-		});
-	}
+            }
+        });
+    }
 }

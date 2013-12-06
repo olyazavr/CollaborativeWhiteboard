@@ -78,7 +78,6 @@ public class Canvas extends JPanel {
 
     private final String name;
     private final String user;
-    private final boolean newWhiteboard;
     private final BlockingQueue<String> inQueue;
     private final BlockingQueue<String> outQueue;
     private boolean connected = true;
@@ -135,13 +134,10 @@ public class Canvas extends JPanel {
      *            background color
      * @param userName
      *            name of user making/selecting the board
-     * @param newWhiteboard
-     *            whether or not this is a new whiteboard, or we are selecting
-     *            an existing one
      * @throws UnknownHostException
      * @throws IOException
      */
-    public Canvas(String boardName, String IP, Color bgColor, String userName, boolean newWhiteboard)
+    public Canvas(String boardName, String IP, Color bgColor, String userName)
             throws UnknownHostException, IOException {
         socket = new Socket(IP, port);
         inQueue = new LinkedBlockingQueue<String>();
@@ -161,7 +157,6 @@ public class Canvas extends JPanel {
         this.name = boardName;
         this.bgColor = bgColor;
         this.user = userName;
-        this.newWhiteboard = newWhiteboard;
 
         // Thread that reads in from the server, mainly keeping track of new
         // draw events
@@ -538,48 +533,39 @@ public class Canvas extends JPanel {
     }
 
     /**
-     * Send the server the message to create/select a whiteboard, if it's a new
-     * whiteboard, nothing is returned, if it's an existing one, set the bg
-     * color and users list and draw the actions.
+     * Send the server the message to select a whiteboard, set the bg color and
+     * users list and draw the actions.
      */
     private void setupWhiteboard() {
         try {
-            if (newWhiteboard) {
-                // "NEW" WB_NAME COLOR_R COLOR_G COLOR_B USER_NAME
-                outQueue.put("NEW " + name + " " + bgColor.getRed() + " " + bgColor.getGreen() + " "
-                        + bgColor.getBlue() + " " + user);
-                addRemoveUsers(user, true); // add user
-                fillBackground();
+            // "SELECT" WB_NAME USER_NAME
+            outQueue.put("SELECT " + name + " " + user);
 
-            } else {
-                // "SELECT" WB_NAME USER_NAME
-                outQueue.put("SELECT " + name + " " + user);
+            // BG_RED BG_GREEN BG_BLUE ARTSY_METER "USERS" USER_NAME
+            // USER_NAME... "ACTIONS" X1 Y1 X2 Y2 STROKE COLOR_R COLOR_G
+            // COLOR_B X1 Y1 X2 Y2 STROKE COLOR_R COLOR_G COLOR_B...
+            String[] totalInput = inQueue.take().split(" ACTIONS ");
+            String[] usersInput = totalInput[0].split(" ");
 
-                // BG_RED BG_GREEN BG_BLUE ARTSY_METER "USERS" USER_NAME
-                // USER_NAME... "ACTIONS" X1 Y1 X2 Y2 STROKE COLOR_R COLOR_G
-                // COLOR_B X1 Y1 X2 Y2 STROKE COLOR_R COLOR_G COLOR_B...
-                String[] totalInput = inQueue.take().split(" ACTIONS ");
-                String[] usersInput = totalInput[0].split(" ");
+            int red = new Integer(usersInput[0]);
+            int green = new Integer(usersInput[1]);
+            int blue = new Integer(usersInput[2]);
+            int artsy = new Integer(usersInput[3]);
 
-                int red = new Integer(usersInput[0]);
-                int green = new Integer(usersInput[1]);
-                int blue = new Integer(usersInput[2]);
-                int artsy = new Integer(usersInput[3]);
+            setArtsy(artsy);
+            bgColor = new Color(red, green, blue);
+            fillBackground();
 
-                setArtsy(artsy);
-                bgColor = new Color(red, green, blue);
-                fillBackground();
-
-                // draw the actions if there are actions to draw
-                if (totalInput.length > 1) {
-                    parseActions(totalInput[1], false);
-                }
-
-                // add users to the playersModel
-                for (int i = 5; i < usersInput.length; ++i) {
-                    addRemoveUsers(usersInput[i], true);
-                }
+            // draw the actions if there are actions to draw
+            if (totalInput.length > 1) {
+                parseActions(totalInput[1], false);
             }
+
+            // add users to the playersModel
+            for (int i = 5; i < usersInput.length; ++i) {
+                addRemoveUsers(usersInput[i], true);
+            }
+
         } catch (InterruptedException e) {
             e.printStackTrace();
         }
@@ -618,7 +604,7 @@ public class Canvas extends JPanel {
             int blue = new Integer(pixelsInput[i]);
 
             // draw it!
-            if (x1 == -1) { // this is doge
+            if (stroke == -1) { // this is doge
                 doge();
             } else { // not doge, normal line
                 drawLineSegment(x1, y1, x2, y2, new Color(red, green, blue), stroke);
