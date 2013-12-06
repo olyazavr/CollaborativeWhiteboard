@@ -249,6 +249,32 @@ public class WhiteboardServer {
     }
 
     /**
+     * Fixes duplicate names by appending a (1) at the end, and then, if there
+     * is already a (1), change it to (2), and so on.
+     * 
+     * @param name
+     *            name to fix
+     * @return fixed name (with a (1) or (2), etc) at end
+     */
+    private String fixDuplicate(String name) {
+        if (whiteboards.containsKey(name)) {
+            if (name.contains("(") && name.contains(")")) {
+                int start = name.indexOf('(');
+                int end = name.indexOf(')');
+                String possibleNum = name.substring(start + 1, end);
+                if (possibleNum.matches("[0-9]+")) {
+                    int nextNum = new Integer(possibleNum) + 1;
+
+                    // much recursive. such 006. wow.
+                    return fixDuplicate(name.substring(0, start) + "(" + nextNum + ")");
+                }
+            }
+            return fixDuplicate(name + "(1)");
+        }
+        return name;
+    }
+
+    /**
      * Put the message on all of the queues of clients that are in the
      * particular whiteboard except the specified client. If we are sending to
      * Artists, leave boardName null.
@@ -374,6 +400,14 @@ public class WhiteboardServer {
                 }
             }
 
+            // remove the queue when we're done
+            if (artistClients.contains(clientID)) { // remove if artist
+                artistClients.remove(artistClients.indexOf(clientID));
+            } else { // remove if canvas
+                names.remove(clientID);
+            }
+            queues.remove(clientID);
+
         } catch (IOException | InterruptedException e) {
             e.printStackTrace();
         }
@@ -411,8 +445,9 @@ public class WhiteboardServer {
      * COLOR_B X1 Y1 X1 Y2 STROKE COLOR_R COLOR_G COLOR_B...) to new client,
      * ("NEWUSER" USER_NAME) to others,
      * 
-     * (3) announce a new whiteboard to everyone ("NEWBOARD" WB_NAME) if name
-     * not taken and send back ("OK"), if name taken, then send back ("TAKEN")
+     * (3) announce a new whiteboard to everyone ("NEWBOARD" WB_NAME), send back
+     * the possibly new name if there were duplicates (ie. a 1 may be added,
+     * then a 2, etc) ("NEWNAME" name)
      * 
      * (4) new draw actions ("DRAW" ARTSY_METER X1 Y1 X1 Y2 STROKE COLOR_R
      * COLOR_G COLOR_B),
@@ -465,26 +500,20 @@ public class WhiteboardServer {
 
                 // ensure name is unique
                 synchronized (whiteboards) {
-                    // if taken, send taken, don't do anything
-                    if (whiteboards.containsKey(boardName)) {
-                        clientQueue.put("TAKEN");
-                        return;
+                    // if name taken, fix it
+                    boardName = fixDuplicate(boardName);
 
-                    } else {
-                        // make a new whiteboard otherwise!
-                        createWhiteboard(boardName, red, green, blue);
-                        // tell all Artists there's a new board and tell the
-                        // origin that it's not taken
-                        clientQueue.put("OK");
-                        putOnAllQueuesBut(clientID, null, "NEWBOARD " + boardName);
+                    // make a new whiteboard
+                    createWhiteboard(boardName, red, green, blue);
+                    // tell all Artists there's a new board and tell the
+                    // origin what the new name is (it may have been changed)
+                    clientQueue.put("NEWNAME " + boardName);
+                    putOnAllQueuesBut(clientID, null, "NEWBOARD " + boardName);
 
-                        // the Artist is leaving, so un-subscribe the client
-                        // from new whiteboard events
-                        clientQueue.put("BYE"); // poison pill
-                        artistClients.remove(clientID);
-                        queues.remove(clientID);
-                        return;
-                    }
+                    // the Artist is leaving, so un-subscribe the client
+                    // from new whiteboard events
+                    clientQueue.put("BYE"); // poison pill
+                    return;
                 }
             }
 
@@ -543,8 +572,6 @@ public class WhiteboardServer {
                 // un-subscribe the client from whiteboard events
                 List<Integer> unsubList = whiteboardClients.get(boardName);
                 unsubList.remove(unsubList.indexOf(clientID));
-                names.remove(clientID);
-                queues.remove(clientID);
 
                 // tell others the user is gone
                 putOnAllQueuesBut(clientID, boardName, "BYEUSER " + userName);

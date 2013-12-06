@@ -225,6 +225,7 @@ public class Artist {
         // if we have an IP, set that IP and get whiteboard names
         if (IP != null) {
             enterIP.setText(IP);
+            socket = new Socket(IP, port);
             startConnection();
         } else {
             // can't enter anything until IP is selected
@@ -502,12 +503,14 @@ public class Artist {
     }
 
     /**
-     * Attempts to make a new whiteboard. On success, will close the Artist.
+     * Attempts to make a new whiteboard. Name may be changed (a (1) will be
+     * appended, then a (2), and so on) if there are duplicates. On success,
+     * will close the Artist.
      * 
      * @param userName
      *            VALID username
      * @param whiteboardName
-     *            not necessary valid whiteboard name
+     *            desired name, not necessary valid
      */
     private void makeNewWhiteboard(String userName, String whiteboardName) {
         // sanitize the boardName
@@ -517,21 +520,19 @@ public class Artist {
             return;
         }
 
-        // ask server if the board name has already been taken
+        // tell server that we're making a new whiteboard, get the name back in
+        // case there were conflicts (ie. if it's taken, "(1)" is appended at
+        // the end, and then "(2)" and so on)
         try {
             // "NEW" WB_NAME COLOR_R COLOR_G COLOR_B
             outQueue.put("NEW " + whiteboardName + " " + color.getRed() + " " + color.getGreen() + " "
                     + color.getBlue());
-            if (inQueue.take().equals("OK")) {
-                // make a new whiteboard! Then close Artist
-                new Canvas(whiteboardName, IP, color, username);
-                window.dispose();
-            }
-            // name is taken, fail
-            else {
-                JOptionPane.showMessageDialog(window, "That whiteboard name is taken. Please choose a different one!");
-                return;
-            }
+            String name = inQueue.take();
+
+            // make a new whiteboard! Then close Artist
+            new Canvas(name, IP, color, username);
+            window.dispose();
+
         } catch (Exception e1) {
             e1.printStackTrace();
         }
@@ -546,7 +547,7 @@ public class Artist {
      * 
      * (2) the list of whiteboard names ("LIST" WB_NAME WB_NAME)
      * 
-     * (3) the whiteboard name is taken ("TAKEN")
+     * (3) the new whiteboard name ("NEWNAME" NAME)
      * 
      * @param input
      *            the input to analyze
@@ -569,11 +570,12 @@ public class Artist {
             }
             return;
         }
-        // the whiteboard name is taken or not
-        // "TAKEN" or "OK"
-        if (input.equals("TAKEN") || input.equals("OK")) {
+        // the new whiteboard name to avoid duplicates if that is the case)
+        // "NEWNAME" NAME
+        if (input.startsWith("NEWNAME")) {
             try {
-                inQueue.put(input);
+                // get the name, without the "NEWNAME "
+                inQueue.put(input.substring(8));
             } catch (InterruptedException e) {
                 e.printStackTrace();
             }
