@@ -229,6 +229,9 @@ public class Canvas extends JPanel {
         dogeButton = new Button("DOGE");
         facebook = new Button("Post to Facebook");
         switchBoards = new Button("Switch boards");
+        // label too big, split it in two
+        final Label changeBGLabel = new Label("Drag colors into the canvas");
+        final Label changeBGLabel2 = new Label("to fill it with that color.");
         final Label tableLabel = new Label("List of Artists:");
         final JTable playerList = new JTable(playersModel);
         final JScrollPane scrollList = new JScrollPane(playerList);
@@ -288,6 +291,8 @@ public class Canvas extends JPanel {
         sidePanel.add(sliderLabel);
         sidePanel.add(strokeSlider);
         sidePanel.add(controlButtonContainer);
+        sidePanel.add(changeBGLabel);
+        sidePanel.add(changeBGLabel2);
         sidePanel.add(colorPallet);
         sidePanel.add(tableLabel);
         sidePanel.add(scrollList);
@@ -368,11 +373,47 @@ public class Canvas extends JPanel {
             // adding components to the pallet
             colorPallet.add(button.getKey());
 
+            // changing drawing color
             button.getKey().addActionListener(new ActionListener() {
                 public void actionPerformed(ActionEvent e) {
                     if (!erasing)
                         color = button.getValue();
                 }
+            });
+
+            // drag into canvas to fill bg color
+            button.getKey().addMouseListener(new MouseListener() {
+
+                public void mouseClicked(MouseEvent e) {
+                }
+
+                public void mousePressed(MouseEvent e) {
+                }
+
+                public void mouseReleased(MouseEvent e) {
+                    int x = e.getXOnScreen();
+                    int y = e.getYOnScreen();
+
+                    // if dragged into the canvas, change the bg color
+                    if (x < 800 && y < 600) {
+                        bgColor = button.getValue();
+                        try {
+                            // "BG" WB_NAME COLOR_R COLOR_G COLOR_BAME COLOR_R
+                            // COLOR_G COLOR_B
+                            outQueue.put("BG " + name + " " + bgColor.getRed() + " " + bgColor.getGreen() + " "
+                                    + bgColor.getBlue());
+                        } catch (InterruptedException e1) {
+                            e1.printStackTrace();
+                        }
+                    }
+                }
+
+                public void mouseEntered(MouseEvent e) {
+                }
+
+                public void mouseExited(MouseEvent e) {
+                }
+
             });
         }
 
@@ -737,7 +778,7 @@ public class Canvas extends JPanel {
         // mouse event.
         private int lastX, lastY;
 
-        /*
+        /**
          * When mouse button is pressed down, start drawing.
          */
         public void mousePressed(MouseEvent e) {
@@ -745,7 +786,7 @@ public class Canvas extends JPanel {
             lastY = e.getY();
         }
 
-        /*
+        /**
          * When mouse moves while a button is pressed down, draw a line segment.
          * Send the points to the server's queue
          */
@@ -818,6 +859,7 @@ public class Canvas extends JPanel {
             int green = new Integer(inputSplit[2]);
             int blue = new Integer(inputSplit[3]);
             bgColor = new Color(red, green, blue);
+            fillBackground();
             return;
         }
 

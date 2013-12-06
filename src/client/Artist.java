@@ -61,11 +61,9 @@ public class Artist {
     private final BlockingQueue<String> inQueue;
     private final BlockingQueue<String> outQueue;
 
-    private final JLabel IPprompt;
     private final JRadioButton localhost;
     private final JRadioButton otherIP;
     private final JTextField enterIP;
-    private final ButtonGroup ipButtonGroup;
     private final JButton connect;
 
     private final JLabel usernamePrompt;
@@ -102,10 +100,10 @@ public class Artist {
         inQueue = new LinkedBlockingQueue<String>();
         outQueue = new LinkedBlockingQueue<String>();
 
-        IPprompt = new JLabel("Enter IP address: ");
+        JLabel IPprompt = new JLabel("Enter IP address: ");
         localhost = new JRadioButton("localhost", true);
         otherIP = new JRadioButton();
-        ipButtonGroup = new ButtonGroup();
+        ButtonGroup ipButtonGroup = new ButtonGroup();
         ipButtonGroup.add(localhost);
         ipButtonGroup.add(otherIP);
 

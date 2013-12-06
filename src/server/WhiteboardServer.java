@@ -434,7 +434,8 @@ public class WhiteboardServer {
      * (4) new draw actions ("DRAW" WB_NAME X1 Y1 X1 Y2 STROKE COLOR_R COLOR_G
      * COLOR_B),
      * 
-     * (5) change whiteboard bg color ("BG" WB_NAME COLOR_R COLOR_G COLOR_B),
+     * (5) change whiteboard bg color and clear ("BG" WB_NAME COLOR_R COLOR_G
+     * COLOR_B),
      * 
      * (6) clear everything from board ("CLEAR" WB_NAME),
      * 
@@ -553,6 +554,8 @@ public class WhiteboardServer {
 
                 // change color, inform others
                 changeBackgroundColor(boardName, red, green, blue);
+                // clear the board, but this doesn't need to be announced
+                clearBoard(boardName);
                 // put on all queues
                 putOnAllQueuesBut(-1, boardName, "BG " + red + " " + green + " " + blue);
                 return;
