@@ -227,7 +227,10 @@ public class Artist {
 
         // if we have an IP, set that IP and get whiteboard names
         if (IP != null) {
-            enterIP.setText(IP);
+            if (!IP.equals("localhost")) {
+                otherIP.setEnabled(true);
+                enterIP.setText(IP);
+            }
             socket = new Socket(IP, port);
             startConnection();
         }
@@ -261,7 +264,7 @@ public class Artist {
     /**
      * Starts the threads to read in and print out information to/from the
      * server. Also sets up the whiteboards. This should only be called whenever
-     * IP is something valid.
+     * the socket has been started.
      */
     private void startConnection() {
         // Thread that reads in from the server, mainly keeping track of new
@@ -286,7 +289,6 @@ public class Artist {
         Thread outCommunication = new Thread(new Runnable() {
             public void run() {
                 try (PrintWriter out = new PrintWriter(socket.getOutputStream(), true)) {
-
                     // send initial hello to get whiteboards
                     outQueue.put("HELLO");
 
@@ -416,7 +418,8 @@ public class Artist {
             public void actionPerformed(ActionEvent e) {
                 String choice = (String) newBoard.getSelectedItem();
 
-                if (choice.equals("New whiteboard")) {
+                // make sure the board is actually selectable atm
+                if (newBoard.isVisible() && choice.equals("New whiteboard")) {
                     toggleNewWhiteboard(true);
 
                 } else {

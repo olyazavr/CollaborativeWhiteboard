@@ -402,8 +402,6 @@ public class WhiteboardServer {
             while (!(response = queues.get(clientID).take()).equals("BYE")) {
                 // take the latest output, deliver it
                 if (!response.isEmpty()) {
-
-                    System.out.println("OUT " + response);
                     out.println(response);
                 }
             }
