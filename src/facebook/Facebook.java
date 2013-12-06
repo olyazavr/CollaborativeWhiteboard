@@ -1,10 +1,10 @@
 package facebook;
 
-import com.restfb.BinaryAttachment;
-import com.restfb.DefaultFacebookClient;
-import com.restfb.FacebookClient;
-import com.restfb.Parameter;
-import com.restfb.types.FacebookType;
+import restfb.BinaryAttachment;
+import restfb.DefaultFacebookClient;
+import restfb.FacebookClient;
+import restfb.Parameter;
+import restfb.types.FacebookType;
 
 /**
  * Finds Olga's facebook. Use this to post images.
