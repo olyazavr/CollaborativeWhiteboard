@@ -19,6 +19,7 @@ import java.awt.event.MouseListener;
 import java.awt.event.MouseMotionListener;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
+import java.awt.image.RenderedImage;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
@@ -37,6 +38,7 @@ import javax.swing.BorderFactory;
 import javax.swing.BoxLayout;
 import javax.swing.JButton;
 import javax.swing.JColorChooser;
+import javax.swing.JFileChooser;
 import javax.swing.JFrame;
 import javax.swing.JPanel;
 import javax.swing.JProgressBar;
@@ -47,7 +49,6 @@ import javax.swing.SwingUtilities;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 import javax.swing.table.DefaultTableModel;
-
 import facebook.Facebook;
 
 /**
@@ -112,6 +113,7 @@ public class Canvas extends JPanel {
     private final Button dogeButton;
     private final Button facebook;
     private final Button switchBoards;
+    private final Button exportImage;
 
     private final JButton buttonBlack;
     private final JButton buttonDarkGray;
@@ -169,7 +171,8 @@ public class Canvas extends JPanel {
         // draw events
         Thread inCommunication = new Thread(new Runnable() {
             public void run() {
-                try (BufferedReader in = new BufferedReader(new InputStreamReader(socket.getInputStream()))) {
+                try (BufferedReader in = new BufferedReader(
+                        new InputStreamReader(socket.getInputStream()))) {
                     String input;
                     while ((input = in.readLine()) != null) {
                         // this is on init
@@ -193,7 +196,8 @@ public class Canvas extends JPanel {
         // events
         Thread outCommunication = new Thread(new Runnable() {
             public void run() {
-                try (PrintWriter out = new PrintWriter(socket.getOutputStream(), true)) {
+                try (PrintWriter out = new PrintWriter(
+                        socket.getOutputStream(), true)) {
                     while (connected) {
                         out.println(outQueue.take());
                     }
@@ -229,8 +233,9 @@ public class Canvas extends JPanel {
         eraserButton.setEnabled(true);
         clearButton = new Button("Clear");
         dogeButton = new Button("DOGE");
-        facebook = new Button("Post to Facebook");
-        switchBoards = new Button("Switch boards");
+        facebook = new Button("Facebook");
+        switchBoards = new Button("Switch");
+        exportImage = new Button("Export");
         // label too big, split it in two
         final Label changeBGLabel = new Label("Drag colors into the canvas");
         final Label changeBGLabel2 = new Label("to fill it with that color.");
@@ -261,7 +266,7 @@ public class Canvas extends JPanel {
         // creating layouts and customizing components
         GridLayout palletLayout = new GridLayout(3, 5);
         BoxLayout panelLayout = new BoxLayout(sidePanel, BoxLayout.Y_AXIS);
-        GridLayout controlButtonLayout = new GridLayout(3, 2);
+        GridLayout controlButtonLayout = new GridLayout(4, 2);
         window.add(this, BorderLayout.WEST);
         window.add(artsyMeter, BorderLayout.SOUTH);
         window.add(sidePanel, BorderLayout.EAST);
@@ -288,6 +293,7 @@ public class Canvas extends JPanel {
         controlButtonContainer.add(dogeButton);
         controlButtonContainer.add(switchBoards);
         controlButtonContainer.add(facebook);
+        controlButtonContainer.add(exportImage);
 
         // adding components to the side panel
         sidePanel.add(sliderLabel);
@@ -302,14 +308,16 @@ public class Canvas extends JPanel {
         // borders and dimensions
         Dimension buttonDimension = new Dimension(BUTTON_WIDTH, BUTTON_HEIGHT);
         Dimension tableDimension = new Dimension(TABLE_WIDTH, TABLE_HEIGHT);
-        Dimension sidePanelDimension = new Dimension(SIDE_PANEL_WIDTH, SIDE_PANEL_HEIGHT);
+        Dimension sidePanelDimension = new Dimension(SIDE_PANEL_WIDTH,
+                SIDE_PANEL_HEIGHT);
         window.setSize(WINDOW_WIDTH, WINDOW_HEIGHT);
         this.setSize(CANVAS_WIDTH, CANVAS_HEIGHT);
         sidePanel.setPreferredSize(sidePanelDimension);
         sidePanel.setBorder(BorderFactory.createEmptyBorder(20, 5, 10, 10));
         colorPallet.setMaximumSize(new Dimension(200, 100));
         controlButtonContainer.setPreferredSize(new Dimension(100, 200));
-        controlButtonContainer.setBorder(BorderFactory.createEmptyBorder(30, 0, 30, 0));
+        controlButtonContainer.setBorder(BorderFactory.createEmptyBorder(30, 0,
+                30, 0));
         paintButton.setPreferredSize(buttonDimension);
         eraserButton.setPreferredSize(buttonDimension);
         clearButton.setPreferredSize(buttonDimension);
@@ -319,10 +327,12 @@ public class Canvas extends JPanel {
         Font segoe;
 
         try {
-            segoe = Font.createFont(Font.TRUETYPE_FONT, new File("files/SEGOEUI.TTF"));
+            segoe = Font.createFont(Font.TRUETYPE_FONT, new File(
+                    "files/SEGOEUI.TTF"));
 
         } catch (FontFormatException | IOException e1) {
-            throw new RuntimeException("files/SEGOEUI.TTF has been either tampered or removed");
+            throw new RuntimeException(
+                    "files/SEGOEUI.TTF has been either tampered or removed");
         }
 
         // set fonts
@@ -331,6 +341,9 @@ public class Canvas extends JPanel {
         eraserButton.setFont(segoe.deriveFont(25f));
         clearButton.setFont(segoe.deriveFont(25f));
         dogeButton.setFont(segoe.deriveFont(25f));
+        switchBoards.setFont(segoe.deriveFont(25f));
+        facebook.setFont(segoe.deriveFont(20f));
+        exportImage.setFont(segoe.deriveFont(25f));
         tableLabel.setFont(segoe.deriveFont(20f));
 
         // adds listeners to all of the components
@@ -402,7 +415,8 @@ public class Canvas extends JPanel {
                         try {
                             // "BG" WB_NAME COLOR_R COLOR_G COLOR_BAME COLOR_R
                             // COLOR_G COLOR_B
-                            outQueue.put("BG " + name + " " + bgColor.getRed() + " " + bgColor.getGreen() + " "
+                            outQueue.put("BG " + name + " " + bgColor.getRed()
+                                    + " " + bgColor.getGreen() + " "
                                     + bgColor.getBlue());
                         } catch (InterruptedException e1) {
                             e1.printStackTrace();
@@ -424,7 +438,8 @@ public class Canvas extends JPanel {
         buttonMore.addActionListener(new ActionListener() {
             public void actionPerformed(ActionEvent e) {
                 if (!erasing)
-                    color = JColorChooser.showDialog(new JPanel(), "Choose a color", color);
+                    color = JColorChooser.showDialog(new JPanel(),
+                            "Choose a color", color);
             }
         });
     }
@@ -490,8 +505,9 @@ public class Canvas extends JPanel {
                 try {
                     // "DRAW" WB_NAME X1 Y1 X2 Y2 STROKE COLOR_R COLOR_G COLOR_B
                     // (everything is -1 for doge)
-                    outQueue.put("DRAW " + name + " " + -1 + " " + -1 + " " + -1 + " " + -1 + " " + -1 + " " + -1 + " "
-                            + -1 + " " + -1);
+                    outQueue.put("DRAW " + name + " " + -1 + " " + -1 + " "
+                            + -1 + " " + -1 + " " + -1 + " " + -1 + " " + -1
+                            + " " + -1);
                 } catch (InterruptedException e1) {
                     e1.printStackTrace();
                 }
@@ -519,12 +535,16 @@ public class Canvas extends JPanel {
             }
         });
 
+        exportImage.addActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent e) {
+                exportImage();
+            }
+        });
+
         // on close, make sure we tell the server
-        window.addWindowListener(new WindowAdapter()
-        {
+        window.addWindowListener(new WindowAdapter() {
             @Override
-            public void windowClosing(WindowEvent e)
-            {
+            public void windowClosing(WindowEvent e) {
                 try {
                     outQueue.put("BYE " + name + " " + user);
                 } catch (Exception e1) {
@@ -560,15 +580,18 @@ public class Canvas extends JPanel {
                     return;
                 }
                 if (artsy < 75) {
-                    artsyMeter.setString("DAYUM, GURL, DEM ARTS (" + artsy + "%)");
+                    artsyMeter.setString("DAYUM, GURL, DEM ARTS (" + artsy
+                            + "%)");
                     return;
                 }
                 if (artsy < 100) {
-                    artsyMeter.setString("LOLZ YOU DON'T GO HERE (" + artsy + "%)");
+                    artsyMeter.setString("LOLZ YOU DON'T GO HERE (" + artsy
+                            + "%)");
                     return;
                 }
                 if (artsy == 100) {
-                    artsyMeter.setString("SO ART. MANY PERCENTAGES. WOW. (" + artsy + "%)");
+                    artsyMeter.setString("SO ART. MANY PERCENTAGES. WOW. ("
+                            + artsy + "%)");
                     return;
                 }
             }
@@ -680,7 +703,8 @@ public class Canvas extends JPanel {
             if (stroke == -1) { // this is doge
                 doge();
             } else { // not doge, normal line
-                drawLineSegment(x1, y1, x2, y2, new Color(red, green, blue), stroke);
+                drawLineSegment(x1, y1, x2, y2, new Color(red, green, blue),
+                        stroke);
             }
         }
     }
@@ -741,6 +765,65 @@ public class Canvas extends JPanel {
     }
 
     /**
+     * This exports the image drawn in the canvas to a .png file. It does so by
+     * utilizing a file chooser to select the save location.
+     */
+    private void exportImage() {
+        // runs the JFileChooser
+        String fileLocation = saveFileChooser();
+
+        // exits and prevents NullPointerException if client exits chooser
+        if (fileLocation == null)
+            return;
+
+        // sets the file save location
+        File outputfile = new File(fileLocation);
+
+        // attempts to write the image to that file location
+        try {
+            ImageIO.write((RenderedImage) drawingBuffer, "png", outputfile);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    /**
+     * This opens a JFileChooser to select the location of where to save the
+     * image of the canvas. It also appends .png to the filename if it is not
+     * already present.
+     * 
+     * @return the filepath in which we want to save the canvas image with
+     *         ".png" appended to the end
+     */
+    private String saveFileChooser() {
+        // Creates the File Chooser
+        JFileChooser chooser = new JFileChooser();
+
+        // sets the default file name
+        chooser.setSelectedFile(new File("image.png"));
+
+        // Displays the chooser
+        int returnedInt = chooser.showSaveDialog(null);
+
+        // If a file is selected, return the string of the filepath
+        if (returnedInt == JFileChooser.APPROVE_OPTION) {
+            // finds the absolute path of the location
+            String path = chooser.getSelectedFile().getAbsolutePath();
+
+            // if it does not end with .png, it sets it to end with .png
+            if (!path.endsWith(".png")) {
+                return path + ".png";
+            }
+
+            // returns the path
+            return path;
+        }
+
+        // returns null if exited
+        return null;
+    }
+
+    /**
      * Draw a line between two points (x1, y1) and (x2, y2), specified in pixels
      * relative to the upper-left corner of the drawing buffer.
      * 
@@ -757,7 +840,8 @@ public class Canvas extends JPanel {
      * @param stroke
      *            thickness of the drawing (>=0)
      */
-    private void drawLineSegment(int x1, int y1, int x2, int y2, Color color, int stroke) {
+    private void drawLineSegment(int x1, int y1, int x2, int y2, Color color,
+            int stroke) {
         Graphics2D graphics = (Graphics2D) drawingBuffer.getGraphics();
 
         graphics.setColor(color);
@@ -782,7 +866,8 @@ public class Canvas extends JPanel {
      * to track mouse motion such as button presses and mouse drags. This is
      * critical for drawing and mouse input on the canvas.
      */
-    private class DrawingController implements MouseListener, MouseMotionListener {
+    private class DrawingController implements MouseListener,
+            MouseMotionListener {
         // store the coordinates of the last mouse event, so we can
         // draw a line segment from that last point to the point of the next
         // mouse event.
@@ -807,8 +892,9 @@ public class Canvas extends JPanel {
             // put the draw action on the queue!
             try {
                 // "DRAW" WB_NAME X1 Y1 X2 Y2 STROKE COLOR_R COLOR_G COLOR_B
-                outQueue.put("DRAW " + name + " " + lastX + " " + lastY + " " + x + " " + y + " " + stroke + " "
-                        + color.getRed() + " " + color.getGreen() + " " + color.getBlue());
+                outQueue.put("DRAW " + name + " " + lastX + " " + lastY + " "
+                        + x + " " + y + " " + stroke + " " + color.getRed()
+                        + " " + color.getGreen() + " " + color.getBlue());
             } catch (InterruptedException e1) {
                 e1.printStackTrace();
             }
