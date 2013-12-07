@@ -171,13 +171,16 @@ public class Canvas extends JPanel {
         // draw events
         Thread inCommunication = new Thread(new Runnable() {
             public void run() {
+                
                 try (BufferedReader in = new BufferedReader(
                         new InputStreamReader(socket.getInputStream()))) {
                     String input;
+                    
                     while ((input = in.readLine()) != null) {
                         // this is on init
                         if (input.contains("ACTIONS")) {
                             inQueue.put(input);
+                            
                         } else {
                             handleRequest(input);
                         }
@@ -196,8 +199,10 @@ public class Canvas extends JPanel {
         // events
         Thread outCommunication = new Thread(new Runnable() {
             public void run() {
+                
                 try (PrintWriter out = new PrintWriter(
                         socket.getOutputStream(), true)) {
+                    
                     while (connected) {
                         out.println(outQueue.take());
                     }
@@ -308,16 +313,14 @@ public class Canvas extends JPanel {
         // borders and dimensions
         Dimension buttonDimension = new Dimension(BUTTON_WIDTH, BUTTON_HEIGHT);
         Dimension tableDimension = new Dimension(TABLE_WIDTH, TABLE_HEIGHT);
-        Dimension sidePanelDimension = new Dimension(SIDE_PANEL_WIDTH,
-                SIDE_PANEL_HEIGHT);
+        Dimension sidePanelDimension = new Dimension(SIDE_PANEL_WIDTH, SIDE_PANEL_HEIGHT);
         window.setSize(WINDOW_WIDTH, WINDOW_HEIGHT);
         this.setSize(CANVAS_WIDTH, CANVAS_HEIGHT);
         sidePanel.setPreferredSize(sidePanelDimension);
         sidePanel.setBorder(BorderFactory.createEmptyBorder(20, 5, 10, 10));
         colorPallet.setMaximumSize(new Dimension(200, 100));
         controlButtonContainer.setPreferredSize(new Dimension(100, 200));
-        controlButtonContainer.setBorder(BorderFactory.createEmptyBorder(30, 0,
-                30, 0));
+        controlButtonContainer.setBorder(BorderFactory.createEmptyBorder(30, 0, 10, 0));
         paintButton.setPreferredSize(buttonDimension);
         eraserButton.setPreferredSize(buttonDimension);
         clearButton.setPreferredSize(buttonDimension);
@@ -345,6 +348,8 @@ public class Canvas extends JPanel {
         facebook.setFont(segoe.deriveFont(20f));
         exportImage.setFont(segoe.deriveFont(25f));
         tableLabel.setFont(segoe.deriveFont(20f));
+        changeBGLabel.setFont(segoe.deriveFont(15f));
+        changeBGLabel2.setFont(segoe.deriveFont(15f));
 
         // adds listeners to all of the components
         addListeners();
@@ -399,12 +404,6 @@ public class Canvas extends JPanel {
             // drag into canvas to fill bg color
             button.getKey().addMouseListener(new MouseListener() {
 
-                public void mouseClicked(MouseEvent e) {
-                }
-
-                public void mousePressed(MouseEvent e) {
-                }
-
                 public void mouseReleased(MouseEvent e) {
                     int x = e.getXOnScreen();
                     int y = e.getYOnScreen();
@@ -424,19 +423,20 @@ public class Canvas extends JPanel {
                     }
                 }
 
-                public void mouseEntered(MouseEvent e) {
-                }
-
-                public void mouseExited(MouseEvent e) {
-                }
+                public void mouseClicked(MouseEvent e) { }
+                public void mousePressed(MouseEvent e) { }
+                public void mouseEntered(MouseEvent e) { }
+                public void mouseExited(MouseEvent e) { }
 
             });
         }
 
         // taking care of buttonMore
         colorPallet.add(buttonMore);
+        
         buttonMore.addActionListener(new ActionListener() {
             public void actionPerformed(ActionEvent e) {
+                
                 if (!erasing)
                     color = JColorChooser.showDialog(new JPanel(),
                             "Choose a color", color);
@@ -508,6 +508,7 @@ public class Canvas extends JPanel {
                     outQueue.put("DRAW " + name + " " + -1 + " " + -1 + " "
                             + -1 + " " + -1 + " " + -1 + " " + -1 + " " + -1
                             + " " + -1);
+                    
                 } catch (InterruptedException e1) {
                     e1.printStackTrace();
                 }
@@ -521,6 +522,7 @@ public class Canvas extends JPanel {
                     outQueue.put("BYE " + name + " " + user);
                     new Artist(IP);
                     window.dispose();
+                    
                 } catch (Exception e1) {
                     e1.printStackTrace();
                 }
@@ -547,6 +549,7 @@ public class Canvas extends JPanel {
             public void windowClosing(WindowEvent e) {
                 try {
                     outQueue.put("BYE " + name + " " + user);
+                    
                 } catch (Exception e1) {
                     e1.printStackTrace();
                 }
@@ -585,8 +588,8 @@ public class Canvas extends JPanel {
                     return;
                 }
                 if (artsy < 100) {
-                    artsyMeter.setString("LOLZ YOU DON'T GO HERE (" + artsy
-                            + "%)");
+                    artsyMeter.setString("LOLZ YOU DON'T EVEN GO HERE ("
+                            + artsy + "%)");
                     return;
                 }
                 if (artsy == 100) {
@@ -904,20 +907,11 @@ public class Canvas extends JPanel {
         }
 
         // Ignore all these other mouse events.
-        public void mouseMoved(MouseEvent e) {
-        }
-
-        public void mouseClicked(MouseEvent e) {
-        }
-
-        public void mouseReleased(MouseEvent e) {
-        }
-
-        public void mouseEntered(MouseEvent e) {
-        }
-
-        public void mouseExited(MouseEvent e) {
-        }
+        public void mouseMoved(MouseEvent e) { }
+        public void mouseClicked(MouseEvent e) { }
+        public void mouseReleased(MouseEvent e) { }
+        public void mouseEntered(MouseEvent e) { }
+        public void mouseExited(MouseEvent e) { }
     }
 
     /**
