@@ -558,6 +558,7 @@ public class Canvas extends JPanel {
             }
         });
 
+        // bring up a prompt to choose where to save the image.
         exportImage.addActionListener(new ActionListener() {
             public void actionPerformed(ActionEvent e) {
                 exportImage();
