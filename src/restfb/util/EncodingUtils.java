@@ -130,8 +130,7 @@ public final class EncodingUtils {
    * @version 2.2
    * @author Mikael Grev Date: 2004-aug-02 Time: 11:31:11
    */
-  @SuppressWarnings("unused")
-  private static class Base64 {
+    public static class Base64 {
     private static final char[] CA = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/".toCharArray();
     private static final int[] IA = new int[256];
     static {

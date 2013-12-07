@@ -32,6 +32,7 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import javax.imageio.ImageIO;
 import javax.swing.BorderFactory;
@@ -49,6 +50,7 @@ import javax.swing.SwingUtilities;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 import javax.swing.table.DefaultTableModel;
+
 import facebook.Facebook;
 
 /**
@@ -88,6 +90,7 @@ public class Canvas extends JPanel {
 
     private final DefaultTableModel playersModel;
     private final JFrame window;
+    private final AtomicInteger fileCounter;
 
     private final int BUTTON_WIDTH = 10;
     private final int BUTTON_HEIGHT = 50;
@@ -151,6 +154,7 @@ public class Canvas extends JPanel {
         this.IP = IP;
         inQueue = new LinkedBlockingQueue<String>();
         outQueue = new LinkedBlockingQueue<String>();
+        fileCounter = new AtomicInteger(1);
 
         playersModel = new DefaultTableModel(0, 1) {
             private static final long serialVersionUID = 2045698881619435427L;
@@ -171,16 +175,16 @@ public class Canvas extends JPanel {
         // draw events
         Thread inCommunication = new Thread(new Runnable() {
             public void run() {
-                
+
                 try (BufferedReader in = new BufferedReader(
                         new InputStreamReader(socket.getInputStream()))) {
                     String input;
-                    
+
                     while ((input = in.readLine()) != null) {
                         // this is on init
                         if (input.contains("ACTIONS")) {
                             inQueue.put(input);
-                            
+
                         } else {
                             handleRequest(input);
                         }
@@ -199,10 +203,10 @@ public class Canvas extends JPanel {
         // events
         Thread outCommunication = new Thread(new Runnable() {
             public void run() {
-                
+
                 try (PrintWriter out = new PrintWriter(
                         socket.getOutputStream(), true)) {
-                    
+
                     while (connected) {
                         out.println(outQueue.take());
                     }
@@ -423,20 +427,27 @@ public class Canvas extends JPanel {
                     }
                 }
 
-                public void mouseClicked(MouseEvent e) { }
-                public void mousePressed(MouseEvent e) { }
-                public void mouseEntered(MouseEvent e) { }
-                public void mouseExited(MouseEvent e) { }
+                public void mouseClicked(MouseEvent e) {
+                }
+
+                public void mousePressed(MouseEvent e) {
+                }
+
+                public void mouseEntered(MouseEvent e) {
+                }
+
+                public void mouseExited(MouseEvent e) {
+                }
 
             });
         }
 
         // taking care of buttonMore
         colorPallet.add(buttonMore);
-        
+
         buttonMore.addActionListener(new ActionListener() {
             public void actionPerformed(ActionEvent e) {
-                
+
                 if (!erasing)
                     color = JColorChooser.showDialog(new JPanel(),
                             "Choose a color", color);
@@ -508,7 +519,7 @@ public class Canvas extends JPanel {
                     outQueue.put("DRAW " + name + " " + -1 + " " + -1 + " "
                             + -1 + " " + -1 + " " + -1 + " " + -1 + " " + -1
                             + " " + -1);
-                    
+
                 } catch (InterruptedException e1) {
                     e1.printStackTrace();
                 }
@@ -522,7 +533,7 @@ public class Canvas extends JPanel {
                     outQueue.put("BYE " + name + " " + user);
                     new Artist(IP);
                     window.dispose();
-                    
+
                 } catch (Exception e1) {
                     e1.printStackTrace();
                 }
@@ -532,8 +543,18 @@ public class Canvas extends JPanel {
         // post the thing to facebook!
         facebook.addActionListener(new ActionListener() {
             public void actionPerformed(ActionEvent e) {
-                Facebook facebook = new Facebook();
-                facebook.publishImage("sharks.png"); // TODO: doesn't work
+                try {
+                    Facebook facebook = new Facebook();
+                    String fileName = "images/image" + fileCounter.get() + ".png";
+                    File outputfile = new File(fileName);
+
+                    // attempts to write the image to that file location
+                    ImageIO.write((RenderedImage) drawingBuffer, "png", outputfile);
+                    facebook.publishImage(fileName);
+
+                } catch (Exception e1) {
+                    e1.printStackTrace();
+                }
             }
         });
 
@@ -549,7 +570,7 @@ public class Canvas extends JPanel {
             public void windowClosing(WindowEvent e) {
                 try {
                     outQueue.put("BYE " + name + " " + user);
-                    
+
                 } catch (Exception e1) {
                     e1.printStackTrace();
                 }
@@ -907,11 +928,20 @@ public class Canvas extends JPanel {
         }
 
         // Ignore all these other mouse events.
-        public void mouseMoved(MouseEvent e) { }
-        public void mouseClicked(MouseEvent e) { }
-        public void mouseReleased(MouseEvent e) { }
-        public void mouseEntered(MouseEvent e) { }
-        public void mouseExited(MouseEvent e) { }
+        public void mouseMoved(MouseEvent e) {
+        }
+
+        public void mouseClicked(MouseEvent e) {
+        }
+
+        public void mouseReleased(MouseEvent e) {
+        }
+
+        public void mouseEntered(MouseEvent e) {
+        }
+
+        public void mouseExited(MouseEvent e) {
+        }
     }
 
     /**
