@@ -589,7 +589,7 @@ public class Artist {
      * 
      * @return boolean, true if it contains a space
      */
-    public boolean containsSpace(String name) {
+    private boolean containsSpace(String name) {
         Pattern pattern = Pattern.compile("\\s");
         Matcher matcher = pattern.matcher(name);
         return matcher.find();

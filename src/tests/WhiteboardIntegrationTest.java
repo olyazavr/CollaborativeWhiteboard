@@ -1,6 +1,7 @@
 package tests;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNull;
 
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
@@ -83,7 +84,60 @@ public class WhiteboardIntegrationTest {
      */
     @Test(timeout = 10000)
     public void drawTest() {
+        try {
+            // we pretend to be the client
+            final Socket socket = new Socket(local, port);
+            BufferedReader in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
+            PrintWriter out = new PrintWriter(socket.getOutputStream(), true);
 
+            // we pretend to be another client!
+            final Socket socket2 = new Socket(localIP, port);
+            BufferedReader in2 = new BufferedReader(new InputStreamReader(socket2.getInputStream()));
+            PrintWriter out2 = new PrintWriter(socket2.getOutputStream(), true);
+
+            // say hello
+            out.println("HELLO");
+            out2.println("HELLO");
+
+            // expect the list of whiteboards (just default right now)
+            assertEquals("LIST Default", in.readLine());
+            assertEquals("LIST Default", in2.readLine());
+
+            // select Default board with username user1
+            out.println("SELECT Default user1");
+
+            // expect bg color (white), artsy meter of zero, and only user1
+            // attached
+            assertEquals("255 255 255 0 USERS user1 ACTIONS ", in.readLine());
+
+            // Draw from (0,0) to (5,5) with stroke 7 in black
+            out.println("DRAW Default 0 0 5 5 7 0 0 0");
+
+            // should get a draw action with artsy of 7%
+            assertEquals("DRAW 7 0 0 5 5 7 0 0 0", in.readLine());
+
+            // select Default board with username user2
+            out2.println("SELECT Default user2");
+
+            // expect bg color (white), artsy meter of 7, and user 1 and user2,
+            // as well as the draw action from before
+            assertEquals("255 255 255 7 USERS user1 user2 ACTIONS 0 0 5 5 7 0 0 0", in2.readLine());
+
+            // expect first client to be notified of another user joining
+            assertEquals("NEWUSER user2", in.readLine());
+
+            // Now two draws from (1,7) to (20,25) with stroke 7 in red
+            out2.println("DRAW Default 1 7 20 25 7 255 0 0");
+
+            // both should get a draw action with artsy of 14%
+            assertEquals("DRAW 14 1 7 20 25 7 255 0 0", in.readLine());
+            assertEquals("DRAW 14 1 7 20 25 7 255 0 0", in2.readLine());
+
+            socket.close();
+            socket2.close();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
     }
 
     /**
@@ -92,6 +146,60 @@ public class WhiteboardIntegrationTest {
      */
     @Test(timeout = 10000)
     public void clearTest() {
+        try {
+            // we pretend to be the client
+            final Socket socket = new Socket(local, port);
+            BufferedReader in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
+            PrintWriter out = new PrintWriter(socket.getOutputStream(), true);
+
+            // we pretend to be another client!
+            final Socket socket2 = new Socket(localIP, port);
+            BufferedReader in2 = new BufferedReader(new InputStreamReader(socket2.getInputStream()));
+            PrintWriter out2 = new PrintWriter(socket2.getOutputStream(), true);
+
+            // say hello
+            out.println("HELLO");
+            out2.println("HELLO");
+
+            // expect the list of whiteboards (just default right now)
+            assertEquals("LIST Default", in.readLine());
+            assertEquals("LIST Default", in2.readLine());
+
+            // select Default board with username user1
+            out.println("SELECT Default user1");
+
+            // expect bg color (white), artsy meter of zero, and only user1
+            // attached
+            assertEquals("255 255 255 0 USERS user1 ACTIONS ", in.readLine());
+
+            // Draw from (0,0) to (5,5) with stroke 7 in black
+            out.println("DRAW Default 0 0 5 5 7 0 0 0");
+
+            // should get a draw action with artsy of 7%
+            assertEquals("DRAW 7 0 0 5 5 7 0 0 0", in.readLine());
+
+            // select Default board with username user2
+            out2.println("SELECT Default user2");
+
+            // expect bg color (white), artsy meter of 7, and user 1 and user2,
+            // as well as the draw action from before
+            assertEquals("255 255 255 7 USERS user1 user2 ACTIONS 0 0 5 5 7 0 0 0", in2.readLine());
+
+            // expect first client to be notified of another user joining
+            assertEquals("NEWUSER user2", in.readLine());
+
+            // Now two clears everything
+            out2.println("CLEAR Default");
+
+            // both should get a clear action
+            assertEquals("CLEAR", in.readLine());
+            assertEquals("CLEAR", in2.readLine());
+
+            socket.close();
+            socket2.close();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
 
     }
 
@@ -101,7 +209,60 @@ public class WhiteboardIntegrationTest {
      */
     @Test(timeout = 10000)
     public void bgTest() {
+        try {
+            // we pretend to be the client
+            final Socket socket = new Socket(local, port);
+            BufferedReader in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
+            PrintWriter out = new PrintWriter(socket.getOutputStream(), true);
 
+            // we pretend to be another client!
+            final Socket socket2 = new Socket(localIP, port);
+            BufferedReader in2 = new BufferedReader(new InputStreamReader(socket2.getInputStream()));
+            PrintWriter out2 = new PrintWriter(socket2.getOutputStream(), true);
+
+            // say hello
+            out.println("HELLO");
+            out2.println("HELLO");
+
+            // expect the list of whiteboards (just default right now)
+            assertEquals("LIST Default", in.readLine());
+            assertEquals("LIST Default", in2.readLine());
+
+            // select Default board with username user1
+            out.println("SELECT Default user1");
+
+            // expect bg color (white), artsy meter of zero, and only user1
+            // attached
+            assertEquals("255 255 255 0 USERS user1 ACTIONS ", in.readLine());
+
+            // change the bg color to red
+            out.println("BG Default 255 0 0");
+
+            // should get a bg change message
+            assertEquals("BG 255 0 0", in.readLine());
+
+            // select Default board with username user2
+            out2.println("SELECT Default user2");
+
+            // expect bg color (red), artsy meter of 0, and user 1 and user2,
+            // and no draw actions
+            assertEquals("255 0 0 0 USERS user1 user2 ACTIONS ", in2.readLine());
+
+            // expect first client to be notified of another user joining
+            assertEquals("NEWUSER user2", in.readLine());
+
+            // now change the bg color to black
+            out2.println("BG Default 0 0 0");
+
+            // both should get a bg change message
+            assertEquals("BG 0 0 0", in.readLine());
+            assertEquals("BG 0 0 0", in2.readLine());
+
+            socket.close();
+            socket2.close();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
     }
 
     /**
@@ -110,7 +271,53 @@ public class WhiteboardIntegrationTest {
      */
     @Test(timeout = 10000)
     public void byeTest() {
+        try {
+            // we pretend to be the client
+            final Socket socket = new Socket(local, port);
+            BufferedReader in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
+            PrintWriter out = new PrintWriter(socket.getOutputStream(), true);
 
+            // we pretend to be another client!
+            final Socket socket2 = new Socket(localIP, port);
+            BufferedReader in2 = new BufferedReader(new InputStreamReader(socket2.getInputStream()));
+            PrintWriter out2 = new PrintWriter(socket2.getOutputStream(), true);
+
+            // say hello
+            out.println("HELLO");
+            out2.println("HELLO");
+
+            // expect the list of whiteboards (just default right now)
+            assertEquals("LIST Default", in.readLine());
+            assertEquals("LIST Default", in2.readLine());
+
+            // select Default board with username user1
+            out.println("SELECT Default user1");
+
+            // expect bg color (white), artsy meter of zero, and only user1
+            // attached
+            assertEquals("255 255 255 0 USERS user1 ACTIONS ", in.readLine());
+
+            // select Default board with username user2
+            out2.println("SELECT Default user2");
+
+            // expect bg color (white), artsy meter of 0, and user 1 and user2,
+            // and no draw actions
+            assertEquals("255 255 255 0 USERS user1 user2 ACTIONS ", in2.readLine());
+
+            // expect first client to be notified of another user joining
+            assertEquals("NEWUSER user2", in.readLine());
+
+            // now one leaves
+            out.println("BYE Default user1");
+
+            // two should get the message
+            assertEquals("BYEUSER user1", in2.readLine());
+
+            socket.close();
+            socket2.close();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
     }
 
     /**
@@ -218,7 +425,7 @@ public class WhiteboardIntegrationTest {
      * 
      * "BYEARTIST" should cause no new messages to be send
      */
-    @Test(timeout = 100000)
+    @Test(timeout = 10000)
     public void byeArtistTest() {
         try {
             // we pretend to be the client
@@ -235,7 +442,8 @@ public class WhiteboardIntegrationTest {
             // suddenly, the Artist leaves
             out.println("BYEARTIST");
 
-            // TODO: not really sure what to test here
+            // server should shut down the connection
+            assertNull(in.readLine());
 
             socket.close();
 

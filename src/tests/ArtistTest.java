@@ -41,6 +41,10 @@ import client.Artist;
  * 10. test saving an image
  * 
  * 11. test posting to Facebook
+ * 
+ * UI breaks didit.
+ * 
+ * @category no_didit
  */
 public class ArtistTest {
 
