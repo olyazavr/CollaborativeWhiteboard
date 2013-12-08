@@ -26,7 +26,7 @@ import server.WhiteboardServer;
  * 5. test multiple users sharing one whiteboard (ensure both see the same
  * thing).
  * 
- * 6. test multiple whiteboard support (ensure different whiteboards don’t send
+ * 6. test multiple whiteboard support (ensure different whiteboards don't send
  * actions to each other).
  * 
  * 7. make sure behavior is as expected when one user draws and another user
