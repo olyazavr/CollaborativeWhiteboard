@@ -327,7 +327,7 @@ public class WhiteboardServer {
      *             if the main server socket is broken (IOExceptions from
      *             individual clients do *not* terminate serve())
      */
-    public void serve() throws IOException {
+    private void serve() throws IOException {
         while (true) {
             // block until a client connects
             final Socket socket = serverSocket.accept();
@@ -479,8 +479,7 @@ public class WhiteboardServer {
             // initial connect message
             // "HELLO"
             if (inputSplit[0].equals("HELLO")) {
-                queues.put(clientID, new LinkedBlockingQueue<String>());
-                artistClients.add(clientID);
+                artistClients.add(clientID); // client is an Artist
                 clientQueue.put(listWhiteboards());
                 return;
             }

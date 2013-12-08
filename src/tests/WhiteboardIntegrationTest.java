@@ -32,7 +32,10 @@ public class WhiteboardIntegrationTest {
     public void helloTest() {
         try {
             // start up the server
-            new WhiteboardServer();
+            startServer();
+
+            // Avoid race where we try to connect to server too early
+            Thread.sleep(100);
 
             // we pretend to be the client
             final Socket socket = new Socket(local, port);
@@ -43,7 +46,6 @@ public class WhiteboardIntegrationTest {
             out.println("HELLO");
 
             // expect the list of whiteboards (just default right now)
-            // TODO: this doesn't work )):
             assertEquals("LIST Default", in.readLine());
 
             socket.close();
@@ -129,6 +131,20 @@ public class WhiteboardIntegrationTest {
     @Test(timeout = 10000)
     public void byeArtistTest() {
 
+    }
+    
+    
+    private static void startServer() {
+        new Thread(new Runnable() {
+            public void run() {
+                try {
+                    WhiteboardServer.main(new String[1]);
+                } catch (Exception e) {
+                    e.printStackTrace();
+                    return;
+                }
+            }
+        }).start();
     }
 
 }
