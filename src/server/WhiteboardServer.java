@@ -27,7 +27,10 @@ import java.util.concurrent.atomic.AtomicInteger;
  * shared information is a final socket and an atomic integer. The server knows
  * nothing about the GUI or the client, except for the messages the client
  * sends. All modifications to queues or Whiteboards is locked on that queue or
- * whiteboard.
+ * whiteboard. Moreover, to ensure whiteboard names are unique, they are sent to
+ * the server first and in a synchronized block, the server ensure the name is
+ * unique and creates a whiteboard and then sends the client the name back (so
+ * no race conditions here).
  * 
  * Port is set to 4444 by default, and every client is given unique ID numbers.
  * 
@@ -50,7 +53,7 @@ public class WhiteboardServer {
     private final List<Integer> artistClients;
 
     /**
-     * Creates a new server, with no whiteboards or users
+     * Creates a new server, with no whiteboards or users. Default port is 4444.
      * 
      * @throws IOException
      *             if invalid port

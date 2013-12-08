@@ -39,13 +39,21 @@ import javax.swing.SwingUtilities;
  * This is the login screen that the user must navigate through to get a canvas.
  * First, they must enter a valid IP to connect to, then they can make a new
  * whiteboard or select an existing one. To make a new whiteboard, the user must
- * supply a username, unique board name, and background color. To select a
- * whiteboard, the user only needs to provide a username.
+ * supply a username, unique board (if not unique, (1) and then (2) and so on
+ * will be appended to the name), and background color. To select a whiteboard,
+ * the user only needs to provide a username. The drop-down of whiteboards gets
+ * updated every time another client adds a new whiteboard.
  * 
- * This is threadsafe because there is only one thread, and no information is
- * shared except for the arguments passed to the new Canvas. However, this is ok
- * because as soon as that happens, the Artist is destroyed and thus no longer
- * holds references to those objects.
+ * This is threadsafe because no information is shared except for the arguments
+ * passed to the new Canvas. However, this is ok because as soon as that
+ * happens, the Artist is destroyed and thus no longer holds references to those
+ * objects. The threads created only share a socket, which is only used to get
+ * the output or input stream. To exchange information to and from the server,
+ * blocking queues are used, so that information is all processed in an orderly
+ * manner. All UI updates are handled in Swing's thread. Moreover, to ensure
+ * whiteboard names are unique, they are sent to the server first, and the name
+ * that returns is unique and the server will have already made a whiteboard
+ * with that name (so no race conditions).
  * 
  * Default port is 4444.
  */
@@ -83,7 +91,8 @@ public class Artist {
     private final JFrame window;
 
     /**
-     * Creates a new Artist login screen
+     * Creates a new Artist login screen to create/select whiteboards and open
+     * Canvases. Default port is 4444.
      * 
      * @param IP
      *            optional IP address if reconnecting, null otherwise

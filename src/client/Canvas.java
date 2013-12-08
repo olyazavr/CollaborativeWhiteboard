@@ -54,7 +54,9 @@ import facebook.Facebook;
 
 /**
  * Canvas represents a drawing surface that allows the user to draw on it
- * freehand, with the mouse.
+ * freehand, with the mouse. User can choose colors, brush size, change
+ * background colors, clear, and draw a doge. The user can also export the image
+ * or post it to Facebook. Switching to another whiteboard is also implemented.
  * 
  * This is threadsafe because the Artist that also holds on to instances of
  * things passed to it in the constructor is destroyed after a Canvas is
@@ -62,9 +64,11 @@ import facebook.Facebook;
  * The threads created only share a socket, which is only used to get the output
  * or input stream. To exchange information to and from the server, blocking
  * queues are used, so that information is all processed in an orderly manner.
- * Things are only ever drawn if/when a draw command is recieved from the
- * server, so draw events are processed in the order they happen (no local
+ * Things are only ever drawn if/when a draw, bg, or clear command is received
+ * from the server, so events are processed in the order they happen (no local
  * drawing). All UI updates are handled in Swing's thread.
+ * 
+ * Default port is 4444.
  */
 public class Canvas extends JPanel {
     private static final long serialVersionUID = -4896602587258968937L;
@@ -133,7 +137,13 @@ public class Canvas extends JPanel {
     private final JButton buttonMore;
 
     /**
-     * Creates a new Canvas object, entirely blank, except maybe some shibas
+     * Creates a new Canvas object, entirely blank. Canvas represents a drawing
+     * surface that allows the user to draw on it freehand, with the mouse. User
+     * can choose colors, brush size, change background colors, clear, and draw
+     * a doge. The user can also export the image or post it to Facebook.
+     * Switching to another whiteboard is also implemented.
+     * 
+     * Default port is 4444.
      * 
      * @param boardName
      *            unique name of the board

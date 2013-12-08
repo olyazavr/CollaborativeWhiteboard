@@ -16,10 +16,9 @@ import server.WhiteboardServer;
 /**
  * Testing strategy: test all of the possible things the client and server can
  * send to each other, ensuring that the right message gets sent to the right
- * clients and in the right order. Partition on who should get the message (ie.
- * all Artists, all clients connected to a whiteboard, all clients but the one
- * who send it, just the client who sent it), and the number of clients attached
- * to the server.
+ * clients. Partition on who should get the message (ie. all Artists, all
+ * clients connected to a whiteboard, all clients but the one who send it, just
+ * the client who sent it)
  */
 public class WhiteboardIntegrationTest {
     private final String local = "localhost";
@@ -80,7 +79,7 @@ public class WhiteboardIntegrationTest {
 
     /**
      * test that "DRAW" messages get sent to all connected clients (but only
-     * those associated with the whiteboard), and in the correct order
+     * those associated with the whiteboard)
      */
     @Test(timeout = 10000)
     public void drawTest() {
@@ -142,7 +141,7 @@ public class WhiteboardIntegrationTest {
 
     /**
      * test that "CLEAR" messages get sent to all connected clients (but only
-     * those associated with the whiteboard), and in the correct order
+     * those associated with the whiteboard)
      */
     @Test(timeout = 10000)
     public void clearTest() {
@@ -205,7 +204,7 @@ public class WhiteboardIntegrationTest {
 
     /**
      * test that "BG" messages get sent to all connected clients (but only those
-     * associated with the whiteboard), and in the correct order
+     * associated with the whiteboard)
      */
     @Test(timeout = 10000)
     public void bgTest() {
@@ -267,7 +266,8 @@ public class WhiteboardIntegrationTest {
 
     /**
      * test that "BYE" messages send "BYEUSER" messages to all but the client
-     * that sent the message
+     * that sent the message (the client's connection should be terminated by
+     * server)
      */
     @Test(timeout = 10000)
     public void byeTest() {
@@ -312,6 +312,9 @@ public class WhiteboardIntegrationTest {
 
             // two should get the message
             assertEquals("BYEUSER user1", in2.readLine());
+
+            // one's connection should be terminated
+            assertNull(in.readLine());
 
             socket.close();
             socket2.close();
@@ -423,7 +426,7 @@ public class WhiteboardIntegrationTest {
 
     /**
      * 
-     * "BYEARTIST" should cause no new messages to be send
+     * "BYEARTIST" should cause the server to close the connection.
      */
     @Test(timeout = 10000)
     public void byeArtistTest() {
