@@ -66,12 +66,7 @@ public class Facebook {
         String redirect = JOptionPane.showInputDialog("Enter the redirect URL (be fast!)", "");
 
         // get the verification id from the URL
-        String verification;
-        if (redirect.endsWith("&_")) { // i think this is an ubuntu thing
-            verification = redirect.substring(56, redirect.length() - 2);
-        } else { // ends in #_=_
-            verification = redirect.substring(56, redirect.length() - 4);
-        }
+        String verification = redirect.substring(56, redirect.length() - 4);
         Verifier verifier = new Verifier(verification);
 
         // get the token and make a fb client!

@@ -4,7 +4,6 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
 import java.awt.Color;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
@@ -25,17 +24,13 @@ import server.Whiteboard;
  */
 public class WhiteboardTest {
 
-    private final List<Integer> blackrgb = new ArrayList<Integer>();
-    private final List<Integer> whitergb = new ArrayList<Integer>();
+    private final List<Integer> blackrgb = Arrays.asList(0, 0, 0);
+    private final List<Integer> whitergb = Arrays.asList(255, 255, 255);
     private final List<Integer> MITcolor = Arrays.asList(163, 31, 52);
 
     @Test
     public void initBoardTest() {
         // test to make sure actions and artsy meter are empty
-        blackrgb.add(0);
-        blackrgb.add(0);
-        blackrgb.add(0);
-
         final Whiteboard board1 = new Whiteboard("board1", blackrgb);
 
         // actions should be empty
@@ -48,10 +43,6 @@ public class WhiteboardTest {
     @Test
     public void nameTest() {
         // test name getter
-        blackrgb.add(0);
-        blackrgb.add(0);
-        blackrgb.add(0);
-
         final Whiteboard board1 = new Whiteboard("board1", blackrgb);
 
         assertEquals(board1.getName(), "board1");
@@ -60,18 +51,20 @@ public class WhiteboardTest {
     @Test
     public void backgroundColorTest() {
         // test bgcolor getters/setters
-        blackrgb.add(0);
-        blackrgb.add(0);
-        blackrgb.add(0);
-
         final Whiteboard board1 = new Whiteboard("board1", blackrgb);
         assertEquals(board1.getBackgroundColorString(), "0 0 0");
 
+        final Whiteboard board2 = new Whiteboard("board2", whitergb);
+        assertEquals(board2.getBackgroundColorString(), "255 255 255");
+
         board1.setBackgroundColor(255, 255, 255);
+        board2.setBackgroundColor(255, 255, 255); // shouldn't change
 
         // changing background color is not an action
         assertEquals("", board1.createStringOfActions());
+        assertEquals("", board2.createStringOfActions());
         assertEquals(board1.getBackgroundColorString(), "255 255 255");
+        assertEquals(board2.getBackgroundColorString(), "255 255 255");
     }
 
     @Test
@@ -92,14 +85,6 @@ public class WhiteboardTest {
     @Test
     public void newActionTest() {
         // test adding and getting an action
-        blackrgb.add(0);
-        blackrgb.add(0);
-        blackrgb.add(0);
-
-        whitergb.add(255);
-        whitergb.add(255);
-        whitergb.add(255);
-
         final Whiteboard board1 = new Whiteboard("board1", blackrgb);
 
         board1.addAction(0, 7, 2, 9, 10, 157, 33, 56);
@@ -125,10 +110,6 @@ public class WhiteboardTest {
     @Test
     public void clearActionsTest() {
         // test that clearing clears all actions
-        blackrgb.add(0);
-        blackrgb.add(0);
-        blackrgb.add(0);
-
         final Whiteboard board1 = new Whiteboard("board1", blackrgb);
         board1.addAction(0, 7, 2, 9, 10, 157, 33, 56);
         assertEquals(board1.createStringOfActions(),
