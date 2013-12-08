@@ -379,7 +379,8 @@ public class WhiteboardIntegrationTest {
 
     /**
      * test that "NEW" messages return a response of "NEWNAME" to original
-     * client, and "NEWBOARD" to all Artist clients
+     * client, and "NEWBOARD" to all Artist clients (also ensure duplicate names
+     * do not happen)
      * */
     @Test(timeout = 10000)
     public void newTest() {
@@ -456,6 +457,9 @@ public class WhiteboardIntegrationTest {
 
     }
 
+    /**
+     * Runs the server in another thread
+     */
     private void startServer() {
         new Thread(new Runnable() {
             public void run() {
