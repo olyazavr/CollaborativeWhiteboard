@@ -32,7 +32,6 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
-import java.util.concurrent.atomic.AtomicInteger;
 
 import javax.imageio.ImageIO;
 import javax.swing.BorderFactory;
@@ -90,7 +89,6 @@ public class Canvas extends JPanel {
 
     private final DefaultTableModel playersModel;
     private final JFrame window;
-    private final AtomicInteger fileCounter;
 
     private final int BUTTON_WIDTH = 10;
     private final int BUTTON_HEIGHT = 50;
@@ -154,7 +152,6 @@ public class Canvas extends JPanel {
         this.IP = IP;
         inQueue = new LinkedBlockingQueue<String>();
         outQueue = new LinkedBlockingQueue<String>();
-        fileCounter = new AtomicInteger(1);
 
         playersModel = new DefaultTableModel(0, 1) {
             private static final long serialVersionUID = 2045698881619435427L;
@@ -545,11 +542,16 @@ public class Canvas extends JPanel {
             public void actionPerformed(ActionEvent e) {
                 try {
                     Facebook facebook = new Facebook();
-                    String fileName = "images/image" + fileCounter.get() + ".png";
+                    // get a random integer to use as filename so we don't
+                    // overwrite
+                    int randomInt = (int) Math.round(Math.random() * 10000);
+                    String fileName = "images/" + randomInt + ".png";
                     File outputfile = new File(fileName);
 
                     // attempts to write the image to that file location
                     ImageIO.write((RenderedImage) drawingBuffer, "png", outputfile);
+
+                    // publish the image to facebook
                     facebook.publishImage(fileName);
 
                 } catch (Exception e1) {

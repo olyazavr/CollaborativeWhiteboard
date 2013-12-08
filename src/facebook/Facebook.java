@@ -31,11 +31,19 @@ public class Facebook {
     private static final String APP_SECRET = "7b3f745440588e1be6220e17597b2707";
     private static final Token EMPTY_TOKEN = null;
 
+    /**
+     * Gets access to the user's facebook. User must enter the auth redirect url
+     * to get the auth token, but then Scribe takes it from there.
+     * 
+     * @throws IOException
+     * @throws URISyntaxException
+     */
     public Facebook() throws IOException, URISyntaxException {
-        // try to get the access token
-        String verificationURI = "https://graph.facebook.com/oauth/authorize?client_id=" + APP_ID
+        // url to get verification token to get access token (gotta love oauth)
+        String url = "https://graph.facebook.com/oauth/authorize?client_id=" + APP_ID
                 + "&redirect_uri=http://www.facebook.com/connect/login_success.html&scope=publish_stream";
 
+        // crazy scribe magic!
         OAuthService service = new ServiceBuilder()
                 .provider(FacebookApi.class)
                 .apiKey(APP_ID)
@@ -44,30 +52,33 @@ public class Facebook {
                 .build();
 
         // Because OAuth is a bitch, just open a browser to get the verification
-        // code
+        // token
         if (Desktop.isDesktopSupported()) {
             // Windows
-            Desktop.getDesktop().browse(new URI(verificationURI));
+            Desktop.getDesktop().browse(new URI(url));
         } else {
             // Ubuntu
             Runtime runtime = Runtime.getRuntime();
-            runtime.exec("/usr/bin/firefox -new-window " + verificationURI);
+            runtime.exec("/usr/bin/firefox -new-window " + url);
         }
 
+        // i'm so sorry about this
         String redirect = JOptionPane.showInputDialog("Enter the redirect URL (be fast!)", "");
         // get the verification id from the URL
         String verification = redirect.substring(56, redirect.length() - 4);
         Verifier verifier = new Verifier(verification);
 
+        // get the token and make a fb client!
         Token accessToken = service.getAccessToken(EMPTY_TOKEN, verifier);
         facebookClient = new DefaultFacebookClient(accessToken.getToken());
     }
 
     /**
-     * Publishes an image to user's facebook. Image must be in images folder.
+     * Publishes an image to user's facebook.
      * 
      * @param name
-     *            name of image, including extension
+     *            full path and name of image, including extension (root is
+     *            whiteboard, not src)
      */
     public void publishImage(String name) {
         try {
