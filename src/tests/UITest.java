@@ -1,18 +1,14 @@
 package tests;
 
-import java.awt.Color;
-import java.io.IOException;
-
-import org.junit.Before;
 import org.junit.Test;
 
 import server.WhiteboardServer;
 import client.Artist;
-import client.Canvas;
 
 /**
- * To test the Artist and Canvas classes, we can only start it up to see if
- * there are exceptions.
+ * To test the Artist class, we can only start it up to see if there are
+ * exceptions. We cannot test Canvas because it depends on things already
+ * existing in the server (which are made in Artist).
  * 
  * To test the server/client interactions, as well as concurrency and UI, we did
  * the following:
@@ -51,52 +47,32 @@ import client.Canvas;
  */
 public class UITest {
 
-    @Before
-    public void setUp() {
-        try {
-            // start up the server
-            startServer();
-
-            // Avoid race where we try to connect to server too early
-            Thread.sleep(100);
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-    }
-
     @Test
     public void testArtistConstructor() {
         // we can't really test the Artist in any other way
         // just make sure nothing blows up
-        Artist.main(new String[1]);
-    }
 
-    @Test
-    public void testCanvasConstructor() {
-        // we can't really test the Canvas in any other way
-        // just make sure nothing blows up
         try {
-            new Canvas("board1", "localhost", 4444, Color.WHITE, "user1");
-        } catch (IOException e) {
-            // this will make the test fail
-            throw new RuntimeException(e);
-        }
-    }
-
-    /**
-     * Runs the server in another thread
-     */
-    private void startServer() {
-        new Thread(new Runnable() {
-            public void run() {
-                try {
-                    WhiteboardServer.main(new String[1]);
-                } catch (Exception e) {
-                    e.printStackTrace();
-                    return;
+            // start server
+            new Thread(new Runnable() {
+                public void run() {
+                    try {
+                        new WhiteboardServer(4444);
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                        return;
+                    }
                 }
-            }
-        }).start();
+            }).start();
+
+            // Avoid race where we try to connect to server too early
+            Thread.sleep(100);
+
+            new Artist("localhost", 4444);
+            
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
     }
 
 }

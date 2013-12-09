@@ -1,7 +1,5 @@
 package tests;
 
-import java.io.IOException;
-
 import org.junit.Test;
 
 import server.WhiteboardServer;
@@ -40,13 +38,16 @@ public class WhiteboardServerTest {
     public void testServerConstructor() {
         // we can't really test the server in any other way
         // just make sure nothing blows up
-        try {
-            new WhiteboardServer(4444);
-        } catch (IOException e) {
-            // this will make the test fail
-            throw new RuntimeException(e);
-        }
+        new Thread(new Runnable() {
+            public void run() {
+                try {
+                    new WhiteboardServer(4444);
+                } catch (Exception e) {
+                    e.printStackTrace();
+                    return;
+                }
+            }
+        }).start();
     }
-    
-    
+
 }
