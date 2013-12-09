@@ -34,6 +34,8 @@ import javax.swing.JPanel;
 import javax.swing.JRadioButton;
 import javax.swing.JTextField;
 import javax.swing.SwingUtilities;
+import javax.swing.UIManager;
+import javax.swing.UIManager.LookAndFeelInfo;
 
 /**
  * This is the login screen that the user must navigate through to get a canvas.
@@ -104,6 +106,18 @@ public class Artist {
         // Create a log-in screen
         this.window = new JFrame("Login");
         this.window.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+
+        // make it pretty!!
+        try {
+            for (LookAndFeelInfo info : UIManager.getInstalledLookAndFeels()) {
+                if ("Nimbus".equals(info.getName())) {
+                    UIManager.setLookAndFeel(info.getClassName());
+                    break;
+                }
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
 
         this.IP = IP;
         inQueue = new LinkedBlockingQueue<String>();
