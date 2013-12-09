@@ -41,7 +41,7 @@ public class WhiteboardServerTest {
         // we can't really test the server in any other way
         // just make sure nothing blows up
         try {
-            new WhiteboardServer();
+            new WhiteboardServer(4444);
         } catch (IOException e) {
             // this will make the test fail
             throw new RuntimeException(e);

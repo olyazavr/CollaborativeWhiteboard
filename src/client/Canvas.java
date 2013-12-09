@@ -67,11 +67,10 @@ import facebook.Facebook;
  * from the server, so events are processed in the order they happen (no local
  * drawing). All UI updates are handled in Swing's thread.
  * 
- * Default port is 4444.
  */
 public class Canvas extends JPanel {
     private static final long serialVersionUID = -4896602587258968937L;
-    private final int port = 4444; // default port
+    private final int port; // default port
     private Socket socket;
 
     // image where the user's drawing is stored
@@ -148,6 +147,8 @@ public class Canvas extends JPanel {
      *            unique name of the board
      * @param IP
      *            IP address to talk to the server
+     * @param port
+     *            port to talk to the server on
      * @param bgColor
      *            background color
      * @param userName
@@ -155,10 +156,11 @@ public class Canvas extends JPanel {
      * @throws UnknownHostException
      * @throws IOException
      */
-    public Canvas(String boardName, String IP, Color bgColor, String userName)
+    public Canvas(String boardName, String IP, int port, Color bgColor, String userName)
             throws UnknownHostException, IOException {
         socket = new Socket(IP, port);
         this.IP = IP;
+        this.port = port;
         inQueue = new LinkedBlockingQueue<String>();
         outQueue = new LinkedBlockingQueue<String>();
 
@@ -348,7 +350,6 @@ public class Canvas extends JPanel {
         }
 
         // set fonts
-
         sliderLabel.setFont(segoe.deriveFont(15f));
         paintButton.setFont(segoe.deriveFont(15f));
         eraserButton.setFont(segoe.deriveFont(15f));
@@ -536,7 +537,7 @@ public class Canvas extends JPanel {
             public void actionPerformed(ActionEvent e) {
                 try {
                     outQueue.put("BYE " + name + " " + user);
-                    new Artist(IP);
+                    new Artist(IP, port);
                     window.dispose();
 
                 } catch (Exception e1) {

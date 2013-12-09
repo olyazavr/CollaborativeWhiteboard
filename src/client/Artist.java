@@ -62,7 +62,7 @@ import javax.swing.UIManager.LookAndFeelInfo;
 public class Artist {
 
     private Socket socket;
-    private final int port = 4444;
+    private final int port;
     private List<String> whiteboards;
     private String username;
 
@@ -94,18 +94,21 @@ public class Artist {
 
     /**
      * Creates a new Artist login screen to create/select whiteboards and open
-     * Canvases. Default port is 4444.
+     * Canvases.
      * 
      * @param IP
      *            optional IP address if reconnecting, null otherwise
+     * @param port
+     *            the port to try to connect to the server on
      * 
      * @throws UnknownHostException
      * @throws IOException
      */
-    public Artist(String IP) throws UnknownHostException, IOException {
+    public Artist(String IP, int port) throws UnknownHostException, IOException {
         // Create a log-in screen
         this.window = new JFrame("Login");
         this.window.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        this.port = port;
 
         // make it pretty!!
         try {
@@ -506,7 +509,7 @@ public class Artist {
                     // if the client chose an existing whiteboard make a
                     // canvas with that name, and close Artist
                     try {
-                        new Canvas(choice, IP, color, username);
+                        new Canvas(choice, IP, port, color, username);
                         window.dispose();
                     } catch (Exception e1) {
                         e1.printStackTrace();
@@ -545,7 +548,7 @@ public class Artist {
             String name = inQueue.take();
 
             // make a new whiteboard! Then close Artist
-            new Canvas(name, IP, color, username);
+            new Canvas(name, IP, port, color, username);
             window.dispose();
 
         } catch (Exception e1) {
@@ -623,7 +626,7 @@ public class Artist {
             public void run() {
                 try {
                     // we have no IP to give yet
-                    new Artist(null);
+                    new Artist(null, 4444);
                 } catch (IOException e) {
                     e.printStackTrace();
                 }

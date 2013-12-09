@@ -8,7 +8,6 @@ import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import java.net.Socket;
 
-import org.junit.Before;
 import org.junit.Test;
 
 import server.WhiteboardServer;
@@ -23,20 +22,6 @@ import server.WhiteboardServer;
 public class WhiteboardIntegrationTest {
     private final String local = "localhost";
     private final String localIP = "127.0.0.1";
-    private final int port = 4444;
-
-    @Before
-    public void setUp() {
-        try {
-            // start up the server
-            startServer();
-
-            // Avoid race where we try to connect to server too early
-            Thread.sleep(100);
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-    }
 
     /**
      * test that a "HELLO" message merits a response with the list of
@@ -45,6 +30,9 @@ public class WhiteboardIntegrationTest {
     @Test(timeout = 10000)
     public void helloTest() {
         try {
+            final int port = 1111;
+            startServer(port);
+
             // we pretend to be the client
             final Socket socket = new Socket(local, port);
             BufferedReader in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
@@ -84,6 +72,9 @@ public class WhiteboardIntegrationTest {
     @Test(timeout = 10000)
     public void drawTest() {
         try {
+            final int port = 2222;
+            startServer(port);
+
             // we pretend to be the client
             final Socket socket = new Socket(local, port);
             BufferedReader in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
@@ -146,6 +137,9 @@ public class WhiteboardIntegrationTest {
     @Test(timeout = 10000)
     public void clearTest() {
         try {
+            final int port = 3333;
+            startServer(port);
+
             // we pretend to be the client
             final Socket socket = new Socket(local, port);
             BufferedReader in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
@@ -209,6 +203,9 @@ public class WhiteboardIntegrationTest {
     @Test(timeout = 10000)
     public void bgTest() {
         try {
+            final int port = 4444;
+            startServer(port);
+
             // we pretend to be the client
             final Socket socket = new Socket(local, port);
             BufferedReader in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
@@ -272,6 +269,9 @@ public class WhiteboardIntegrationTest {
     @Test(timeout = 10000)
     public void byeTest() {
         try {
+            final int port = 5555;
+            startServer(port);
+
             // we pretend to be the client
             final Socket socket = new Socket(local, port);
             BufferedReader in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
@@ -331,6 +331,9 @@ public class WhiteboardIntegrationTest {
     @Test(timeout = 10000)
     public void selectTest() {
         try {
+            final int port = 6666;
+            startServer(port);
+
             // we pretend to be the client
             final Socket socket = new Socket(local, port);
             BufferedReader in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
@@ -385,6 +388,9 @@ public class WhiteboardIntegrationTest {
     @Test(timeout = 10000)
     public void newTest() {
         try {
+            final int port = 7777;
+            startServer(port);
+
             // we pretend to be the client
             final Socket socket = new Socket(local, port);
             BufferedReader in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
@@ -432,6 +438,9 @@ public class WhiteboardIntegrationTest {
     @Test(timeout = 10000)
     public void byeArtistTest() {
         try {
+            final int port = 8888;
+            startServer(port);
+
             // we pretend to be the client
             final Socket socket = new Socket(local, port);
             BufferedReader in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
@@ -459,18 +468,28 @@ public class WhiteboardIntegrationTest {
 
     /**
      * Runs the server in another thread
+     * 
+     * @param port
+     *            port to run the server on
      */
-    private void startServer() {
+    private void startServer(final int port) {
         new Thread(new Runnable() {
             public void run() {
                 try {
-                    WhiteboardServer.main(new String[1]);
+                    new WhiteboardServer(port);
                 } catch (Exception e) {
                     e.printStackTrace();
                     return;
                 }
             }
         }).start();
+
+        // Avoid race where we try to connect to server too early
+        try {
+            Thread.sleep(100);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
     }
 
 }

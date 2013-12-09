@@ -32,12 +32,11 @@ import java.util.concurrent.atomic.AtomicInteger;
  * unique and creates a whiteboard and then sends the client the name back (so
  * no race conditions here).
  * 
- * Port is set to 4444 by default, and every client is given unique ID numbers.
+ * Every client is given unique ID numbers.
  * 
  */
 public class WhiteboardServer {
     private final ServerSocket serverSocket;
-    private final int port = 4444;
 
     private final AtomicInteger clientIDCounter;
 
@@ -55,10 +54,13 @@ public class WhiteboardServer {
     /**
      * Creates a new server, with no whiteboards or users. Default port is 4444.
      * 
+     * @param port
+     *            the port to run the server on
+     * 
      * @throws IOException
      *             if invalid port
      */
-    public WhiteboardServer() throws IOException {
+    public WhiteboardServer(int port) throws IOException {
         serverSocket = new ServerSocket(port);
         whiteboards = Collections.synchronizedMap(new HashMap<String, Whiteboard>());
         clientIDCounter = new AtomicInteger(0);
@@ -66,6 +68,7 @@ public class WhiteboardServer {
         queues = Collections.synchronizedMap(new HashMap<Integer, BlockingQueue<String>>());
         whiteboardClients = Collections.synchronizedMap(new HashMap<String, List<Integer>>());
         artistClients = Collections.synchronizedList(new ArrayList<Integer>());
+        serve();
     }
 
     /**
@@ -612,8 +615,7 @@ public class WhiteboardServer {
         // try to initialize the server with port 4444, this should def work,
         // try/catch just to soothe java's nerves
         try {
-            WhiteboardServer server = new WhiteboardServer();
-            server.serve();
+            new WhiteboardServer(4444);
         } catch (IOException e) {
             e.printStackTrace();
         }

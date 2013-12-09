@@ -76,7 +76,7 @@ public class UITest {
         // we can't really test the Canvas in any other way
         // just make sure nothing blows up
         try {
-            new Canvas("board1", "localhost", Color.WHITE, "user1");
+            new Canvas("board1", "localhost", 4444, Color.WHITE, "user1");
         } catch (IOException e) {
             // this will make the test fail
             throw new RuntimeException(e);
