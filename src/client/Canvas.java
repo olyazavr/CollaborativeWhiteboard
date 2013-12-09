@@ -351,13 +351,13 @@ public class Canvas extends JPanel {
 
         // set fonts
         sliderLabel.setFont(segoe.deriveFont(20f));
-        paintButton.setFont(segoe.deriveFont(25f));
-        eraserButton.setFont(segoe.deriveFont(25f));
-        clearButton.setFont(segoe.deriveFont(25f));
-        dogeButton.setFont(segoe.deriveFont(25f));
-        switchBoards.setFont(segoe.deriveFont(25f));
-        facebook.setFont(segoe.deriveFont(20f));
-        exportImage.setFont(segoe.deriveFont(25f));
+        paintButton.setFont(segoe.deriveFont(20f));
+        eraserButton.setFont(segoe.deriveFont(20f));
+        clearButton.setFont(segoe.deriveFont(20f));
+        dogeButton.setFont(segoe.deriveFont(20f));
+        switchBoards.setFont(segoe.deriveFont(20f));
+        facebook.setFont(segoe.deriveFont(15f));
+        exportImage.setFont(segoe.deriveFont(20f));
         tableLabel.setFont(segoe.deriveFont(20f));
         changeBGLabel.setFont(segoe.deriveFont(15f));
         changeBGLabel2.setFont(segoe.deriveFont(15f));
