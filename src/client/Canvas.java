@@ -396,6 +396,7 @@ public class Canvas extends JPanel {
             button.getKey().setBackground(button.getValue());
             // remove the default buttons
             button.getKey().setBorderPainted(false);
+            button.getKey().setOpaque(false);
 
             // adding components to the pallet
             colorPallet.add(button.getKey());
