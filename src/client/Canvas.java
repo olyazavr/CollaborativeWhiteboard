@@ -2,7 +2,6 @@ package client;
 
 import java.awt.BasicStroke;
 import java.awt.BorderLayout;
-import java.awt.Button;
 import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.Font;
@@ -112,13 +111,13 @@ public class Canvas extends JPanel {
     private final JPanel colorPallet;
     private final JSlider strokeSlider;
     private final JProgressBar artsyMeter;
-    private final Button eraserButton;
-    private final Button paintButton;
-    private final Button clearButton;
-    private final Button dogeButton;
-    private final Button facebook;
-    private final Button switchBoards;
-    private final Button exportImage;
+    private final JButton eraserButton;
+    private final JButton paintButton;
+    private final JButton clearButton;
+    private final JButton dogeButton;
+    private final JButton facebook;
+    private final JButton switchBoards;
+    private final JButton exportImage;
 
     private final JButton buttonBlack;
     private final JButton buttonDarkGray;
@@ -243,15 +242,14 @@ public class Canvas extends JPanel {
         // components of the side panel
         final Label sliderLabel = new Label("Stroke Size:");
         strokeSlider = new JSlider(SLIDER_MIN, SLIDER_MAX, SLIDER_INIT);
-        paintButton = new Button("Draw!");
+        paintButton = new JButton("Draw!");
         paintButton.setEnabled(false);
-        eraserButton = new Button("Erase!");
-        eraserButton.setEnabled(true);
-        clearButton = new Button("Clear");
-        dogeButton = new Button("DOGE");
-        facebook = new Button("Facebook");
-        switchBoards = new Button("Switch");
-        exportImage = new Button("Export");
+        eraserButton = new JButton("Erase!");
+        clearButton = new JButton("Clear");
+        dogeButton = new JButton("DOGE");
+        facebook = new JButton("Facebook");
+        switchBoards = new JButton("Switch");
+        exportImage = new JButton("Export");
         // label too big, split it in two
         final Label changeBGLabel = new Label("Drag colors into the canvas");
         final Label changeBGLabel2 = new Label("to fill it with that color.");
@@ -350,15 +348,15 @@ public class Canvas extends JPanel {
         }
 
         // set fonts
-        sliderLabel.setFont(segoe.deriveFont(20f));
-        paintButton.setFont(segoe.deriveFont(25f));
-        eraserButton.setFont(segoe.deriveFont(25f));
-        clearButton.setFont(segoe.deriveFont(25f));
-        dogeButton.setFont(segoe.deriveFont(25f));
-        switchBoards.setFont(segoe.deriveFont(25f));
-        facebook.setFont(segoe.deriveFont(20f));
-        exportImage.setFont(segoe.deriveFont(25f));
-        tableLabel.setFont(segoe.deriveFont(20f));
+        sliderLabel.setFont(segoe.deriveFont(15f));
+        paintButton.setFont(segoe.deriveFont(15f));
+        eraserButton.setFont(segoe.deriveFont(15f));
+        clearButton.setFont(segoe.deriveFont(15f));
+        dogeButton.setFont(segoe.deriveFont(15f));
+        switchBoards.setFont(segoe.deriveFont(15f));
+        facebook.setFont(segoe.deriveFont(15f));
+        exportImage.setFont(segoe.deriveFont(15f));
+        tableLabel.setFont(segoe.deriveFont(15f));
         changeBGLabel.setFont(segoe.deriveFont(15f));
         changeBGLabel2.setFont(segoe.deriveFont(15f));
 
