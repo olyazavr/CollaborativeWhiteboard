@@ -118,6 +118,7 @@ public class Canvas extends JPanel {
     private final JButton switchBoards;
     private final JButton exportImage;
 
+    private JButton previousButton;
     private final JButton buttonBlack;
     private final JButton buttonDarkGray;
     private final JButton buttonGray;
@@ -275,6 +276,8 @@ public class Canvas extends JPanel {
         buttonPink = new JButton();
         buttonCyan = new JButton();
         buttonMore = new JButton("...");
+        previousButton = buttonBlack;
+        previousButton.setEnabled(false);
 
         // setup their properties and listeners
         setupButtons();
@@ -376,7 +379,7 @@ public class Canvas extends JPanel {
      */
     private void setupButtons() {
         // set up the map
-        Map<JButton, Color> colorButtons = new HashMap<JButton, Color>();
+        final Map<JButton, Color> colorButtons = new HashMap<JButton, Color>();
         colorButtons.put(buttonBlack, Color.BLACK);
         colorButtons.put(buttonDarkGray, Color.DARK_GRAY);
         colorButtons.put(buttonGray, Color.GRAY);
@@ -391,7 +394,7 @@ public class Canvas extends JPanel {
         colorButtons.put(buttonPink, Color.PINK);
         colorButtons.put(buttonCyan, Color.CYAN);
         colorButtons.put(buttonWhite, Color.WHITE);
-
+        
         // set properties of all buttons
         for (final Entry<JButton, Color> button : colorButtons.entrySet()) {
             // set the bg color of the button
@@ -406,8 +409,13 @@ public class Canvas extends JPanel {
             // changing drawing color
             button.getKey().addActionListener(new ActionListener() {
                 public void actionPerformed(ActionEvent e) {
-                    if (!erasing)
+                    if (!erasing) {
                         color = button.getValue();
+                        // enables the previous button and disables this one
+                        previousButton.setEnabled(true);
+                        button.getKey().setEnabled(false);
+                        previousButton = button.getKey();
+                    }
                 }
             });
 
@@ -454,9 +462,21 @@ public class Canvas extends JPanel {
         buttonMore.addActionListener(new ActionListener() {
             public void actionPerformed(ActionEvent e) {
 
-                if (!erasing)
+                if (!erasing) {
+                    // sets the pen color to the color chosen from the chooser
                     color = JColorChooser.showDialog(new JPanel(),
                             "Choose a color", color);
+                    
+                    // Disables the previous button
+                    previousButton.setEnabled(true);
+                    
+                    // if client exits the chooser, then set it to the previous
+                    // color and disables it
+                    if (color == null) {
+                        color = previousButton.getBackground();
+                        previousButton.setEnabled(false);
+                    }
+                }
             }
         });
     }
