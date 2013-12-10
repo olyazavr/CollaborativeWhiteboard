@@ -409,12 +409,19 @@ public class Canvas extends JPanel {
             // changing drawing color
             button.getKey().addActionListener(new ActionListener() {
                 public void actionPerformed(ActionEvent e) {
-                    if (!erasing) {
-                        color = button.getValue();
-                        // enables the previous button and disables this one
-                        previousButton.setEnabled(true);
-                        button.getKey().setEnabled(false);
-                        previousButton = button.getKey();
+                    color = button.getValue();
+                    // enables the previous button and disables this one
+                    previousButton.setEnabled(true);
+                    button.getKey().setEnabled(false);
+                    previousButton = button.getKey();
+                    
+                    // if clicked on while erasing, switch paint button on
+                    if (erasing) {
+                        erasing = false;
+                        stroke = strokeSlider.getValue();
+                        paintButton.setEnabled(false);
+                        eraserButton.setEnabled(true);
+                        
                     }
                 }
             });
@@ -429,6 +436,10 @@ public class Canvas extends JPanel {
                     // if dragged into the canvas, change the bg color
                     if (x < 800 && y < 600) {
                         bgColor = button.getValue();
+                        
+                        if (erasing)
+                            color = button.getValue();
+                        
                         try {
                             // "BG" WB_NAME COLOR_R COLOR_G COLOR_BAME COLOR_R
                             // COLOR_G COLOR_B
