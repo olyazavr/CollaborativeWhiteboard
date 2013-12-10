@@ -108,6 +108,7 @@ public class Artist {
         // Create a log-in screen
         this.window = new JFrame("Login");
         this.window.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        this.window.setLocationRelativeTo(null); // center the window
         this.port = port;
 
         // make it pretty!!

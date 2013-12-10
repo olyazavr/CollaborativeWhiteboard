@@ -229,6 +229,7 @@ public class Canvas extends JPanel {
         // Main Window creation
         window = new JFrame("Whiteboard: " + boardName);
         window.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        window.setLocationRelativeTo(null); // center the window
         BorderLayout windowLayout = new BorderLayout();
         window.setLayout(windowLayout);
 
